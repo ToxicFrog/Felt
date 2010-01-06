@@ -1,5 +1,9 @@
 local Menu = require("Widget"):subclass "Menu"
 
+Menu:defaults {
+    visible = false
+}
+
 local MenuTitle = require("Widget"):subclass "MenuTitle"
 do
     function MenuTitle:__init(...)
@@ -12,7 +16,7 @@ do
     function MenuTitle:draw(scale, x, y, w, h)
         love.graphics.pushClip(x, y, w, h)
         love.graphics.setColour(0, 0, 0, 255)
-        love.graphics.draw(self.text, x+1, y+9)
+        love.graphics.print(self.text, x+1, y+9)
         love.graphics.popClip()
     end
 end
@@ -29,9 +33,9 @@ do
     function MenuEntry:draw(scale, x, y, w, h)
         love.graphics.pushClip(x, y, w, h)
         love.graphics.setColour(0, 0, 0, 255)
-        love.graphics.rectangle(love.draw_fill, x, y, w, h)
+        love.graphics.rectangle("fill", x, y, w, h)
         love.graphics.setColour(255, 255, 255, 255)
-        love.graphics.draw(self.text, x+1, y+9)
+        love.graphics.print(self.text, x+1, y+9)
         love.graphics.popClip()
     end
     
@@ -39,9 +43,10 @@ do
         print("menu entry clicked", self.text)
         if self.call then
             print("", "calling")
-            self.call()
-            self.parent.parent:remove(self.parent)
+            self.call(self.parent.context, self.parent)
+            self.parent:hide()
         end
+        return true
     end
 end
 
@@ -63,10 +68,12 @@ function Menu:__init(t)
     
     self:add(MenuTitle { x=1, y=1, text = self.title })
 
-    for i=1,#t,2 do
+    local i = 1;
+    while t[i] do
         local entry
         if t[i] == "--" then
             entry = self:add(MenuSpacer { x=1, y = self.h })
+            i = i + 1
         else
             entry = self:add(MenuEntry {
                 text = t[i];
@@ -74,6 +81,7 @@ function Menu:__init(t)
                 x = 1;
                 y = self.h;
             })
+            i = i + 2
         end
         self.w = math.max(self.w, entry.w)
         self.h = self.h + entry.h + 1
@@ -88,13 +96,49 @@ end
 
 function Menu:draw(scale, x, y, w, h)
     love.graphics.setColour(255, 255, 255, 255)
-    love.graphics.rectangle(love.draw_fill, x, y, w, h)
+    love.graphics.rectangle("fill", x, y, w, h)
 end
 
 function Menu:move(x, y)
 end
 
-function Menu:raise()
-    Widget.raise(self)
+function Menu:inBounds(x, y)
+    return self.visible
 end
 
+function Menu:click_right_before()
+    self:hide()
+    return true
+end
+
+function Menu:click_left(x, y)
+    if x < 0 or x > self.w
+    or y < 0 or y > self.w
+    then
+        self:hide()
+    end
+    return true
+end
+
+function Menu:show(x, y)
+    self.x = x or self.x
+    self.y = y or self.y
+    
+    felt.log("display menu before")
+    
+    if not self.visible then
+        felt.log("display menu")
+        self.visible = true
+        felt.screen:add(self)
+        self:raise()
+    end
+    
+    felt.log("display menu after")
+end
+
+function Menu:hide()
+    if self.visible then
+        self.visible = false
+        self.parent:remove(self)
+    end
+end

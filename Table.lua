@@ -1,9 +1,26 @@
 local Table = require("Widget"):subclass "Table"
 
-function Table:__init(...)
-    Widget.__init(self, ...)
+local DrawOverlay = require("Widget"):subclass "DrawOverlay"
+do
+    DrawOverlay:defaults {
+        visible = false;
+    }
     
-    self.items = {}
+    function DrawOverlay:__init()
+        self.lines = {}
+    end
+    
+    function DrawOverlay:key_d()
+        self.visible = not self.visible
+    end
+    
+    function DrawOverlay:key_e()
+        self.lines = {}
+    end
+    
+    function DrawOverlay:draw(scale, x, y, w, h)
+        
+    end
 end
 
 Table:defaults {
@@ -12,9 +29,11 @@ Table:defaults {
         
     -- location of the origin of the contents relative to upper left, px
     ox = 0, oy = 0;
+}
 
-    -- width and height in grid units
-    gw = 100, gh = 100;
+Table.menu = {
+    title = "Table";
+    "Create Disc", function(self, menu) self:add(require "Disc" {}, self:toGrid(menu.x, menu.y)) end;
 }
 
 -- convert grid coordinates to screen coordinates
@@ -27,13 +46,18 @@ end
 -- convert screen coordinates to grid coordinates
 function Table:toGrid(x, y)
     -- turn screen coordinates into viewport coordinates
-    return (x - self.x - self.ox)/self.scale
-        ,  (y - self.y - self.oy)/self.scale
+    return (x - self.ox)/self.scale
+        ,  (y - self.oy)/self.scale
 end
 
-function Table:pan(dx, dy)
-    self.ox = self.ox + dx
-    self.oy = self.oy + dy
+function Table:childInBounds(child, x, y)
+    x,y = self:toGrid(x,y)
+    return child:inBounds(x - child.x, y - child.y)
+end
+    
+function Table:pan(ox, oy)
+    self.ox = ox
+    self.oy = oy
 end
 
 -- set zoom factor
@@ -45,64 +69,56 @@ function Table:clear()
     self.items = {}
 end
 
-function Table:reset()
-    self.ox,self.oy = 0,0
-    self.scale = 1.0
-end
-
-function Table:add(item)
-    table.insert(self.items, item)
-    Widget.add(self, item)
-end
-
-function Table:remove(item)
-    for i,v in ipairs(self.items) do
-        if v == item then
-            table.remove(self.items, i)
-            break
-        end
-    end
-    Widget.remove(self, item)
-end
-
 function Table:grab()
     return self
 end
 
 function Table:drag_right(dx, dy)
-    self:pan(dx, dy)
+    self:pan(self.ox + dx, self.oy + dy)
+    return true
+end
+Table.drag_middle = Table.drag_right
+
+function Table:click_wheeldown()
+    self:zoom(self.scale * 0.9)
+    return true
 end
 
-function Table:isVisible(item)
-    local x,y = self:toScreen(item.x, item.y)
-    local _x,_y = self:trueXY()
-    local rx,by = x + self.scale * item.w, y + self.scale * item.h
+function Table:click_wheelup()
+    self:zoom(self.scale * 1.1)
+    return true
+end
+
+function Table:drop(x, y, item)
+    print("drop", item, x, y)
+    x,y = self:toGrid(x,y)
+    item.parent:remove(item)
+    self:add(item, x - item.w/2, y - item.h/2)
+    item:raise()
+    felt.held = nil
     
-    if x > _x + self.w
-    or y > _y + self.h
-    or rx < _x
-    or by < _y
-    then
-        return false
-    end
+    return true
+end
+
+function Table:key_c()
+    self:pan(0,0)
+    return true
+end
+
+function Table:key_z()
+    self:zoom(1.0)
     return true
 end
 
 function Table:draw(scale, x, y)
-    if self.parent.folded then
-        return true
-    end
-    
-    table.sort(self.items, L 'lhs,rhs -> lhs.z < rhs.z')
-    
     love.graphics.pushClip(x, y, self.w, self.h)
     love.graphics.setColour(0, 64, 0, 255)
-    love.graphics.rectangle(love.draw_fill, x, y, self.w, self.h)
+    love.graphics.rectangle("fill", x, y, self.w, self.h)
     
-    for _,item in ipairs(self.items) do
-        if self:isVisible(item) then
-            item:render(self.scale, self:toScreen(item.x, item.y))
-        end
+    for i=#self._children,1,-1 do
+        local child = self._children[i]
+        local x,y = self:toScreen(child.x, child.y)
+        child:render(self.scale, x, y, child.w, child.h)
     end
     
     love.graphics.popClip()

@@ -1,29 +1,44 @@
 local Screen = require("Widget"):subclass "Screen"
 
+Screen:defaults {
+    menu = {
+        title = "Felt";
+        "Create Window", function(...) print(...) return Screen.create(...) end;
+        "Load Window", felt.load;
+        "Host Game", false;
+        "Join Game", false;
+        "Leave Game", false;
+        "test", false;
+        "argh", false;
+    };
+}
+
 function Screen:__init(...)
     Widget.__init(self, ...)
     
-    self.menu = require "Menu" {
-        title = "Felt";
-        "Create Window", self:close(self.create);
-        visible = false;
-    }
+    felt.log("screen create %s", tostring(self.menu.visible))
 end
 
 function Screen:draw()
     return
 end
 
-function Screen:create()
-    print("create")
-    felt.addWindow { x = self.menu.x, y = self.menu.y }
+function Screen:create(menu)
+    felt.log("create")
+    felt.addWindow { x = menu.x, y = menu.y }
 end
 
-function Screen:click_right(x, y)
-    self:add(self.menu)
-    self.menu:raise()
-    self.menu.x = x
-    self.menu.y = y
+function Screen:click_left_before(x, y)
+    if felt.held then
+        felt.held:dropped(x, y)
+        return true
+    end
+    return false
+end
+
+function Screen:key_r()
+    love.system.restart()
+    return true
 end
 
 return Screen

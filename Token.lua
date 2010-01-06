@@ -6,10 +6,11 @@ Token:defaults {
 
 function Token:click_left()
     felt.pickup(self)
+    return true
 end
 
-function Token:click_right()
-    print("token clicked on", self)
+function Token:dropped(x, y)
+    felt.screen:event("drop", x, y, self)
 end
 
 return Token

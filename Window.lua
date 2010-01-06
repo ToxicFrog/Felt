@@ -19,9 +19,9 @@ do
     function TitleBar:draw(scale, x, y)
         love.graphics.pushClip(x, y, self.w, self.h)
         love.graphics.setColour(0, 0, 0, 255)
-        love.graphics.rectangle(love.draw_fill, x, y, self.w, self.h)
+        love.graphics.rectangle("fill", x, y, self.w, self.h)
         love.graphics.setColour(255, 255, 255, 255)
-        love.graphics.draw(self.parent.title, x+1, y+9)
+        love.graphics.print(self.parent.title, x+1, y+9)
         love.graphics.popClip()
     end
     
@@ -30,12 +30,17 @@ do
         return self.parent
     end
     
-    function TitleBar:click_right()
+    function TitleBar:click_middle()
         if self.parent.folded then
             self.parent:unfold()
         else
             self.parent:fold()
         end
+        return true
+    end
+    
+    function TitleBar:click_right()
+        print(felt.save(self.parent))
         return true
     end
 end
@@ -53,9 +58,9 @@ do
     
     function Resizer:draw(scale, x, y)
         love.graphics.setColour(0, 0, 0, 255)
-        love.graphics.rectangle(love.draw_fill, x, y, self.w, self.h)
+        love.graphics.rectangle("fill", x, y, self.w, self.h)
         love.graphics.setColour(128, 128, 128, 255)
-        love.graphics.triangle(love.draw_fill,
+        love.graphics.triangle("fill",
             x + 2, y + 1,
             x + self.w - 1, y + 1,
             x + self.w - 1, y + self.h - 2
@@ -79,20 +84,31 @@ Window:defaults {
     visible_to = {};
     w = 64;
     h = 64;
+    
+    menu = {
+        title = "Window Control";
+        "Save Window...", nil;
+        "Close Window", Window.destroy;
+    }
 }
+
+Window:persistent "title" "content"
+Window:transitory "_children"
 
 function Window:__init(...)
     Widget.__init(self, ...)
     
     self.titlebar = self:add(TitleBar(self))
     self.resizer = self:add(Resizer(self))
-    self.table = self:add(require "Table" {
-        x = 1,
-        y = 12,
-        w = self.w - 2,
-        h = self.h - 13,
-    })
     
+    self.content = self.content or require "Table" {}
+
+    self.content.x = 1
+    self.content.y = 12
+    self.content.w = self.w - 2
+    self.content.h = self.h - 13
+    self:add(self.content)
+     
     self.true_h = self.h
     if self.folded then
         self:fold()
@@ -105,15 +121,6 @@ function Window:drag_left(dx, dy)
     self.y = math.max(0,
         math.min(self.y + dy, love.graphics.getHeight() - self.h))
     return true
-end
-
--- display window context menu
---  close window
---  move window contents
---  rename window
---  set permissions
---  set visibility
-function Window:click_right()
 end
 
 function Window:resize(w, h)
@@ -137,22 +144,24 @@ function Window:resize(w, h)
     end
     
     self.titlebar.w = self.w - 13
-    self.table.w = self.w - 2
-    self.table.h = self.h - 13
+    self.content.w = self.w - 2
+    self.content.h = self.h - 13
 end
 
 function Window:fold()
     self.folded = true
     self.h = self.titlebar.h + 2
+    self.content.visible = false
 end
 
 function Window:unfold()
     self.folded = false
     self.h = self.true_h
+    self.content.visible = true
 end
 
-function Window:draw(scale, x, y)
+function Window:draw(scale, x, y, w, h)
     love.graphics.setColour(255, 255, 255, 255)
-    love.graphics.rectangle(love.draw_fill, x, y, self.w, self.h)
+    love.graphics.rectangle("fill", x, y, w, h)
 end
 

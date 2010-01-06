@@ -1,4 +1,5 @@
 -- fix love.filesystem.load
+--[[
 do
     local _love_fs_load = love.filesystem.load
     function love.filesystem.load(path)
@@ -9,6 +10,7 @@ do
         return result
     end
 end
+--]]
 
 -- set up require() to work with love2d
 package.lovepath = "lib/?.lua;?.lua;"
@@ -60,4 +62,22 @@ do
         end
     end
 end
+
+-- keycode -> name mapping
+love.keys = {}
+for k,v in pairs(love) do
+    if k:match("^key_") then
+        love.keys[v] = k
+    end
+end
+
+love.buttons = {
+    wd = "wheeldown";
+    wu = "wheelup";
+    l = "left";
+    r = "right";
+    m = "middle";
+    x1 = "x1";
+    x2 = "x2";
+}
 

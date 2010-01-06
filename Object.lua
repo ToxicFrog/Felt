@@ -22,9 +22,7 @@ end
 
 function _M:cloneto(child)
     for k,v in pairs(self) do
-        if not k:match("^_[A-Z]+") then
-            child[k] = v
-        end
+        child[k] = v
     end
     
     child.__super = self
@@ -47,7 +45,7 @@ end
 function _M:subclass(name)
     module(name)
     self:cloneto(package.loaded[name])
-    package.loaded[name].__class = name
+    package.loaded[name]._NAME = name
     return setmetatable(package.loaded[name], { __call = package.loaded[name].new, __class = name })
 end
 
