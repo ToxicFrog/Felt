@@ -67,10 +67,7 @@ function felt.remove(t, ...)
 end
 
 function felt.pickup(item)
-    -- FIXME broadcast
-    if not felt.held then
-        felt.held = item
-    end
+    felt.hand:pickup(item)
 end
 
 function felt.loadmodule(name)

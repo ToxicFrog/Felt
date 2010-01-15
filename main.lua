@@ -63,7 +63,12 @@ function felt.screen:key_c()
     return true
 end
 
+-- create the log window
 felt.screen:add(new "SystemWindow" {})
+
+-- create the grasping hand
+felt.hand = new "Hand" {}
+felt.screen:add(felt.hand)
 
 local t = felt.new()
 t:add(new "felt.Deck" {

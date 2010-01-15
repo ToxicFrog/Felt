@@ -48,10 +48,6 @@ function Deck:drop(x, y, item)
         item:raise()
     end
     
-    if felt.held == item then
-        felt.held = nil -- FIXME oh jesus why
-    end
-
     return true
 end
 

@@ -13,22 +13,5 @@ end
 
 function Screen:draw() end
 
-function Screen:click_left_before(x, y)
-    if felt.held then
-        self:event("drop", x, y, felt.held)
-        return true
-    end
-    return false
-end
-
-function Screen:click_right_before()
-    if felt.held then
-        felt.held = nil
-        -- FIXME broadcast release
-        return true
-    end
-    return false
-end
-
 return Screen
 
