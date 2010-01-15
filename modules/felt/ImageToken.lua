@@ -1,10 +1,10 @@
-local ImageToken = require("Token"):subclass "ImageToken"
+local ImageToken = require("felt.Token"):subclass "felt.ImageToken"
 
 ImageToken:defaults { w=false, h=false }
 ImageToken:persistent "file"
 
 function ImageToken:__init(...)
-    Token.__init(self, ...)
+    felt.Token.__init(self, ...)
     
     self.back = love.graphics.newImage(self.back or self.face)
     self.face = love.graphics.newImage(self.face)

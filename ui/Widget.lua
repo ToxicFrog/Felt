@@ -279,6 +279,8 @@ end
 -- reverse order
 function Widget:render(scale, x, y, w, h)
     if not self.visible then return end
+    x = math.floor(x)
+    y = math.floor(y)
     
     if self:draw(scale, x, y, w, h) then return end
     

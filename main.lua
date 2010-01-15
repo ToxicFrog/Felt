@@ -66,14 +66,10 @@ end
 felt.screen:add(new "SystemWindow" {})
 
 local t = felt.new()
-t:add(new "base.Deck" {
-    new "ImageToken" { file="modules/chess/bbishop.png" };
-    new "ImageToken" { file="modules/chess/bknight.png" };
-    new "ImageToken" { file="modules/chess/bpawn.png" };
-    new "ImageToken" { file="modules/chess/bking.png" };
+t:add(new "felt.Deck" {
+    new "felt.ImageToken" { face="modules/chess/bbishop.png" };
+    new "felt.ImageToken" { face="modules/chess/bknight.png" };
+    new "felt.ImageToken" { face="modules/chess/bpawn.png" };
+    new "felt.ImageToken" { face="modules/chess/bking.png" };
 })
-do return end
-
-t:add(new "Disc" {})
---felt.loadmodule "chess"
 

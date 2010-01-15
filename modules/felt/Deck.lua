@@ -1,11 +1,11 @@
-local Deck = require("Token"):subclass "base.Deck"
+local Deck = require("felt.Token"):subclass "felt.Deck"
 
 Deck:defaults {
     name = "Deck";
 }
 
 function Deck:__init(t)
-    Token.__init(self, t)
+    felt.Token.__init(self, t)
     
     for _,v in ipairs(t) do
         self:add(v)

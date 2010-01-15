@@ -1,4 +1,4 @@
-local Pile = require("Token"):subclass "base.Pile"
+local Pile = require("felt.Token"):subclass "felt.Pile"
 
 Pile:defaults {
     count = 1;
@@ -11,7 +11,7 @@ Pile:persistent "count" "ctor" "type"
 Pile:broadcast "setCount"
 
 function Pile:__init(...)
-    Token.__init(self, ...)
+    felt.Token.__init(self, ...)
     
     self.top = require(self.type)(self.ctor)
     self.w = self.top.w
