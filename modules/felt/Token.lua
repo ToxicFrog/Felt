@@ -62,7 +62,6 @@ function Token:drawHidden(scale, x, y, w, h)
 end
 
 function Token:moveto(parent, ...)
-    print("moveto", self.parent, parent)
     if parent and self.parent then
         felt.log("%s moves %s from %s to %s"
             , felt.config.name
@@ -72,7 +71,7 @@ function Token:moveto(parent, ...)
         self.parent:remove(self)
         parent:add(self, ...)
     elseif self.parent then
-        felt.log("%s removes %s from %s"
+        felt.log("%s takes %s from %s"
             , felt.config.name
             , tostring(self)
             , tostring(self.parent))

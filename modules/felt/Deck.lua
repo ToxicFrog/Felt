@@ -7,7 +7,8 @@ Deck:defaults {
 function Deck:__init(t)
     felt.Token.__init(self, t)
     
-    for _,v in ipairs(t) do
+    for i,v in ipairs(t) do
+        v.z = i
         self:add(v)
     end
     
@@ -19,7 +20,7 @@ end
 
 function Deck:click_left_before()
     if love.keyboard.isDown "lshift" or love.keyboard.isDown "rshift" then
-        return Token.click_left(self)
+        return felt.Token.click_left(self)
     end
     
     if #self.children == 0 then return true end
