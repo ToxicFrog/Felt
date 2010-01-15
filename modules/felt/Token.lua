@@ -7,7 +7,7 @@ Token:defaults {
     hidden = false;
 }
 
-Token:propagate "moveto" "raise" "lower"
+Token:sync "moveto" "raise" "lower"
 
 function Token:setHidden(h)
     self.hidden = h

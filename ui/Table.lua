@@ -73,7 +73,7 @@ Table.menu = {
 }
 
 Table:persistent "title" "visibleTo"
-Table:propagate "drop" "setTitle" "setVis"
+Table:sync "drop" "setTitle" "setVis"
 
 function Table:add(child, ...)
     Widget.add(self, child, ...)
