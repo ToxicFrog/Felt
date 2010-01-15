@@ -1,9 +1,10 @@
 local SystemWindow = require("Window"):subclass "SystemWindow"
 
-local SystemTextPane = require "Widget" {
+local SystemTextPane = new "Widget" {
     lines = {
     };
     offset = 0;
+    name = "System Messages";
 }
 
 function felt.log(...)
@@ -65,10 +66,9 @@ end
 SystemWindow:defaults {
     saveable = false;
     x = 0;
-    y = 0;
-    w = 200;
-    h = love.graphics.getHeight();
-    title = "Messages";
+    y = love.graphics.getHeight() - 200;
+    w = love.graphics.getWidth();
+    h = 200;
     content = SystemTextPane;
 }
 

@@ -1,5 +1,33 @@
 local Widget = require("Object"):subclass "Widget"
 
+local function set(init)
+    local set = {}
+    
+    for k in pairs(init or {}) do
+        set[k] = true
+    end
+    
+    local function add(key)
+        set[key] = true
+        return add
+    end
+    
+    local function remove(key)
+        set[key] = nil
+        return remove
+    end
+    
+    return setmetatable(set, {
+        __call = function(list, self, key)
+            print("set-add",list, self, key)
+            return add(key)
+        end;
+    }),function(self, key)
+        print("set-remove", self, key)
+        return remove(key)
+    end
+end
+
 Widget:defaults {
     x = 0,
     y = 0,
@@ -8,119 +36,123 @@ Widget:defaults {
     h = 16,
     z_sort = L 'lhs,rhs -> lhs.z > rhs.z';
     visible = true;
-    _persistent = {};
+    focused = false;
+    save = false;
+    id = false;
 }
 
+Widget.persistent,Widget.transitory = set()
+Widget.propagate = set()
+
+Widget:persistent "x" "y" "z" "w" "h" "id"
+
+function Widget:__clone(child)
+    child.persistent,child.transitory = set(self.persistent)
+    child.propagate = set(self.propagate)
+end
+
 function Widget:__init(...)
-    self._children = {}
+    self.children = setmetatable({}, { __call = function() return self:ichildren() end })
     Object.__init(self, ...)
     
-    print(self.menu)
+    if self.id then
+        felt.id(self)
+        print("id", self._NAME, self.id)
+    end
     
     if self.menu and self.menu._NAME ~= "Menu" then
-        self.menu = require "Menu" (self.menu)
+        self.menu = new "Menu" (self.menu)
         self.menu.context = self
+    end
+    
+    for method in pairs(self.propagate) do
+        local key = method.."_actual"
+        self[key] = self[method]
+        self[method] = function(self, ...)
+            local log = felt.log
+            function felt.log(...)
+                felt.broadcast(0, "log", ...)
+                log(...)
+            end
+            self:broadcast(key, ...)
+            local result = self[key](self, ...)
+            felt.log = log
+            return result
+        end
     end
     
     felt.log("Created %s%s", self._NAME, self.menu and " with menu" or "")
 end
 
 function Widget:__tostring()
-    return self.__super._NAME
+    return self._NAME
+end
+
+function Widget:__send()
+    return string.format("L%sl"
+        , felt.serialize("felt", "byID", self.id))
 end
 
 function Widget:__save()
-    local buf = { self._NAME..":load {" }
+    local buf = { "L" }
     
-    for k in pairs(self._persistent) do
-        buf[#buf+1] = string.format("\t[%s] = %s;", felt.repr(k), felt.repr(self[k]))
+    local function append(s) buf[#buf+1] = s end
+    
+    append(felt.serialize(self._NAME, "load"))
+    
+    append "T"
+    for k in pairs(self.persistent) do
+        append(felt.serialize(k, self[k]))
     end
+    append "t"
     
-    buf[#buf+1] = "}"
+    append "T"
+    local i = 0
+    for child in self:children() do
+        if child.save then
+            i = i+1
+            append(felt.serialize(i, child))
+        end
+    end
+    append "t"
+    append "l"
     
-    return table.concat(buf, "\n")
+    return table.concat(buf, "")
 end
 
-function Widget:load(t)
-    local children = t._children; t._children = nil
+function Widget:load(t, children)
     local w = self(t)
+
     for i,c in ipairs(children or {}) do
         w:add(c)
     end
+    
     w:sort()
+    
     return w
 end
-
-function Widget:persistent(...)
-    if self._persistent == self.__super._persistent then
-        self._persistent = {}
-        for k in pairs(self.__super._persistent) do
-            self._persistent[k] = true
-        end
-    end
-    
-    local function aux(key, ...)
-        if not key then
-            return aux
-        end
-        
-        if type(key) == "table" then
-            aux(unpack(key))
-        else
-            self._persistent[key] = true
-        end
-        return aux(...)
-    end
-    
-    return aux(...)
-end
-
-Widget:persistent "x" "y" "z" "w" "h" "_children"
-
-function Widget:transitory(...)
-    if self._persistent == self.__super._persistent then
-        self._persistent = {}
-        for k in pairs(self.__super._persistent) do
-            self._persistent[k] = true
-        end
-    end
-    
-    local function aux(key, ...)
-        if not key then
-            return aux
-        end
-        
-        if type(key) == "table" then
-            aux(unpack(key))
-        else
-            self._persistent[key] = nil
-        end
-        return aux(...)
-    end
-    
-    return aux(...)
-end
-
 --
 -- functions for manipulating children
 --
 
 -- add a new child widget
 function Widget:add(child, x, y)
-    print("add", self, child, x, y)
+    if child.parent then
+        child.parent:remove(child)
+    end
     child.x = x or child.x
     child.y = y or child.y
     child.parent = self
-    self._children[#self._children+1] = child
+    self.children[#self.children+1] = child
     self:sort()
     return child
 end
 
 -- remove a child widget
 function Widget:remove(child)
-    for i,c in ipairs(self._children) do
+    for i,c in ipairs(self.children) do
         if c == child then
-            table.remove(self._children, i)
+            table.remove(self.children, i)
             return c
         end
     end
@@ -128,11 +160,11 @@ function Widget:remove(child)
 end
 
 -- iterate over all children of this widget, in order
-function Widget:children()
+function Widget:ichildren()
     local i = 0
     return function()
         i = i+1
-        return self._children[i]
+        return self.children[i]
     end
 end
 
@@ -146,8 +178,6 @@ function Widget:trueXY()
     local x,y
     if self.parent then
         x,y = self.parent:trueXY()
-        if self.x < 0 then x = x + self.parent.w end
-        if self.y < 0 then y = y + self.parent.h end
     else
         x,y = 0,0
     end
@@ -158,10 +188,7 @@ end
 -- return true if the given child is within these x,y coordinates relative
 -- to our origin
 function Widget:childInBounds(child, x, y)
-    local _x = child.x + (child.x < 0 and self.w or 0)
-    local _y = child.y + (child.y < 0 and self.h or 0)
-    
-    return child:inBounds(x - _x, y - _y)
+    return child:inBounds(x - child.x, y - child.y)
 end
 
 function Widget:inBounds(x, y)
@@ -170,7 +197,7 @@ end
 
 -- raise this widget to the top of the stack
 function Widget:raise(n)
-    n = n or self.parent._children[1].z +1
+    n = n or self.parent.children[1].z +1
     self.z = n
     self.parent:sort()
 end
@@ -186,7 +213,7 @@ end
 
 -- sort the children by Z-value
 function Widget:sort()
-    table.sort(self._children, self.z_sort)
+    table.sort(self.children, self.z_sort)
 end
 
 --
@@ -212,6 +239,9 @@ end
 -- otherwise, dispatch it also to our children, with the same rules   
 function Widget:event(type, x, y, ...)
     if not self.visible then return end
+    if type ~= "enter" and type ~= "leave" then 
+        print("event", self, type, x, y, ...)
+    end
     
     local function callhandler(key, ...)
         local eventhandler = self[key]
@@ -227,8 +257,8 @@ function Widget:event(type, x, y, ...)
     end
 
     for child in self:children() do
-        if self:childInBounds(child, x, y)
-        and child:event(type, x - child.x, y - child.y, ...)
+        if (not x or child:inBounds(x - child.x, y - child.y))
+        and child:event(type, x and x - child.x, y and y - child.y, ...)
         then
             return true
         end
@@ -238,6 +268,7 @@ function Widget:event(type, x, y, ...)
         return true
     end
     
+    return false
 end
 
 --
@@ -248,16 +279,17 @@ end
 -- reverse order
 function Widget:render(scale, x, y, w, h)
     if not self.visible then return end
+    
     if self:draw(scale, x, y, w, h) then return end
     
-    for i=#self._children,1,-1 do
-        local child = self._children[i]
+    for i=#self.children,1,-1 do
+        local child = self.children[i]
         
         child:render(scale
-            , child.x + x + (child.x < 0 and self.w or 0)
-            , child.y + y + (child.y < 0 and self.h or 0)
-            , child.w
-            , child.h)
+            , child.x * scale + x
+            , child.y * scale + y
+            , child.w * scale
+            , child.h * scale)
     end
 end
 
@@ -269,15 +301,19 @@ function Widget:draw(scale, x, y, w, h)
     love.graphics.rectangle("line", x, y, w, h)
 end
 
+function Widget:drawHidden(...)
+    return self:draw(...)
+end
+
 function Widget:click_right(x, y)
-    felt.log("%s right click (%d,%d) menu=%s", tostring(self), x, y, tostring(self.menu))
     if self.menu then
         local _x,_y = self:trueXY()
         self.menu:show(_x + x, _y + y)
         felt.log("display menu at (%d,%d)", _x+x, _y+y)
+        return true
     end
     
-    return true
+    return false
 end
 
 function Widget:destroy()
@@ -286,6 +322,20 @@ function Widget:destroy()
     end
     
     self.visible = false
+end
+
+function Widget:enter()
+    self.focused = true
+    return false
+end
+
+function Widget:leave()
+    self.focused = false
+    return false
+end
+
+function Widget:broadcast(...)
+    return felt.broadcast(self, ...)
 end
 
 return Widget

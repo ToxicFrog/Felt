@@ -8,3 +8,8 @@ function Disc:draw(scale, x, y)
     love.graphics.circle("fill", x, y, (self.w/2)*scale)
 end
 
+function Disc:inBounds(...)
+    print("disc-inbounds", ...)
+    return Token.inBounds(self, ...)
+end
+

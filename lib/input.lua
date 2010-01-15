@@ -16,16 +16,11 @@ function love.mousepressed(x, y, button)
     
     -- grab the widget under the window, if it permits this
     grabbed = felt.screen:grab(x, y, button)
-    print("grab", grabbed)
 end
 
 function love.mousereleased(x, y, button)
     -- only one button is allowed to be pressed at a time; ignore others
     if button ~= cbutton then return end
-    
-    if grabbed then
-        -- release grabbed object?
-    end
     
     -- if we remember the button but not where it was pressed, that means
     -- the mouse has moved far enough to no longer be considered a "click"
@@ -43,7 +38,8 @@ function love.mousereleased(x, y, button)
     grabbed = nil
 end
 
-function love.update(dt)
+input = {}
+function input.update(dt)
     local x,y = love.mouse.getPosition()
     
     if cx and math.abs(cx - x) > 1
@@ -53,25 +49,23 @@ function love.update(dt)
     end
     
     if grabbed and not cx then
-        grabbed:event("drag_"..love.buttons[cbutton], x - mx, y - my)
+        grabbed:event("drag_"..love.buttons[cbutton], x, y, x - mx, y - my)
     end
     
-    if felt.screen:find(mx,my) ~= felt.screen:find(x,y) then
-        felt.screen:event("leave", mx, my)
-        felt.screen:event("enter", x, y)
-    end
-        
+    felt.screen:event("leave", mx, my)
+    felt.screen:event("enter", x, y)
     
     mx,my = x,y
 end
 
-function love.keypressed(key)
-    key = love.keys[key]
+function love.keypressed(key, char)
+    key = "key_"..key
+    char = string.char(char)
     
     if felt.focus then
-        felt.focus:event(key, mx, my)
+        felt.focus:event(key, mx, my, char)
     else
-        felt.screen:event(key, mx, my)
+        felt.screen:event(key, mx, my, char)
     end
 end
 

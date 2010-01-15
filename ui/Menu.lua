@@ -4,7 +4,7 @@ Menu:defaults {
     visible = false
 }
 
-local MenuTitle = require("Widget"):subclass "MenuTitle"
+local MenuTitle = require("Label"):subclass "MenuTitle"
 do
     function MenuTitle:__init(...)
         Widget.__init(self, ...)
@@ -21,29 +21,13 @@ do
     end
 end
 
-local MenuEntry = require("Widget"):subclass "MenuEntry"
+local MenuEntry = require("Button"):subclass "MenuEntry"
 do
-    function MenuEntry:__init(...)
-        Widget.__init(self, ...)
-        
-        self.h = 10
-        self.w = love.graphics.getFont():getWidth(self.text) + 2
-    end
-    
-    function MenuEntry:draw(scale, x, y, w, h)
-        love.graphics.pushClip(x, y, w, h)
-        love.graphics.setColour(0, 0, 0, 255)
-        love.graphics.rectangle("fill", x, y, w, h)
-        love.graphics.setColour(255, 255, 255, 255)
-        love.graphics.print(self.text, x+1, y+9)
-        love.graphics.popClip()
-    end
-    
     function MenuEntry:click_left()
-        print("menu entry clicked", self.text)
-        if self.call then
-            print("", "calling")
+        if type(self.call) == "function" then
             self.call(self.parent.context, self.parent)
+            self.focused = false
+            print(self, self.parent)
             self.parent:hide()
         end
         return true
@@ -124,16 +108,12 @@ function Menu:show(x, y)
     self.x = x or self.x
     self.y = y or self.y
     
-    felt.log("display menu before")
-    
     if not self.visible then
         felt.log("display menu")
         self.visible = true
         felt.screen:add(self)
         self:raise()
     end
-    
-    felt.log("display menu after")
 end
 
 function Menu:hide()

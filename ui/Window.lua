@@ -9,6 +9,7 @@ do
             y = 1;
             w = win.w - 13;
             h = 10;
+            save = false;
         })
     end
     
@@ -16,12 +17,12 @@ do
         self.w = self.parent.w - 13
     end
     
-    function TitleBar:draw(scale, x, y)
-        love.graphics.pushClip(x, y, self.w, self.h)
+    function TitleBar:draw(scale, x, y, w, h)
+        love.graphics.pushClip(x, y, w, h)
         love.graphics.setColour(0, 0, 0, 255)
-        love.graphics.rectangle("fill", x, y, self.w, self.h)
+        love.graphics.rectangle("fill", x, y, w, h)
         love.graphics.setColour(255, 255, 255, 255)
-        love.graphics.print(self.parent.title, x+1, y+9)
+        love.graphics.print(self.parent.title, x, y+8)
         love.graphics.popClip()
     end
     
@@ -38,21 +39,17 @@ do
         end
         return true
     end
-    
-    function TitleBar:click_right()
-        print(felt.save(self.parent))
-        return true
-    end
 end
 
 local Resizer = require("Widget"):subclass "Resizer"
 do
     function Resizer:__init(win)
         Widget.__init(self, {
-            x = -11;
+            x = win.w - 11;
             y = 1;
             w = 10;
             h = 10;
+            save = false;
         })
     end
     
@@ -71,7 +68,7 @@ do
         return self
     end
     
-    function Resizer:drag_left(dx, dy)
+    function Resizer:drag_left(x, y, dx, dy)
         self.parent:resize(self.parent.w + dx, self.parent.h - dy)
         return true
     end
@@ -79,35 +76,45 @@ end
 
 Window:defaults {
     folded = false;
-    title = "(untitled)";
+    save = false;
     owned_by = {};
     visible_to = {};
-    w = 64;
-    h = 64;
-    
-    menu = {
-        title = "Window Control";
-        "Save Window...", nil;
-        "Close Window", Window.destroy;
-    }
+    w = false;
+    h = false;
 }
 
 Window:persistent "title" "content"
-Window:transitory "_children"
 
-function Window:__init(...)
-    Widget.__init(self, ...)
+function Window:__index(key)
+    if key == "title" or key == "name" then
+        return self.content.name or self.content.title
+    end
+end
+
+function Window:__init(t)
+    Widget.__init(self, t)
     
-    self.titlebar = self:add(TitleBar(self))
-    self.resizer = self:add(Resizer(self))
-    
-    self.content = self.content or require "Table" {}
+    self.content = self.content or new "Table" {}
 
     self.content.x = 1
     self.content.y = 12
-    self.content.w = self.w - 2
-    self.content.h = self.h - 13
     self:add(self.content)
+
+    if not self.w then
+        self.w = self.content.w + 2
+    else
+        self.content.w = self.w - 2
+    end
+    if not self.h then
+        self.h = self.content.h + 13
+    else
+        self.content.h = self.h - 13
+    end
+
+    self.titlebar = self:add(TitleBar(self))
+    self.resizer = self:add(Resizer(self))
+    
+    self.titlebar.w = self.w - 13
      
     self.true_h = self.h
     if self.folded then
@@ -115,7 +122,11 @@ function Window:__init(...)
     end
 end
 
-function Window:drag_left(dx, dy)
+function Window:click_right(...)
+    return self.content:click_right(...)
+end
+
+function Window:drag_left(x, y, dx, dy)
     self.x = math.max(0,
         math.min(self.x + dx, love.graphics.getWidth() - self.w))
     self.y = math.max(0,
@@ -125,8 +136,15 @@ end
 
 function Window:resize(w, h)
     -- adjust width. This is easy.
-    local maxwidth = love.graphics.getWidth() - self.x
-    self.w = math.min(maxwidth, math.max(64, w))
+    self.w = math.max(w, 64)
+    self.titlebar.w = self.w - 13
+    self.content.w = self.w - 2
+    self.resizer.x = self.w - 11
+
+    self.h = math.max(h, 64)
+    self.content.h = self.h - 13
+    
+    do return end
 
     -- adjust height. This is hard.
     if not self.folded then
@@ -146,6 +164,7 @@ function Window:resize(w, h)
     self.titlebar.w = self.w - 13
     self.content.w = self.w - 2
     self.content.h = self.h - 13
+    self.resizer.x = self.w - 11
 end
 
 function Window:fold()
@@ -161,7 +180,11 @@ function Window:unfold()
 end
 
 function Window:draw(scale, x, y, w, h)
-    love.graphics.setColour(255, 255, 255, 255)
+    if self.focused then
+        love.graphics.setColour(255, 0, 0, 255)
+    else
+        love.graphics.setColour(255, 255, 255, 255)
+    end
     love.graphics.rectangle("fill", x, y, w, h)
 end
 

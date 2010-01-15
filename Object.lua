@@ -1,10 +1,9 @@
-local pairs,setmetatable,module,package = pairs,setmetatable,module,package
+local pairs,setmetatable,module,package,require = pairs,setmetatable,module,package,require
 
 local print = print
 
 module(...)
 
-__index = _M
 __super = _M
 
 function _M:__init(t)
@@ -59,5 +58,9 @@ function _M:close(method)
     return function(...)
         return method(self, ...)
     end
+end
+
+function _M:mixin(name, ...)
+    require("mixins."..name)(self, ...)
 end
 

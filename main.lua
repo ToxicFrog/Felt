@@ -1,46 +1,28 @@
-love.filesystem.load "init.lua" ()
+love.filesystem.load "lib/init.lua" ()
 
-felt = {
-    log = print;
-}
+-- initialize love2d
+love.filesystem.setIdentity("Felt")
+love.graphics.setFont(10)
+love.graphics.setBackgroundColour(64, 128, 64)
+love.graphics.setLineStyle("rough")
+love.graphics.setColourMode("modulate")
 
-local function main()
-    love.graphics.setBackgroundColour(64, 128, 64)
-    love.graphics.setFont(10)
-    love.graphics.setLineStyle("rough")
-
+-- load supporting libraries
+require "felt"
+require "serialize"
+require "deserialize"
 require "input"
+require "settings"
+require "net"
+require "dispatch"
 
-print("main")
-    local Screen = require "Screen"
-    felt.screen = Screen {
-        x = 0;
-        y = 0;
-        w = love.graphics.getWidth();
-        h = love.graphics.getHeight();
-    };
-    felt.screen:add(require "SystemWindow" {})
-    
-    local W = felt.addWindow { x=200, y=200, w=100, h=100, title="Test", content = require "Table" {} }
-        W.content:add(require "Token" { x=0, y=0 })
-        W.content:add(require "Disc" { x=50, y=50 })
-        W.content:add(require "Disc" { x=70, y=30 })
-        W.content:add(require "Disc" { x=200, y=100 })
-    felt.log("Initialization complete.")
-    
-    felt.screen:add(require "TextInput" { x = 300, y = 100 })
+-- install update callback
+function love.update(...)
+    input.update(...)
+    net.update(...)
 end
 
-function felt.pickup(item)
-    if not felt.held then
-        felt.held = item
-    end
-end
-
-function felt.addWindow(t)
-    return felt.screen:add(require "Window" (t))
-end
-
+-- install rendering callback
 function love.draw()
     felt.screen:render(1.0, felt.screen.x, felt.screen.y, felt.screen.w, felt.screen.h)
     
@@ -51,52 +33,47 @@ function love.draw()
     end
 end
 
-function felt.repr(val)
-    local repr = {}
-    local function aux(t)
-        if repr[type(t)] then
-            return repr[type(t)](t)
-        else
-            return error("Attempt to save non-saveable type "..type(t))
-        end
-    end
-    
-    function repr.string(v)
-        return string.format("%q", v)
-    end
-    
-    function repr.number(v)
-        return tostring(v)
-    end
-    repr.boolean = repr.number
-    repr["nil"] = repr.number
-    
-    function repr.table(t)
-        local mt = getmetatable(t)
-        if mt and mt.__save then
-            return mt.__save(t)
-        end
-        
-        local buf = { "{" }
-        for k,v in pairs(t) do
-            buf[#buf+1] = string.format("[%s] = %s;", aux(k), aux(v))
-        end
-        buf[#buf+1] = "}"
-        
-        return table.concat(buf, " ")
-    end
+-- initialize the game
+felt.screen = new "Screen" {
+    menu = {
+        title = "Felt";
+        "Create Window", function(self, menu) felt.new(menu.x, menu.y) end;
+        "Load Window...", function(self, menu) self:add(new "SaveGamesWindow" {}, menu.x, menu.y) end;
+        "--";
+        "Save Game...", felt.savegame;
+        "Load Game...", felt.loadgame;
+        "--";
+        "Host Game...", felt.host;
+        "Join Game...", felt.join;
+    --        "Leave Game", felt.leave;
+        "--";
+        "Settings...", felt.configure;
+        "--";
+        "Quit", function() love.event.push "q" end;
+    };
+}
 
-    return aux(val)
+function felt.screen:key_c()
+    self:add(new "SettingsWindow" {
+        "cmd", "";
+        call = function(self)
+            felt.log("%s", tostring(false or select(2, pcall(loadstring(self:get "cmd")))))
+        end;
+    })
+    return true
 end
 
-function felt.save(v)
-    love.filesystem.write("save", "return "..felt.repr(v))
-end
+felt.screen:add(new "SystemWindow" {})
 
-function felt.load()
-    local win =  love.filesystem.load("save")()
-    felt.screen:add(win)
-end
+local t = felt.new()
+t:add(new "base.Deck" {
+    new "ImageToken" { file="modules/chess/bbishop.png" };
+    new "ImageToken" { file="modules/chess/bknight.png" };
+    new "ImageToken" { file="modules/chess/bpawn.png" };
+    new "ImageToken" { file="modules/chess/bking.png" };
+})
+do return end
 
-return main(...)
+t:add(new "Disc" {})
+--felt.loadmodule "chess"
 
