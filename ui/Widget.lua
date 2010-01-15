@@ -42,13 +42,13 @@ Widget:defaults {
 }
 
 Widget.persistent,Widget.transitory = set()
-Widget.propagate = set()
+Widget.sync = set()
 
 Widget:persistent "x" "y" "z" "w" "h" "id"
 
 function Widget:__clone(child)
     child.persistent,child.transitory = set(self.persistent)
-    child.propagate = set(self.propagate)
+    child.sync = set(self.sync)
 end
 
 function Widget:__init(...)
@@ -65,7 +65,7 @@ function Widget:__init(...)
         self.menu.context = self
     end
     
-    for method in pairs(self.propagate) do
+    for method in pairs(self.sync) do
         local key = method.."_actual"
         self[key] = self[method]
         self[method] = function(self, ...)
