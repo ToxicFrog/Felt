@@ -15,7 +15,7 @@ function love.mousepressed(x, y, button)
     cx,cy,cbutton = x,y,button
     
     -- grab the widget under the window, if it permits this
-    grabbed = felt.screen:grab(x, y, button)
+    grabbed = felt.screen:event("grab", x, y, button)
 end
 
 function love.mousereleased(x, y, button)

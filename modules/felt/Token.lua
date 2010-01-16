@@ -85,13 +85,6 @@ function Token:moveto(parent, ...)
     end
 end
 
-function Token:lower()
-    if not self.parent then return end
-    
-    self.z = self.parent.children[#self.parent.children].z - 1
-    self.parent:sort()
-end
-
 function Token:add(child, ...)
     Widget.add(self, child, ...)
     

@@ -38,7 +38,7 @@ felt.screen = new "Screen" {
     menu = {
         title = "Felt";
         "Create Window", function(self, menu) felt.new(menu.x, menu.y) end;
-        "Load Window...", function(self, menu) self:add(new "SaveGamesWindow" {}, menu.x, menu.y) end;
+        --"Load Window...", function(self, menu) self:add(new "SaveGamesWindow" {}, menu.x, menu.y) end;
         "--";
         "Save Game...", felt.savegame;
         "Load Game...", felt.loadgame;
@@ -69,6 +69,10 @@ felt.screen:add(new "SystemWindow" {})
 -- create the grasping hand
 felt.hand = new "Hand" {}
 felt.screen:add(felt.hand)
+
+felt.loadmodule "cards"
+
+do return end
 
 local t = felt.new()
 t:add(new "felt.Deck" {

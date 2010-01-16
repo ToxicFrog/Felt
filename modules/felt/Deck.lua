@@ -18,7 +18,7 @@ function Deck:__init(t)
     end
 end
 
-function Deck:click_left_before()
+function Deck:click_left_before(x, y)
     if love.keyboard.isDown "lshift" or love.keyboard.isDown "rshift" then
         return felt.Token.click_left(self)
     end
@@ -26,19 +26,12 @@ function Deck:click_left_before()
     if #self.children == 0 then return true end
     
     if love.keyboard.isDown "lctrl" or love.keyboard.isDown "rctrl" then
-        felt.pickup(self:pull(#self.children))
+        return self.children[#self.children]:click_left(x, y)
     else
-        felt.pickup(self:pull(1))
+        return self.children[1]:click_left(x, y)
     end
     
     return true
-end
-
-function Deck:pull(n)
-    print("deck-pull", n)
-    local item = self.children[n]
-    item:moveto(nil)
-    return item
 end
 
 function Deck:drop(x, y, item)

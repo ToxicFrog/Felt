@@ -196,11 +196,36 @@ function Widget:inBounds(x, y)
 end
 
 -- raise this widget to the top of the stack
-function Widget:raise(n)
-    n = n or self.parent.children[1].z +1
-    self.z = n
+function Widget:raise()
+    local siblings = self.parent.children
+    local z = 0
+    
+    for i=1,#siblings do
+        if siblings[i].z == -math.huge then break end
+        if siblings[i].z < math.huge then
+            z = siblings[i].z + 1
+            break
+        end
+    end
+    self.z = z
     self.parent:sort()
 end
+
+function Widget:lower()
+    local siblings = self.parent.children
+    local z = 0
+    
+    for i=#siblings,1,-1 do
+        if siblings[i].z == math.huge then break end
+        if siblings[i].z > -math.huge then
+            z = siblings[i].z - 1
+            break
+        end
+    end
+    self.z = z
+    self.parent:sort()
+end
+
 
 -- find the child widget at the given coordinates
 function Widget:find(x, y)
@@ -220,19 +245,6 @@ end
 -- event handling
 --
 
--- attempt to grab a widget. Called on mouse-down and used for dragging.
--- by default, ask all elegible children if they are grabbable and if one
--- is, return that
--- overloads should return the widget that actually gets grabbed (ie, the
--- widget that will recieve drag events)
-function Widget:grab(x, y, button)
-    local child = self:find(x,y)
-    if child then
-        return child:grab(x - child.x, y - child.y, button)
-    end
-    return nil
-end
-
 -- recieve an event
 -- first, we see if we have an event handler for it, and if so call it
 -- if it returns true, the event stops there
@@ -247,28 +259,22 @@ function Widget:event(type, x, y, ...)
         local eventhandler = self[key]
         if eventhandler then
             local result = eventhandler(self, x, y, ...)
-            assert(result == true or result == false, "event handler "..self._NAME..":"..key.." did not return a value")
+            assert(result or result == false, "event handler "..self._NAME..":"..key.." did not return a value")
             return result
         end
     end
     
-    if callhandler(type.."_before", ...) then
-        return true
-    end
+    local r = callhandler(type.."_before", ...)
+    if r then return r end
 
     for child in self:children() do
-        if (not x or child:inBounds(x - child.x, y - child.y))
-        and child:event(type, x and x - child.x, y and y - child.y, ...)
-        then
-            return true
+        if not x or child:inBounds(x - child.x, y - child.y) then
+            r = child:event(type, x and x - child.x, y and y - child.y, ...)
+            if r then return r end
         end
     end
 
-    if callhandler(type, ...) then
-        return true
-    end
-    
-    return false
+    return callhandler(type, ...)
 end
 
 --

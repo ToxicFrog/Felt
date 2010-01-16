@@ -37,10 +37,13 @@ function unrepr.B(buf)
     return buf:sub(1,1) == "t",buf:sub(2,-1)
 end
 
-unrepr["."] = function() return nil end
+unrepr["."] = function(buf)
+    return nil,buf
+end
 
 function unrepr.T(buf)
     local function next()
+        print("next", buf)
         local val
         val,buf = deserialize_one(buf)
         return val
