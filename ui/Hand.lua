@@ -24,7 +24,7 @@ end
 
 function Hand:click_left_before(x, y)
     if #self.children > 0 then
-        felt.screen:event("drop", x, y, table.remove(self.children))
+        felt.screen:event("drop", x, y, self.children[1])
         return true
     end
     

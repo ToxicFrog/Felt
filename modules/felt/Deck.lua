@@ -9,7 +9,7 @@ function Deck:__init(t)
     
     for i,v in ipairs(t) do
         v.z = i
-        self:add(v)
+        self:add(v, 0, 0)
     end
     
     if #self.children > 0 then
