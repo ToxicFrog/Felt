@@ -43,7 +43,6 @@ end
 
 function unrepr.T(buf)
     local function next()
-        print("next", buf)
         local val
         val,buf = deserialize_one(buf)
         return val

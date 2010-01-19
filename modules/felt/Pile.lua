@@ -4,10 +4,11 @@ Pile:defaults {
     count = 1;
     type = "Token";
     ctor = {};
+    mixin = {};
     top = nil;
 }
 
-Pile:persistent "count" "ctor" "type"
+Pile:persistent "count" "ctor" "type" "mixin"
 Pile:broadcast "setCount"
 
 function Pile:__init(...)
@@ -23,11 +24,15 @@ end
 
 function Pile:click_left()
     if love.keyboard.isDown "lshift" or love.keyboard.isDown "rshift" then
-        return Token.click_left(self)
+        return felt.Token.click_left(self)
     end
     
     if self.count > 0 then
-        felt.pickup(new(self.type)(self.ctor))
+        local obj = new(self.type)(self.ctor)
+        for _,mixin in ipairs(self.mixin) do
+            obj:mixin(unpack(mixin))
+        end
+        felt.pickup(obj)
         self:setCount(self.count - 1)
         self.label.text = tostring(self.count)
     end
@@ -39,18 +44,14 @@ function Pile:setCount(n)
     self.count = n
 end
 
-function Pile:click_middle()
-    felt.pickup(self)
-    return true
-end
-
 function Pile:drop(x, y, item)
     if item._NAME ~= self.type then
         return false
     end
     
     self:setCount(self.count + 1)
-    item:destroy()    self.label.text = tostring(self.count)
+    item:destroy()
+    self.label.text = tostring(self.count)
     return true
 end
 

@@ -5,13 +5,20 @@ Token:defaults {
     id = true;
     save = true;
     hidden = false;
+    theta = 0;
 }
 
-Token:sync "moveto" "raise" "lower"
+Token:persistent "name" "theta"
+Token:sync "moveto" "raise" "lower" "rotate"
+
+function Token:rotate(theta)
+    self.theta = theta % (2 * math.pi)
+end
 
 function Token:setHidden(h)
     self.hidden = h
     for child in self:children() do
+        assert(child ~= self, tostring(self).." "..tostring(child))
         child:setHidden(h)
     end
 end
@@ -52,12 +59,12 @@ end
 
 
 function Token:draw(scale, x, y, w, h)
-    love.graphics.setColour(255, 255, 255, 255)
+    love.graphics.setColour(255, 255, 255)
     love.graphics.rectangle("fill", x, y, w, h)
 end
 
 function Token:drawHidden(scale, x, y, w, h)
-    love.graphics.setColour(0, 0, 0, 255)
+    love.graphics.setColour(0, 0, 0)
     love.graphics.rectangle("fill", x, y, w, h)
 end
 
@@ -86,6 +93,7 @@ function Token:moveto(parent, ...)
 end
 
 function Token:add(child, ...)
+    assert(child ~= self, tostring(self))
     Widget.add(self, child, ...)
     
     child:setHidden(self.hidden)

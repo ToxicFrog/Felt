@@ -1,5 +1,5 @@
 felt = {
-    log = print;
+    log = function() end;
     widgets = {};
     tables = {};
     players = {};
@@ -25,22 +25,32 @@ end
 
 -- table management
 
-function felt.new(x, y)
-    local t = felt.add(new "Table" {}, x, y)
-    felt.broadcast(0, "remoteadd", felt.serialize(t, x, y))
+function felt.new(init, name)
+    init = init or {}
+    name = name or init.name
+    
+    if felt.tables[name] then
+        return felt.tables[name]
+    end
+    
+    local t = felt.add(new "Table" (init), name)
+    felt.broadcast(0, "remoteadd", felt.serialize(t, name))
     return t
 end
 
-function felt.remoteadd(buf, x, y)
-    return felt.add(felt.deserialize(buf), x, y)
+function felt.remoteadd(buf)
+    return felt.add(felt.deserialize(buf))
 end
 
-function felt.add(t, x, y)
-    x = x or love.graphics.getWidth()/2 - t.w/2
-    y = y or love.graphics.getHeight()/2 - t.h/2
+function felt.add(t, name)
+    local x = love.graphics.getWidth()/2 - t.w/2
+    local y = love.graphics.getHeight()/2 - t.h/2
+    name = name or "table-"..tostring(math.random(1,2^30))
     
-    if not t then return end
-    print("add", t.w, t.h)
+    if not t then
+        print("warning: no t in call to felt.add")
+        return
+    end
     
     local w = new "Window" {
         x = x;
@@ -48,18 +58,18 @@ function felt.add(t, x, y)
         content = t;
     }
     felt.screen:add(w)
-    felt.tables[t] = true
-    
-    print("addw", w.w, w.h)
+    felt.tables[t] = name
+    felt.tables[name] = t
     
     return t
 end
 
-function felt.remove(t, ...)
+function felt.remove(t, ...) -- FIXME this function is a mess
     if not t then return end
     
     -- FIXME broadcast
     t.parent:destroy()
+    felt.tables[felt.tables[t]] = nil
     felt.tables[t] = nil
     -- FIXME save table for later recall
     
@@ -71,39 +81,46 @@ function felt.pickup(item)
 end
 
 function felt.loadmodule(name)
-    if love.filesystem.exists("modules/"..name.."/init.win") then
-        felt.add(felt.deserialize(love.filesystem.read("modules/"..name.."/init.win")))
-    elseif love.filesystem.exists("modules/"..name.."/init.lua") then
-        felt.add(require("modules."..name..".init"))
+    if love.filesystem.exists("modules/"..name:gsub("%.","/").."/init.win") then
+        -- FIXME should probably scrap init.win entirely
+        -- felt.add(felt.deserialize(love.filesystem.read("modules/"..name.."/init.win")))
+    elseif love.filesystem.exists("modules/"..name:gsub("%.","/").."/init.lua") then
+        require("modules."..name..".init")
     else
         -- FIXME load individual module classes for use
     end
 end
 
 function felt:byID(id)
-    felt.log("byID %d -> %s", id, tostring(felt.widgets[id]))
     return felt.widgets[id]
 end
 
 function felt.savestate()
-    return felt.serialize(felt.tables)
+    return felt.serialize(felt.background,felt.tables)
 end
 
 function felt.loadstate(state)
     for t in pairs(felt.tables) do
         felt.remove(t)
     end
-    felt.widgets = {}
+    felt.background:destroy()
     
-    for t in pairs(felt.deserialize(state)) do
-        felt.add(t)
+    local bg,tables = felt.deserialize(state)
+    
+    bg.w = love.graphics.getWidth()
+    bg.h = love.graphics.getHeight()
+    felt.background = bg
+    felt.screen:add(bg)
+    
+    for name,t in pairs(tables) do
+        felt.add(t, name)
     end
 end
 
 function felt.load(buf)
-    for t in pairs(felt.deserialize(buf)) do
-        felt.add(t)
-        felt.broadcast(0, "remoteadd", felt.serialize(t))
+    for name,t in pairs(felt.deserialize(buf)) do
+        felt.add(t, name)
+        felt.broadcast(0, "remoteadd", felt.serialize(t, name))
     end
 end
 
@@ -123,7 +140,9 @@ end
 
 function felt.loadgame()
     local function call(self)
-        felt.load(love.filesystem.read("save/"..self:get "Name"))
+        local buf = love.filesystem.read("save/"..self:get "Name")
+        felt.loadstate(buf)
+        felt.broadcast(0, "loadstate", buf)
     end
     felt.screen:add(new "SettingsWindow" {
         "Name", "";

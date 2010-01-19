@@ -42,8 +42,8 @@ input = {}
 function input.update(dt)
     local x,y = love.mouse.getPosition()
     
-    if cx and math.abs(cx - x) > 1
-    or cy and math.abs(cy - y) > 1
+    if cx and math.abs(cx - x) > 5
+    or cy and math.abs(cy - y) > 5
     then
         cx,cy = nil,nil
     end

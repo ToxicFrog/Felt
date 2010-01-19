@@ -1,3 +1,5 @@
+math.randomseed(os.time())
+
 -- an xpcall that permits varargs
 function va_xpcall(f, e, ...)
     local argc = select('#', ...)
@@ -6,13 +8,14 @@ function va_xpcall(f, e, ...)
     return xpcall(function() return f(unpack(argv,1,argc)) end, e)
 end
 
+-- converse of unpack
 function table.pack(...)
     return { n = select('#', ...), ... }
 end
 
+-- instantiate something on all nodes simultaneously
 function new(type)
     return function(...)
-        print("new", type, ...)
         local obj = require(type)(...)
         if obj.id then
             felt.broadcast(0, "newobject", felt.serialize(obj))
@@ -21,11 +24,17 @@ function new(type)
     end
 end
 
-function love.errhand(...)
-    print(...)
-    print(debug.traceback())
+-- replace default error handler
+do
+    local _errhand = love.errhand
+    function love.errhand(...)
+        print("Error:", ...)
+        print(debug.traceback())
+        return _errhand
+    end
 end
 
+-- converse of assert
 function tressa(result, ...)
     if not result then
         return nil,...
@@ -139,11 +148,14 @@ do
     end
 end
 
-function love.graphics.box(x, y, w, h, r1, g1, b1, r2, g2, b2)
-    love.graphics.setColour(r2, g2, b2, 255)
-    love.graphics.rectangle("fill", x, y, w, h)
-    love.graphics.setColour(r1, g1, b1, 255)
-    love.graphics.rectangle("line", x, y, w, h)
+-- an alpha-preserving version of setcolour
+do
+    local alpha = select(4, love.graphics.getColour())
+    local _setColour = love.graphics.setColour
+    
+    function love.graphics.setColour(r, g, b, a)
+        alpha = a or alpha
+        return _setColour(r, g, b, alpha)
+    end
 end
-
 

@@ -25,14 +25,14 @@ end
 
 function Table:save()
     felt.screen:add(new 'SettingsWindow' {
-        "Name", self.title;
+        "Save As", self.name;
         call = function(win)
-            local name = win:get("Name"):gsub('[^%w_/]', '_')
+            local name = win:get("Save As"):gsub('[^%w_/]', '_')
             if #name == 0 then
                 felt.log("invalid savename")
                 return
             end
-            local r,err = pcall(love.filesystem.write, "save/"..name, felt.serialize{self})
+            local r,err = pcall(love.filesystem.write, "save/"..name, felt.serialize(self))
             if not r then
                 felt.log("save failed: %s", err)
             else
@@ -44,7 +44,7 @@ end
 
 function Table:rename()
     felt.screen:add(new 'SettingsWindow' {
-        "Name", self.title;
+        "Name", self.name;
         call = function(win)
             self:setTitle(win:get "Name")
         end;
@@ -69,7 +69,6 @@ Table.menu = {
     title = "Table";
     "Rename...", Table.rename;
     "Save...", Table.save;
-    "Create Disc", function(self, menu) self:add(new "Disc" {}, self:toGrid(self.mx, self.my)) end;
 }
 
 Table:persistent "title" "visibleTo"
@@ -78,6 +77,7 @@ Table:sync "drop" "setTitle" "setVis"
 function Table:add(child, ...)
     Widget.add(self, child, ...)
     child:setHidden(not self.visibleTo[felt.config.name])
+    return child
 end
 
 function Table:__init(...)
@@ -219,7 +219,7 @@ function Table:draw(scale, x, y)
     for i=#self.children,1,-1 do
         local child = self.children[i]
         local x,y = self:toScreen(child.x, child.y)
-        child:render(self.scale, x, y, child.w, child.h)
+        child:render(self.scale, x, y, child.w * self.scale, child.h * self.scale)
     end
     
     love.graphics.popClip()

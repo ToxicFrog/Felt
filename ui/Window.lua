@@ -127,10 +127,10 @@ function Window:click_right(...)
 end
 
 function Window:drag_left(x, y, dx, dy)
-    self.x = math.max(0,
-        math.min(self.x + dx, love.graphics.getWidth() - self.w))
+    self.x = math.max(-self.w+20,
+        math.min(self.x + dx, love.graphics.getWidth() - 10))
     self.y = math.max(0,
-        math.min(self.y + dy, love.graphics.getHeight() - self.h))
+        math.min(self.y + dy, love.graphics.getHeight() - 10))
     return true
 end
 

@@ -2,6 +2,11 @@ local Deck = require("felt.Token"):subclass "felt.Deck"
 
 Deck:defaults {
     name = "Deck";
+    menu = {
+        title = "Deck";
+        "Shuffle", function(self) return self:shuffle() end;
+    };
+    spread = false;
 }
 
 function Deck:__init(t)
@@ -47,7 +52,11 @@ end
 
 function Deck:draw(scale, x, y, w, h)
     if #self.children > 0 then
-        self.children[1]:draw(scale, x, y, w, h)
+        if self.spread then
+            self:drawSpread(scale, x, y, w, h)
+        else
+            self.children[1]:draw(scale, x, y, w, h)
+        end
     else
         love.graphics.setColour(128, 128, 128, 255)
         love.graphics.rectangle("line", x, y, w, h)
@@ -63,5 +72,58 @@ function Deck:drawHidden(scale, x, y, w, h)
         love.graphics.rectangle("line", x, y, w, h)
     end
     return true
+end
+
+function Deck:drawSpread(scale, x, y, w, h)
+    local col = 1
+    local cols = math.ceil(math.sqrt(#self.children))
+    local cx,cy = x,y
+    
+    for i=#self.children,1,-1 do
+        self.children[i]:draw(scale, cx, cy, w, h)
+        if col >= cols then
+            col = 1
+            cx = x
+            cy = cy + h/4
+        else
+            col = col + 1
+            cx = cx + w/2
+        end
+    end
+end
+
+function Deck:click_middle_before()
+    self.spread = not self.spread
+    if not self.spread then
+        self.w = self.children[1].w
+        self.h = self.children[1].h
+    end
+    return true
+end
+
+function Deck:shuffle()
+    local newcards = {}
+    while #self.children > 0 do
+        table.insert(newcards
+            , table.remove(self.children
+                , math.random(1,#self.children)))
+    end
+    self:shuffleCommit(newcards)
+end
+
+Deck:sync "shuffleCommit"
+function Deck:shuffleCommit(newdeck)
+    felt.log("%s shuffles %s"
+        , felt.config.name
+        , tostring(self))
+        
+    while #self.children > 0 do
+        self.children[#self.children] = nil
+    end
+    
+    for i=1,#newdeck do
+        self.children[i] = newdeck[i]
+        self.children[i].z = i
+    end
 end
 

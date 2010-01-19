@@ -25,34 +25,33 @@ end
 -- install rendering callback
 function love.draw()
     felt.screen:render(1.0, felt.screen.x, felt.screen.y, felt.screen.w, felt.screen.h)
-    
-    if felt.held then
-        local x,y = love.mouse.getPosition()
-        local w,h = felt.held.w,felt.held.h
-        felt.held:render(1.0, x - w/2, y - h/2, w, h)
-    end
 end
 
 -- initialize the game
+
+-- create main menu
+felt.menu = {
+    title = "Felt";
+    --"Create Window", function(self, menu) felt.new {} end;
+    --"Load Window...", function(self, menu) self:add(new "SaveGamesWindow" {}, menu.x, menu.y) end;
+    "--";
+    "Save Game...", felt.savegame;
+    "Load Game...", felt.loadgame;
+    "--";
+    "Host Game...", felt.host;
+    "Join Game...", felt.join;
+--        "Leave Game", felt.leave;
+    "--";
+    "Settings...", felt.configure;
+    "--";
+    "Quit", function() love.event.push "q" end;
+};
+
 felt.screen = new "Screen" {
-    menu = {
-        title = "Felt";
-        "Create Window", function(self, menu) felt.new(menu.x, menu.y) end;
-        --"Load Window...", function(self, menu) self:add(new "SaveGamesWindow" {}, menu.x, menu.y) end;
-        "--";
-        "Save Game...", felt.savegame;
-        "Load Game...", felt.loadgame;
-        "--";
-        "Host Game...", felt.host;
-        "Join Game...", felt.join;
-    --        "Leave Game", felt.leave;
-        "--";
-        "Settings...", felt.configure;
-        "--";
-        "Quit", function() love.event.push "q" end;
-    };
+    menu = felt.menu;
 }
 
+-- enable command line
 function felt.screen:key_c()
     self:add(new "SettingsWindow" {
         "cmd", "";
@@ -63,6 +62,17 @@ function felt.screen:key_c()
     return true
 end
 
+-- install the background
+felt.background = new "Table" {
+    name = "BACKGROUND";
+    z = -math.huge;
+    x = 0, y = 0;
+    w = love.graphics.getWidth(), h = love.graphics.getHeight();
+    menu = felt.menu
+}
+
+felt.screen:add(felt.background)
+
 -- create the log window
 felt.screen:add(new "SystemWindow" {})
 
@@ -70,15 +80,5 @@ felt.screen:add(new "SystemWindow" {})
 felt.hand = new "Hand" {}
 felt.screen:add(felt.hand)
 
-felt.loadmodule "cards"
-
-do return end
-
-local t = felt.new()
-t:add(new "felt.Deck" {
-    new "felt.ImageToken" { face="modules/chess/bbishop.png" };
-    new "felt.ImageToken" { face="modules/chess/bknight.png" };
-    new "felt.ImageToken" { face="modules/chess/bpawn.png" };
-    new "felt.ImageToken" { face="modules/chess/bking.png" };
-})
+felt.loadmodule "descent"
 

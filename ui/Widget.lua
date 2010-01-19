@@ -19,11 +19,9 @@ local function set(init)
     
     return setmetatable(set, {
         __call = function(list, self, key)
-            print("set-add",list, self, key)
             return add(key)
         end;
     }),function(self, key)
-        print("set-remove", self, key)
         return remove(key)
     end
 end
@@ -46,6 +44,8 @@ Widget.sync = set()
 
 Widget:persistent "x" "y" "z" "w" "h" "id"
 
+function Widget:setHidden() end
+
 function Widget:__clone(child)
     child.persistent,child.transitory = set(self.persistent)
     child.sync = set(self.sync)
@@ -57,7 +57,6 @@ function Widget:__init(...)
     
     if self.id then
         felt.id(self)
-        print("id", self._NAME, self.id)
     end
     
     if self.menu and self.menu._NAME ~= "Menu" then
@@ -192,11 +191,16 @@ function Widget:childInBounds(child, x, y)
 end
 
 function Widget:inBounds(x, y)
-    return x > 0 and y > 0 and x < self.w and y < self.h
+    return x > 0
+    and y > 0
+    and x < self.w
+    and y < self.h
 end
 
 -- raise this widget to the top of the stack
 function Widget:raise()
+    if self.z == -math.huge or self.z == math.huge then return end
+    
     local siblings = self.parent.children
     local z = 0
     
@@ -212,6 +216,8 @@ function Widget:raise()
 end
 
 function Widget:lower()
+    if self.z == -math.huge or self.z == math.huge then return end
+
     local siblings = self.parent.children
     local z = 0
     
