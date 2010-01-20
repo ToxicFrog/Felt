@@ -43,14 +43,14 @@ function felt.remoteadd(buf)
 end
 
 function felt.add(t, name)
-    local x = love.graphics.getWidth()/2 - t.w/2
-    local y = love.graphics.getHeight()/2 - t.h/2
-    name = name or "table-"..tostring(math.random(1,2^30))
-    
     if not t then
         print("warning: no t in call to felt.add")
         return
     end
+    
+    local x = love.graphics.getWidth()/2 - t.w/2
+    local y = love.graphics.getHeight()/2 - t.h/2
+    name = name or "table-"..tostring(math.random(1,2^30))
     
     local w = new "Window" {
         x = x;
@@ -68,7 +68,12 @@ function felt.remove(t, ...) -- FIXME this function is a mess
     if not t then return end
     
     -- FIXME broadcast
-    t.parent:destroy()
+    if t.parent then
+        t.parent:destroy()
+    else
+        print("parentless table", t, t.name, t._NAME, t.title)
+    end
+    
     felt.tables[felt.tables[t]] = nil
     felt.tables[t] = nil
     -- FIXME save table for later recall
@@ -100,7 +105,7 @@ function felt.savestate()
 end
 
 function felt.loadstate(state)
-    for t in pairs(felt.tables) do
+    for name,t in pairs(felt.tables) do
         felt.remove(t)
     end
     felt.background:destroy()
@@ -113,7 +118,9 @@ function felt.loadstate(state)
     felt.screen:add(bg)
     
     for name,t in pairs(tables) do
-        felt.add(t, name)
+        if type(name) == "string" then
+            felt.add(t, name)
+        end
     end
 end
 
