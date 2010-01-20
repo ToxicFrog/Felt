@@ -28,6 +28,10 @@ function Deck:click_left_before(x, y)
         return felt.Token.click_left(self)
     end
     
+    if self.spread then
+        return false
+    end
+    
     if #self.children == 0 then return true end
     
     if love.keyboard.isDown "lctrl" or love.keyboard.isDown "rctrl" then
@@ -50,18 +54,46 @@ function Deck:drop(x, y, item)
     return true
 end
 
-function Deck:draw(scale, x, y, w, h)
-    if #self.children > 0 then
-        if self.spread then
-            self:drawSpread(scale, x, y, w, h)
+function Deck:sort()
+    felt.Token.sort(self)
+    
+    if not self.spread then return end
+    
+    -- layout children
+    local col = 1
+    local cols = math.ceil(math.sqrt(#self.children))
+    local cx,cy = 0,0
+    
+    for i=#self.children,1,-1 do
+        local child = self.children[i]
+        
+        child.x = cx
+        child.y = cy
+        if col >= cols then
+            self.w = cx + child.w
+            col = 1
+            cx = 0
+            cy = cy + child.h/4
+            self.h = cy + child.h
         else
-            self.children[1]:draw(scale, x, y, w, h)
+            col = col + 1
+            cx = cx + child.w/2
         end
-    else
+    end
+end
+
+function Deck:draw(scale, x, y, w, h)
+    if #self.children == 0 then
         love.graphics.setColour(128, 128, 128, 255)
         love.graphics.rectangle("line", x, y, w, h)
+        return true
+    elseif not self.spread then
+        self.children[1]:render(scale, x, y, w, h)
+        return true
+    else
+        self:sort()
+        return false
     end
-    return true
 end
 
 function Deck:drawHidden(scale, x, y, w, h)
@@ -72,24 +104,6 @@ function Deck:drawHidden(scale, x, y, w, h)
         love.graphics.rectangle("line", x, y, w, h)
     end
     return true
-end
-
-function Deck:drawSpread(scale, x, y, w, h)
-    local col = 1
-    local cols = math.ceil(math.sqrt(#self.children))
-    local cx,cy = x,y
-    
-    for i=#self.children,1,-1 do
-        self.children[i]:draw(scale, cx, cy, w, h)
-        if col >= cols then
-            col = 1
-            cx = x
-            cy = cy + h/4
-        else
-            col = col + 1
-            cx = cx + w/2
-        end
-    end
 end
 
 function Deck:click_middle_before()

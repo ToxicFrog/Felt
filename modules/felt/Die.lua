@@ -4,7 +4,6 @@ Die:persistent "images" "face" "names"
 Die:sync "setFace"
 
 function Die:__init(t)
-    print("die", t, t.images, unpack(t))
     t.face = t[1] or t.images[1]
     felt.ImageToken.__init(self, t)
     self.images = t.images or {unpack(t)}

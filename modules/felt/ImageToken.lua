@@ -6,7 +6,6 @@ ImageToken:persistent "face" "back"
 function ImageToken:__init(...)
     felt.Token.__init(self, ...)
     
-    print("ImageToken", self.back, self.face)
     self.backi = love.graphics.newImage(self.back or self.face)
     self.facei = love.graphics.newImage(self.face)
 
