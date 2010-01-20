@@ -3,7 +3,6 @@ local Token = require("Widget"):subclass "felt.Token"
 Token:defaults {
     name = "token";
     id = true;
-    save = true;
     hidden = false;
     theta = 0;
 }
@@ -30,7 +29,7 @@ end
 
 function Token:__tostring()
     if self.hidden then
-        return self.hiddenname or "???"
+        return self.hiddenname or "hidden "..(self.name or self._NAME or "(unnamed object)") 
     end
     return self.name or self._NAME or "(unnamed object)"
 end

@@ -1,4 +1,4 @@
-local t = new "Table" { w = 400, h = 400, name = "Chess" }
+local t = felt.new { w = 400, h = 400, name = "Chess" }
 local board = new "felt.ImageToken" { face = "modules/chess/board.png", z=-1, name = "Chessboard" }
 board:mixin "board"
 
@@ -58,6 +58,4 @@ for r,colour in ipairs { "w", "b" } do
     , 10 + 4 * 45
     , colour == "b" and 10 or 325)
 end
-
-return t
 

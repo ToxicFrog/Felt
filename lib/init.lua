@@ -17,6 +17,7 @@ end
 function new(type)
     return function(...)
         local obj = require(type)(...)
+        print("new", type, obj.id, felt.widgets[obj.id])
         if obj.id then
             felt.broadcast(0, "newobject", felt.serialize(obj))
         end

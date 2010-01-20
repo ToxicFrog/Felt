@@ -7,11 +7,13 @@ felt = {
 
 function felt.id(widget)
     local id = #felt.widgets + 1
+    print("id", widget._NAME, widget.id, id)
 
     if type(widget.id) == 'number' then
         if felt.widgets[widget.id] then
+            print("id collision", widget.id, widget._NAME, felt.widgets[widget.id])
             felt.log("warning: %s wants id %d, which is already in use by %s"
-                , widget._NAME
+                , tostring(widget)
                 , widget.id
                 , tostring(felt.widgets[widget.id])
                 , id)
@@ -27,7 +29,7 @@ end
 
 function felt.new(init, name)
     init = init or {}
-    name = name or init.name
+    name = name or init.name or "table-"..tostring(math.random(1, 2^30))
     
     if felt.tables[name] then
         return felt.tables[name]
@@ -35,6 +37,7 @@ function felt.new(init, name)
     
     local t = felt.add(new "Table" (init), name)
     felt.broadcast(0, "remoteadd", felt.serialize(t, name))
+    --felt.broadcast(0, "add", t, name)
     return t
 end
 
@@ -43,14 +46,10 @@ function felt.remoteadd(buf)
 end
 
 function felt.add(t, name)
-    if not t then
-        print("warning: no t in call to felt.add")
-        return
-    end
+    assert(t and name, "spurious call to add")
     
     local x = love.graphics.getWidth()/2 - t.w/2
     local y = love.graphics.getHeight()/2 - t.h/2
-    name = name or "table-"..tostring(math.random(1,2^30))
     
     local w = new "Window" {
         x = x;
@@ -58,27 +57,17 @@ function felt.add(t, name)
         content = t;
     }
     felt.screen:add(w)
-    felt.tables[t] = name
+--    felt.tables[t] = name
     felt.tables[name] = t
     
     return t
 end
 
-function felt.remove(t, ...) -- FIXME this function is a mess
-    if not t then return end
-    
+function felt.remove(name) -- FIXME this function is a mess
     -- FIXME broadcast
-    if t.parent then
-        t.parent:destroy()
-    else
-        print("parentless table", t, t.name, t._NAME, t.title)
-    end
-    
-    felt.tables[felt.tables[t]] = nil
-    felt.tables[t] = nil
+    felt.tables[name].parent:destroy()
+    felt.tables[name] = nil
     -- FIXME save table for later recall
-    
-    return felt.remove(...)
 end
 
 function felt.pickup(item)
@@ -106,7 +95,7 @@ end
 
 function felt.loadstate(state)
     for name,t in pairs(felt.tables) do
-        felt.remove(t)
+        felt.remove(name)
     end
     felt.background:destroy()
     
@@ -118,9 +107,7 @@ function felt.loadstate(state)
     felt.screen:add(bg)
     
     for name,t in pairs(tables) do
-        if type(name) == "string" then
-            felt.add(t, name)
-        end
+        felt.add(t, name)
     end
 end
 

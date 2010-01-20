@@ -81,4 +81,6 @@ felt.hand = new "Hand" {}
 felt.screen:add(felt.hand)
 
 felt.loadmodule "descent"
+--felt.loadmodule "chess"
+--require "modules.descent.jitd.heroes"
 

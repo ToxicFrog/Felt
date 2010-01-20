@@ -139,5 +139,6 @@ function Deck:shuffleCommit(newdeck)
         self.children[i] = newdeck[i]
         self.children[i].z = i
     end
+    self:sort()
 end
 

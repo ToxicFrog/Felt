@@ -108,7 +108,7 @@ function Widget:__save()
     append "T"
     local i = 0
     for child in self:children() do
-        if child.save then
+        if child.id then
             i = i+1
             append(felt.serialize(i, child))
         end
@@ -121,6 +121,7 @@ end
 
 function Widget:load(t, children)
     local w = self(t)
+    print("load", self._NAME, t.id, felt.widgets[t.id])
 
     for i,c in ipairs(children or {}) do
         w:add(c)
@@ -257,9 +258,6 @@ end
 -- otherwise, dispatch it also to our children, with the same rules   
 function Widget:event(type, x, y, ...)
     if not self.visible then return end
-    if type ~= "enter" and type ~= "leave" then 
-        print("event", self, type, x, y, ...)
-    end
     
     local function callhandler(key, ...)
         local eventhandler = self[key]
@@ -331,8 +329,17 @@ function Widget:click_right(x, y)
 end
 
 function Widget:destroy()
+    print("destroy", self, self.id, felt.widgets[self.id], felt.widgets[self.id] == self)
     if self.parent then
         self.parent:remove(self)
+    end
+    
+    if felt.widgets[self.id] == self then
+        felt.widgets[self.id] = nil
+    end
+    
+    while #self.children > 0 do
+        self.children[1]:destroy()
     end
     
     self.visible = false

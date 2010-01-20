@@ -26,7 +26,7 @@ function net.serialize(v, ...)
     end
     
     if repr[type(v)] then
-        return repr[type(v)](v)..net.serialize(...)
+        return repr[type(v)](v, net.serialize)..net.serialize(...)
     end
     
     return error("Cannot serialize type '"..type(v).."'")
@@ -44,11 +44,11 @@ function repr.boolean(b)
     return b and "Bt" or "Bf"
 end
 
-function repr.table(t)
+function repr.table(t, f)
     local buf = { "T" }
     for k,v in pairs(t) do
-        buf[#buf+1] = serialize(k)
-        buf[#buf+1] = serialize(v)
+        buf[#buf+1] = (f or serialize)(k)
+        buf[#buf+1] = (f or serialize)(v)
     end
     buf[#buf+1] = "t"
     

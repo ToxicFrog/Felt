@@ -61,7 +61,6 @@ Table:defaults {
     ox = 0, oy = 0;
     
     id = true;
-    save = true;
     title = "(untitled table)";
 }
 
@@ -71,7 +70,7 @@ Table.menu = {
     "Save...", Table.save;
 }
 
-Table:persistent "title" "visibleTo"
+Table:persistent "name" "visibleTo"
 Table:sync "drop" "setTitle" "setVis"
 
 function Table:add(child, ...)

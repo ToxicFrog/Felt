@@ -20,18 +20,21 @@ function net.read(sock)
     local len,err = sock:receive(8)
     
     if not len then
+        print("net.read error", err)
         return nil,err
     else
         len = tonumber(len)
     end
     
-    sock:settimeout(1)
+    sock:settimeout(nil)
     local buf,err = sock:receive(len)
     sock:settimeout(0)
     
     if not buf then
+        print("net.read error2", err)
         return nil,err
     else
+        print("net.read", buf)
         local r = table.pack(felt.deserialize(buf))
         local s = {}
         for i=1,r.n do
@@ -46,7 +49,11 @@ function net.write(sock, ...)
     print("net.write", ...)
     local buf = net.serialize(...)
 
-    return sock:send(string.format("%8d", #buf)..buf)
+    sock:settimeout(nil)
+    return (function(...)
+        sock:settimeout(0)
+        return ...
+    end)(sock:send(string.format("%8d", #buf)..buf))
 end
 
 function net.host(port)

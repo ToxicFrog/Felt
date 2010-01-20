@@ -42,20 +42,27 @@ end
 
 function client.update(dt)
     if sock:receive(0) then
+        sock:settimeout(nil)
         client.dispatch(client.read())
+        if sock then
+            sock:settimeout(0)
+        end
     end
 end
 
 function client.write(...)
-    return L 'r,e -> r or client.disconnect(e)' (net.write(sock, ...))
+    print("client.write", ...)
+    return L 'r,e -> r or (print("client.write disconnect", e) or client.disconnect(e))' (net.write(sock, ...))
 end
 
 function client.read(...)
     return (function(...)
         local r,e = ...
         if r then
+            print("client.read", ...)
             return ...
         else
+            print("client.read disconnect", ...)
             client.disconnect(e)
             return nil,e
         end
