@@ -14,9 +14,12 @@ Pile:broadcast "setCount"
 function Pile:__init(...)
     felt.Token.__init(self, ...)
     
+    local id = self.ctor.id
+    self.ctor.id = false
     self.top = require(self.type)(self.ctor)
     self.w = self.top.w
     self.h = self.top.h
+    self.ctor.id = id
     
     self.label = require "Label" { text = tostring(self.count) }
     self:add(self.label, 0, 0)

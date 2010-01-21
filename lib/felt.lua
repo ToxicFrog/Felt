@@ -7,11 +7,10 @@ felt = {
 
 function felt.id(widget)
     local id = #felt.widgets + 1
-    print("id", widget._NAME, widget.id, id)
 
     if type(widget.id) == 'number' then
         if felt.widgets[widget.id] then
-            print("id collision", widget.id, widget._NAME, felt.widgets[widget.id])
+            error("id collision")
             felt.log("warning: %s wants id %d, which is already in use by %s"
                 , tostring(widget)
                 , widget.id
