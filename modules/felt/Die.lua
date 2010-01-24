@@ -17,6 +17,11 @@ function Die:__init(t)
     
     self.face = 1
     self.facei = self[self.face]
+    
+    if self.hidden then
+        self.back = self.hidden
+        self.backi = love.graphics.newImage(self.hidden)
+    end
 end
 
 function Die:click_left()
@@ -40,6 +45,11 @@ end
 function Die:setFace(n)
     self.face = n
     self.facei = self[self.face]
+    
+    if not self.back then
+        self.backi = self.facei
+    end
+    
     felt.log("%s rolls %s and gets %s"
         , felt.config.name
         , tostring(self)
