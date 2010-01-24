@@ -44,7 +44,7 @@ function Deck:click_left_before(x, y)
 end
 
 function Deck:drop(x, y, item)
-    item:moveto(self)
+    item:moveto(self, 0, 0)
     if love.keyboard.isDown "lctrl" or love.keyboard.isDown "rctrl" then
         item:lower()
     else
@@ -96,14 +96,8 @@ function Deck:draw(scale, x, y, w, h)
     end
 end
 
-function Deck:drawHidden(scale, x, y, w, h)
-    if #self.children > 0 then
-        self.children[1]:drawHidden(scale, x, y, w, h)
-    else
-        love.graphics.setColour(128, 128, 128, 255)
-        love.graphics.rectangle("line", x, y, w, h)
-    end
-    return true
+function Deck:drawHidden(...)
+    return self:draw(...)
 end
 
 function Deck:click_middle_before()
