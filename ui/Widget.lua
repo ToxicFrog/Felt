@@ -84,7 +84,7 @@ function Widget:__init(...)
 end
 
 function Widget:__tostring()
-    return self._NAME
+    return self.name or self.title or self._NAME
 end
 
 function Widget:__send()

@@ -32,7 +32,7 @@ end
 -- create main menu
 felt.menu = {
     title = "Felt";
-    --"Create Window", function(self, menu) felt.new {} end;
+    "Create Window", function() felt.new {} end;
     --"Load Window...", function(self, menu) self:add(new "SaveGamesWindow" {}, menu.x, menu.y) end;
     "--";
     "Save Game...", felt.savegame;
@@ -64,7 +64,7 @@ end
 
 -- install the background
 felt.background = new "Table" {
-    name = "BACKGROUND";
+    name = "Background";
     z = -math.huge;
     x = 0, y = 0;
     w = love.graphics.getWidth(), h = love.graphics.getHeight();
@@ -74,7 +74,7 @@ felt.background = new "Table" {
 felt.screen:add(felt.background)
 
 -- create the log window
-felt.screen:add(new "SystemWindow" {})
+felt.syslog = felt.screen:add(new "SystemWindow" {})
 
 -- create the grasping hand
 felt.hand = new "Hand" {}
