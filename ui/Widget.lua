@@ -79,8 +79,6 @@ function Widget:__init(...)
             return result
         end
     end
-    
-    felt.log("Created %s%s", self._NAME, self.menu and " with menu" or "")
 end
 
 function Widget:__tostring()

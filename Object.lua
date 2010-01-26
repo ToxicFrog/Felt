@@ -2,6 +2,19 @@ local pairs,setmetatable,module,package,require = pairs,setmetatable,module,pack
 
 local print = print
 
+do
+    local _type = type
+    function type(obj)
+        local mt = getmetatable(obj)
+        if not mt or not mt.__type then return _type(obj) end
+        
+        if type(mt.__type) == "function" then
+            return mt.__type(obj)
+        end
+        return mt.__type
+    end
+end
+
 module(...)
 
 __super = _M

@@ -52,7 +52,7 @@ felt.screen = new "Screen" {
 }
 
 -- enable command line
-function felt.screen:key_c()
+function felt.screen:key_tab()
     self:add(new "SettingsWindow" {
         "cmd", "";
         call = function(self)

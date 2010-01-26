@@ -14,6 +14,15 @@ function Token:rotate(theta)
     self.theta = theta % 360
 end
 
+function Token:inBounds(x, y)
+    if self.theta >= 90 and self.theta < 180
+    or self.theta >= 240 and self.theta < 360
+    then
+        x,y = y,x
+    end
+    return Widget.inBounds(self, x, y)
+end
+
 function Token:setHidden(h)
     self.hidden = h
     for child in self:children() do

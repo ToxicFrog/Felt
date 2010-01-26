@@ -16,25 +16,32 @@ function ImageToken:__init(...)
 end
 
 function ImageToken:draw(scale, x, y, w, h)
-    local _x,_y = x,y
-    local W = w/2
-    local H = h/2
-    local Cx = x+W
-    local Cy = y+H
-    x = Cx - W * math.cos(self.theta) + H * math.sin(self.theta)
-    y = Cy - W * math.sin(self.theta) - H * math.cos(self.theta)
+    if self.theta < 90 then
+    elseif self.theta < 180 then
+        x = x + h
+    elseif self.theta < 270 then
+        x = x + w
+        y = y + h
+    elseif self.theta < 360 then
+        y = y + w
+    end
+    
     love.graphics.setColour(255, 255, 255)
-    love.graphics.draw(self.facei, x, y, self.theta, (w/self.iw), (h/self.ih))
+    love.graphics.draw(self.facei, x, y, math.rad(self.theta), (w/self.iw), (h/self.ih))
 end
 
 function ImageToken:drawHidden(scale, x, y, w, h)
-    local W = w/2
-    local H = h/2
-    local Cx = x+W
-    local Cy = y+H
-    x = Cx - W * math.cos(self.theta) + H * math.sin(self.theta)
-    y = Cy - W * math.sin(self.theta) - H * math.cos(self.theta)
+    if self.theta < 90 then
+    elseif self.theta < 180 then
+        x = x + h
+    elseif self.theta < 270 then
+        x = x + w
+        y = y + h
+    elseif self.theta < 360 then
+        y = y + w
+    end
+
     love.graphics.setColour(255, 255, 255)
-    love.graphics.draw(self.backi, x, y, self.theta, (w/self.iw), (h/self.ih))
+    love.graphics.draw(self.backi, x, y, math.rad(self.theta), (w/self.iw), (h/self.ih))
 end
 
