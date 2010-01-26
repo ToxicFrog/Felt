@@ -44,6 +44,10 @@ function Deck:click_left_before(x, y)
 end
 
 function Deck:drop(x, y, item)
+    if self.type and item._NAME ~= self.type then
+        return false
+    end
+    
     item:moveto(self, 0, 0)
     if love.keyboard.isDown "lctrl" or love.keyboard.isDown "rctrl" then
         item:lower()

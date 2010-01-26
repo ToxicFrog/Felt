@@ -18,3 +18,8 @@ function Label:draw(scale, x, y, w, h)
     love.graphics.popClip()
 end
 
+function Label:set(text)
+    self.text = text;
+    self.w = love.graphics.getFont():getWidth(self.text) + 2
+end
+

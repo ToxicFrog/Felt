@@ -54,7 +54,7 @@ function Pile:drop(x, y, item)
     
     self:setCount(self.count + 1)
     item:destroy()
-    self.label.text = tostring(self.count)
+    self.label:set(tostring(self.count))
     return true
 end
 

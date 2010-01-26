@@ -231,4 +231,7 @@ function Table:event(type, x, y, ...)
     return Widget.event(self, type, x, y, ...)
 end
 
+function Table:click_left()
+    return false
+end
 

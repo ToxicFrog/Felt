@@ -11,7 +11,7 @@ Token:persistent "name" "theta"
 Token:sync "moveto" "raise" "lower" "rotate"
 
 function Token:rotate(theta)
-    self.theta = theta % (2 * math.pi)
+    self.theta = theta % 360
 end
 
 function Token:setHidden(h)
