@@ -37,23 +37,31 @@ Widget:defaults {
     focused = false;
     save = false;
     id = false;
+    mixins = {};
 }
 
 Widget.persistent,Widget.transitory = set()
 Widget.sync = set()
 
-Widget:persistent "x" "y" "z" "w" "h" "id"
+Widget:persistent "x" "y" "z" "w" "h" "id" "mixins"
+Widget:sync "mixin"
 
 function Widget:setHidden() end
 
 function Widget:__clone(child)
     child.persistent,child.transitory = set(self.persistent)
     child.sync = set(self.sync)
+    child.mixins = { unpack(self.mixins) }
 end
 
 function Widget:__init(...)
     self.children = setmetatable({}, { __call = function() return self:ichildren() end })
     Object.__init(self, ...)
+    
+    function self:mixin(name, ...)
+        table.insert(self.mixins, { name, ... })
+        require("mixins."..name)(self, ...)
+    end
     
     if self.id then
         felt.id(self)
@@ -120,7 +128,7 @@ end
 function Widget:load(t, children)
     local w = self(t)
     print("load", self._NAME, t.id, felt.widgets[t.id])
-
+    
     for i,c in ipairs(children or {}) do
         w:add(c)
     end

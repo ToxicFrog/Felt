@@ -1,4 +1,5 @@
-local pairs,setmetatable,module,package,require = pairs,setmetatable,module,package,require
+local pairs,setmetatable,module,package,require,unpack,ipairs,table
+    = pairs,setmetatable,module,package,require,unpack,ipairs,table
 
 local print = print
 
@@ -17,15 +18,27 @@ end
 
 module(...)
 
-__super = _M
+__super = false
+mixins = {}
 
 function _M:__init(t)
     if t then
+        if t.mixins then
+            for i,v in ipairs(t.mixins) do
+                table.insert(self.mixins, v)
+            end
+            t.mixins = self.mixins
+        end
         for k,v in pairs(t) do
             self[k] = v
         end
     end
-    return
+    
+    for i,mix in ipairs(self.mixins) do
+        require("mixins."..mix[1])(self, unpack(mix, 2))
+    end
+    
+    return self
 end
 
 function _M:clone()
@@ -49,6 +62,7 @@ end
 function _M:new(...)
     local obj = self:clone()
     obj._NAME = self._NAME
+    
     obj:__init(...)
 
     return setmetatable(obj, obj)
@@ -58,6 +72,7 @@ function _M:subclass(name)
     module(name)
     self:cloneto(package.loaded[name])
     package.loaded[name]._NAME = name
+    package.loaded[name].mixins = { unpack(self.mixins) }
     return setmetatable(package.loaded[name], { __call = package.loaded[name].new, __class = name })
 end
 
@@ -73,7 +88,7 @@ function _M:close(method)
     end
 end
 
-function _M:mixin(name, ...)
-    require("mixins."..name)(self, ...)
+function _M:mixin(...)
+    table.insert(self.mixins, {...})
 end
 

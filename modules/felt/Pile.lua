@@ -4,12 +4,12 @@ Pile:defaults {
     count = 1;
     type = "Token";
     ctor = {};
-    mixin = {};
+    mixins = {};
     top = nil;
 }
 
-Pile:persistent "count" "ctor" "type" "mixin"
-Pile:broadcast "setCount"
+Pile:persistent "count" "ctor" "type"
+Pile:sync "setCount"
 
 function Pile:__init(...)
     felt.Token.__init(self, ...)
@@ -32,7 +32,7 @@ function Pile:click_left()
     
     if self.count > 0 then
         local obj = new(self.type)(self.ctor)
-        for _,mixin in ipairs(self.mixin) do
+        for _,mixin in ipairs(self.mixins) do
             obj:mixin(unpack(mixin))
         end
         felt.pickup(obj)
