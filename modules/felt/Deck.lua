@@ -5,6 +5,7 @@ Deck:defaults {
     menu = {
         title = "Deck";
         "Shuffle", function(self) return self:shuffle() end;
+        "Sort", function(self) return self:sortByName() end;
     };
     spread = false;
 }
@@ -43,7 +44,7 @@ function Deck:click_left_before(x, y)
     return true
 end
 
-function Deck:drop(x, y, item)
+function Deck:drop_before(x, y, item)
     if self.type and item._NAME ~= self.type then
         return false
     end
@@ -120,14 +121,27 @@ function Deck:shuffle()
             , table.remove(self.children
                 , math.random(1,#self.children)))
     end
-    self:shuffleCommit(newcards)
-end
-
-Deck:sync "shuffleCommit"
-function Deck:shuffleCommit(newdeck)
-    felt.log("%s shuffles %s"
+    self:commit(newcards
+        , "%s shuffles %s"
         , felt.config.name
         , tostring(self))
+end
+
+function Deck:sortByName()
+    local newcards = {}
+    for child in self:children() do
+        table.insert(newcards, child)
+    end
+    table.sort(newcards, L 'x,y -> tostring(x) < tostring(y)')
+    self:commit(newcards
+        , "%s sorts %s"
+        , felt.config.name
+        , tostring(self))
+end
+
+Deck:sync "commit"
+function Deck:commit(newdeck, ...)
+    felt.log(...)
         
     while #self.children > 0 do
         self.children[#self.children] = nil
