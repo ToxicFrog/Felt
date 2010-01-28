@@ -76,6 +76,18 @@ felt.screen:add(felt.background)
 -- create the log window
 felt.syslog = felt.screen:add(new "SystemWindow" {})
 
+-- create the info window
+local infowin = new "Window" {
+    x = 0;
+    y = love.graphics.getHeight() - 200;
+    content = new "TextBox" {
+        name = "Info";
+    };
+}
+infowin:resize(200,200)
+felt.screen:add(infowin)
+felt.info = infowin.content
+
 -- create the grasping hand
 felt.hand = new "Hand" {}
 felt.screen:add(felt.hand)

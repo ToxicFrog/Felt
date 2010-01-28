@@ -66,9 +66,9 @@ end
 SystemWindow:defaults {
     saveable = false;
     x = 0;
-    y = love.graphics.getHeight() - 200;
-    w = love.graphics.getWidth();
-    h = 200;
+    y = 0;
+    w = 200;
+    h = love.graphics.getHeight() - 200;
     content = SystemTextPane;
 }
 

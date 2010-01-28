@@ -69,7 +69,7 @@ do
     end
     
     function Resizer:drag_left(x, y, dx, dy)
-        self.parent:resize(self.parent.w + dx, self.parent.h - dy)
+        self.parent:resize(self.parent.w + dx, self.parent.h + dy)
         return true
     end
 end
@@ -124,6 +124,10 @@ end
 
 function Window:click_right(...)
     return self.content:click_right(...)
+end
+
+function Window:all_events()
+    return self
 end
 
 function Window:drag_left(x, y, dx, dy)

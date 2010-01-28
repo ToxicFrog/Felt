@@ -71,7 +71,7 @@ Table.menu = {
 }
 
 Table:persistent "name" "visibleTo"
-Table:sync "drop" "setTitle" "setVis"
+Table:sync "setTitle" "setVis"
 
 function Table:add(child, ...)
     Widget.add(self, child, ...)

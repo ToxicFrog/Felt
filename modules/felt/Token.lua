@@ -107,5 +107,14 @@ function Token:add(child, ...)
     child:setHidden(self.hidden)
 end
 
+function Token:enter()
+    if self.info then
+        felt.info:set(tostring(self).."\n\n"..tostring(self.info))
+    else
+        felt.info:set(tostring(self))
+    end
+    return true
+end
+
 return Token
 

@@ -102,6 +102,7 @@ function felt.loadstate(state)
     
     bg.w = love.graphics.getWidth()
     bg.h = love.graphics.getHeight()
+    bg.menu = felt.menu
     felt.background = bg
     felt.screen:add(bg)
     
@@ -118,7 +119,7 @@ function felt.load(buf)
 end
 
 function felt.newobject(buf)
-    felt.id(felt.deserialize(buf))
+    felt.deserialize(buf)
 end
 
 function felt.savegame()

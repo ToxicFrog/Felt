@@ -20,6 +20,7 @@ function Pile:__init(...)
     self.w = self.top.w
     self.h = self.top.h
     self.ctor.id = id
+    self.name = "Pile of "..tostring(self.top)
     
     self.label = require "Label" { text = tostring(self.count) }
     self:add(self.label, 0, 0)

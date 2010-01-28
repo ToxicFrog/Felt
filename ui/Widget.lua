@@ -74,6 +74,7 @@ function Widget:__init(...)
     
     for method in pairs(self.sync) do
         local key = method.."_actual"
+        assert(self[method], "attempt to synchronize nonexistent method "..self._NAME.."::"..method)
         self[key] = self[method]
         self[method] = function(self, ...)
             local log = felt.log
@@ -265,8 +266,8 @@ end
 function Widget:event(type, x, y, ...)
     if not self.visible then return end
     
-    local function callhandler(key, ...)
-        local eventhandler = self[key]
+    local function callhandler(key, alt, ...)
+        local eventhandler = self[key] or self[alt]
         if eventhandler then
             local result = eventhandler(self, x, y, ...)
             assert(result or result == false, "event handler "..self._NAME..":"..key.." did not return a value")
@@ -274,7 +275,7 @@ function Widget:event(type, x, y, ...)
         end
     end
     
-    local r = callhandler(type.."_before", ...)
+    local r = callhandler(type.."_before", "all_events_before", ...)
     if r then return r end
 
     for child in self:children() do
@@ -284,7 +285,7 @@ function Widget:event(type, x, y, ...)
         end
     end
 
-    return callhandler(type, ...)
+    return callhandler(type, "all_events", ...)
 end
 
 --
@@ -353,7 +354,7 @@ end
 
 function Widget:enter()
     self.focused = true
-    return false
+    return true
 end
 
 function Widget:leave()

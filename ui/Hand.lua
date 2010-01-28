@@ -50,6 +50,9 @@ function Hand:pickup(item)
     self:add(item)
 end
 
+function Hand:enter() return false end
+function Hand:leave() return false end
+
 function Hand:event(type, x, y, ...)
     local function callhandler(key, ...)
         local eventhandler = self[key]
