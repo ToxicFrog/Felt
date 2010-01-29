@@ -45,9 +45,11 @@ function Deck:click_left_before(x, y)
 end
 
 function Deck:drop_before(x, y, item)
-    if self.type and item._NAME ~= self.type then
+    if self.type and not item:instanceof(self.type) then
         return false
     end
+    
+    -- FIXME combine other decks
     
     item:moveto(self, 0, 0)
     if love.keyboard.isDown "lctrl" or love.keyboard.isDown "rctrl" then

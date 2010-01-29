@@ -14,9 +14,11 @@ Pile:sync "setCount"
 function Pile:__init(...)
     felt.Token.__init(self, ...)
     
+    self.new = self.new or self.type
+    
     local id = self.ctor.id
     self.ctor.id = false
-    self.top = require(self.type)(self.ctor)
+    self.top = require(self.new)(self.ctor)
     self.w = self.top.w
     self.h = self.top.h
     self.ctor.id = id
@@ -32,7 +34,7 @@ function Pile:click_left()
     end
     
     if self.count > 0 then
-        local obj = new(self.type)(self.ctor)
+        local obj = new(self.new)(self.ctor)
         for _,mixin in ipairs(self.mixins) do
             obj:mixin(unpack(mixin))
         end
@@ -49,7 +51,7 @@ function Pile:setCount(n)
 end
 
 function Pile:drop(x, y, item)
-    if item._NAME ~= self.type then
+    if not item:instanceof(self.type) then
         return false
     end
     

@@ -20,6 +20,9 @@ require "dispatch"
 function love.update(...)
     input.update(...)
     net.update(...)
+    if felt.update then
+        felt.update(...)
+    end
 end
 
 -- install rendering callback

@@ -38,7 +38,7 @@ end
 
 function Token:__tostring()
     if self.hidden then
-        return self.hiddenname or "hidden "..(self.name or self._NAME or "(unnamed object)") 
+        return self.hiddenname or "???" 
     end
     return self.name or self._NAME or "(unnamed object)"
 end

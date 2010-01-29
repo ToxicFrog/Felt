@@ -1,5 +1,5 @@
-local pairs,setmetatable,module,package,require,unpack,ipairs,table
-    = pairs,setmetatable,module,package,require,unpack,ipairs,table
+local pairs,setmetatable,module,package,require,unpack,ipairs,table,type
+    = pairs,setmetatable,module,package,require,unpack,ipairs,table,type
 
 local print = print
 
@@ -43,6 +43,19 @@ end
 
 function _M:clone()
     return self:cloneto {}
+end
+
+function _M:instanceof(t)
+    if type(self) == t then
+        return true
+    elseif self._NAME == t then
+        return true
+    end
+    while self.__super do
+        if self.__super._NAME == t then return true end
+        self = self.__super
+    end
+    return false
 end
 
 function _M:cloneto(child)
@@ -90,5 +103,9 @@ end
 
 function _M:mixin(...)
     table.insert(self.mixins, {...})
+end
+
+function _M:__type()
+    return self._NAME
 end
 
