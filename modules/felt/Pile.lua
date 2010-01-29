@@ -8,7 +8,7 @@ Pile:defaults {
     top = nil;
 }
 
-Pile:persistent "count" "ctor" "type"
+Pile:persistent "count" "ctor" "type" "new"
 Pile:sync "setCount"
 
 function Pile:__init(...)

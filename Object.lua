@@ -72,7 +72,7 @@ function _M:cloneto(child)
     return child
 end
 
-function _M:new(...)
+function _M:__new(...)
     local obj = self:clone()
     obj._NAME = self._NAME
     
@@ -86,7 +86,7 @@ function _M:subclass(name)
     self:cloneto(package.loaded[name])
     package.loaded[name]._NAME = name
     package.loaded[name].mixins = { unpack(self.mixins) }
-    return setmetatable(package.loaded[name], { __call = package.loaded[name].new, __class = name })
+    return setmetatable(package.loaded[name], { __call = package.loaded[name].__new, __class = name })
 end
 
 function _M:defaults(t)

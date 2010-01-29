@@ -188,9 +188,9 @@ end
 
 function Table:setVis(name, value)
     if value then
-        felt.log("%s reveals %s to %s", felt.config.name, self.title, name)
+        felt.log("%s reveals %s to %s", felt.config.name, tostring(self), name)
     else
-        felt.log("%s hides %s from %s", felt.config.name, self.title, name)
+        felt.log("%s hides %s from %s", felt.config.name, tostring(self), name)
     end
     self.visibleTo[name] = value
     if name == felt.config.name then
@@ -200,9 +200,9 @@ function Table:setVis(name, value)
     end
 end
 
-function Table:setTitle(title)
-    felt.log("%s renames %s to %s", felt.config.name, self.title, title)
-    self.title = title
+function Table:setTitle(name)
+    felt.log("%s renames %s to %s", felt.config.name, tostring(self), title)
+    self.name = name
 end
 
 function Table:key_z()
