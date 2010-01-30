@@ -1,6 +1,13 @@
 local t = felt.new { w = 400, h = 400, name = "Chess" }
-local board = new "felt.ImageToken" { face = "modules/chess/board.png", z=-1, name = "Chessboard" }
-board:mixin "board"
+local board = new "felt.ImageToken" {
+    face = "modules/chess/board.png";
+    z=-1;
+    name = "Chessboard";
+    mixins = {
+        { "board" };
+        { "grid", 45, 45, 10, 10 };
+    };
+}
 
 t:add(board, 10, 10)
 

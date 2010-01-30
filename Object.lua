@@ -105,7 +105,5 @@ function _M:mixin(...)
     table.insert(self.mixins, {...})
 end
 
-function _M:__type()
-    return self._NAME
-end
+_M.__type = _M._NAME
 
