@@ -43,7 +43,7 @@ Widget:defaults {
 Widget.persistent,Widget.transitory = set()
 Widget.sync = set()
 
-Widget:persistent "x" "y" "z" "w" "h" "id" "mixins"
+Widget:persistent "x" "y" "z" "w" "h" "id" "mixins" "__type"
 Widget:sync "mixin"
 
 function Widget:setHidden() end
@@ -127,6 +127,11 @@ function Widget:__save()
 end
 
 function Widget:load(t, children)
+    if t.id and felt.widgets[t.id] then
+        assert(self._NAME == felt.widgets[t.id]._NAME, "type mismatch in ID-overlapped load")
+        return felt.widgets[t.id]
+    end
+    
     local w = self(t)
     print("load", self._NAME, t.id, felt.widgets[t.id])
     
