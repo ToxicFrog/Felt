@@ -7,7 +7,7 @@ Token:defaults {
     theta = 0;
 }
 
-Token:persistent "name" "theta"
+Token:persistent "name" "hiddenname" "theta"
 Token:sync "moveto" "raise" "lower" "rotate"
 
 function Token:rotate(theta)
