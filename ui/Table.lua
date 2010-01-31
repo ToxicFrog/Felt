@@ -53,6 +53,7 @@ end
 
 Table:defaults {
     w = 128, h = 128;
+    z = -math.huge;
     
     -- scale of the contents of this table
     scale = 1.0;
