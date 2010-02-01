@@ -128,7 +128,12 @@ end
 
 function Widget:load(t, children)
     if t.id and felt.widgets[t.id] then
-        assert(self._NAME == felt.widgets[t.id]._NAME, "type mismatch in ID-overlapped load")
+        assert(self._NAME == felt.widgets[t.id]._NAME
+            , "type mismatch in ID-overlapped load: existing '"
+                ..felt.widgets[t.id]._NAME
+                .."', loading '"
+                ..self._NAME
+                .."'")
         return felt.widgets[t.id]
     end
     
