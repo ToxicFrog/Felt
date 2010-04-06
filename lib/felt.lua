@@ -1,5 +1,5 @@
 felt = {
-    log = function() end;
+    log = function(...) print(string.format(...)) end;
     widgets = {};
     tables = {};
     players = {};

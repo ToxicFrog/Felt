@@ -1,3 +1,4 @@
+-- bootstrap
 love.filesystem.load "lib/init.lua" ()
 
 -- initialize love2d
@@ -9,17 +10,17 @@ love.graphics.setColourMode("modulate")
 
 -- load supporting libraries
 require "felt"
-require "serialize"
-require "deserialize"
+--require "serialize"
+--require "deserialize"
 require "input"
-require "settings"
-require "net"
-require "dispatch"
+--require "settings"
+--require "net"
+--require "dispatch"
 
 -- install update callback
 function love.update(...)
     input.update(...)
-    net.update(...)
+--    net.update(...)
     if felt.update then
         felt.update(...)
     end
@@ -30,8 +31,6 @@ function love.draw()
     felt.screen:render(1.0, felt.screen.x, felt.screen.y, felt.screen.w, felt.screen.h)
 end
 
--- initialize the game
-
 -- create main menu
 felt.menu = {
     title = "Felt";
@@ -41,18 +40,18 @@ felt.menu = {
     "Save Game...", felt.savegame;
     "Load Game...", felt.loadgame;
     "--";
-    "Host Game...", felt.host;
-    "Join Game...", felt.join;
---        "Leave Game", felt.leave;
-    "--";
     "Settings...", felt.configure;
     "--";
     "Quit", function() love.event.push "q" end;
 };
 
+-- create main screen
 felt.screen = new "Screen" {
     menu = felt.menu;
 }
+
+-- create the log window
+felt.syslog = felt.screen:add(new "SystemWindow" {})
 
 -- enable command line
 function felt.screen:key_tab()
@@ -64,20 +63,6 @@ function felt.screen:key_tab()
     })
     return true
 end
-
--- install the background
-felt.background = new "Table" {
-    name = "Background";
-    z = -math.huge;
-    x = 0, y = 0;
-    w = love.graphics.getWidth(), h = love.graphics.getHeight();
-    menu = felt.menu
-}
-
-felt.screen:add(felt.background)
-
--- create the log window
-felt.syslog = felt.screen:add(new "SystemWindow" {})
 
 -- create the info window
 local infowin = new "Window" {
@@ -91,6 +76,22 @@ infowin:resize(200,200)
 felt.screen:add(infowin)
 felt.info = infowin.content
 
+-- hand off to the start-of-game routines
+require "startup"
+
+--[[
+-- install the background
+felt.background = new "Table" {
+    name = "Background";
+    z = -math.huge;
+    x = 0, y = 0;
+    w = love.graphics.getWidth(), h = love.graphics.getHeight();
+    menu = felt.menu
+}
+
+felt.screen:add(felt.background)
+
+
 -- create the grasping hand
 felt.hand = new "Hand" {}
 felt.screen:add(felt.hand)
@@ -98,4 +99,5 @@ felt.screen:add(felt.hand)
 felt.loadmodule "descent"
 --felt.loadmodule "chess"
 --require "modules.descent.jitd.heroes"
+]]
 

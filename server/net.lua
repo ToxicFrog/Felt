@@ -143,3 +143,4 @@ end
 function server.log(...)
     felt.log("[server] %s", string.format(...))
 end
+

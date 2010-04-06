@@ -13,8 +13,10 @@ function Button:draw(scale, x, y, w, h)
     love.graphics.rectangle("fill", x, y, w, h)
     if self.focused then
         love.graphics.setColour(255, 0, 0, 255)
-        love.graphics.rectangle("line", x, y, w, h)
+    else
+        love.graphics.setColour(128, 128, 128, 255)
     end
+    love.graphics.rectangle("line", x, y, w, h)
     love.graphics.setColour(255, 255, 255, 255)
     love.graphics.print(self.text, x, y+9)
     love.graphics.popClip()
