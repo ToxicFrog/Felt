@@ -1,7 +1,6 @@
 local Die = require("felt.ImageToken"):subclass "felt.Die"
 
 Die:persistent "images" "face" "names"
-Die:sync "setFace"
 
 function Die:__init(t)
     t.face = t[1] or t.images[1]

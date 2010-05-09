@@ -41,16 +41,13 @@ Widget:defaults {
 }
 
 Widget.persistent,Widget.transitory = set()
-Widget.sync = set()
 
 Widget:persistent "x" "y" "z" "w" "h" "id" "mixins" "__type"
-Widget:sync "mixin"
 
 function Widget:setHidden() end
 
 function Widget:__clone(child)
     child.persistent,child.transitory = set(self.persistent)
-    child.sync = set(self.sync)
     child.mixins = { unpack(self.mixins) }
 end
 
@@ -70,23 +67,6 @@ function Widget:__init(...)
     if self.menu and self.menu._NAME ~= "Menu" then
         self.menu = new "Menu" (self.menu)
         self.menu.context = self
-    end
-    
-    for method in pairs(self.sync) do
-        local key = method.."_actual"
-        assert(self[method], "attempt to synchronize nonexistent method "..self._NAME.."::"..method)
-        self[key] = self[method]
-        self[method] = function(self, ...)
-            local log = felt.log
-            function felt.log(...)
-                felt.broadcast(0, "log", ...)
-                log(...)
-            end
-            self:broadcast(key, ...)
-            local result = self[key](self, ...)
-            felt.log = log
-            return result
-        end
     end
 end
 
@@ -183,6 +163,16 @@ function Widget:ichildren()
         i = i+1
         return self.children[i]
     end
+end
+
+function Widget:hide()
+    self:event("leave")
+    self.parent:remove(self)
+end
+
+function Widget:show()
+    assert(self.parent, "show called on unattached widget")
+    self.parent:add(self)
 end
 
 --
@@ -370,10 +360,6 @@ end
 function Widget:leave()
     self.focused = false
     return false
-end
-
-function Widget:broadcast(...)
-    return felt.broadcast(self, ...)
 end
 
 return Widget

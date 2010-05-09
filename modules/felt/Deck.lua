@@ -141,7 +141,6 @@ function Deck:sortByName()
         , tostring(self))
 end
 
-Deck:sync "commit"
 function Deck:commit(newdeck, ...)
     felt.log(...)
         

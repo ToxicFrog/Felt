@@ -18,9 +18,6 @@ function new(type)
     return function(...)
         local obj = require(type)(...)
         print("new", type, obj.id, felt.widgets[obj.id])
-        if obj.id then
-            felt.broadcast(0, "newobject", felt.serialize(obj))
-        end
         return obj
     end
 end
@@ -82,6 +79,11 @@ end
 -- fast lambda creation
 function L(src)
     return assert(loadstring(src:gsub("%s+%-%>%s+", " = ...; return ")))
+end
+
+-- quit
+function love.quit()
+    love.event.push "q"
 end
 
 -- stacked clipping rectangles

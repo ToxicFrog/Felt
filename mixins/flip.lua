@@ -1,5 +1,4 @@
 return function(obj, state)
-    obj:sync "flip"
     obj.hidden = state
     
     function obj:click_middle()

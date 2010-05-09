@@ -9,7 +9,6 @@ Pile:defaults {
 }
 
 Pile:persistent "count" "ctor" "type" "new"
-Pile:sync "setCount"
 
 function Pile:__init(...)
     felt.Token.__init(self, ...)

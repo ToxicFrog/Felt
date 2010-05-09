@@ -1,4 +1,4 @@
-require "net"
+--require "net"
 
 local repr = {}
 
@@ -18,7 +18,7 @@ local function serialize(...)
     end)(...)
 end
 
-function net.serialize(v, ...)
+local function net_serialize(v, ...)
     if v == nil and select('#', ...) == 0 then return "" end
     
     if getmetatable(v) and getmetatable(v).__send then

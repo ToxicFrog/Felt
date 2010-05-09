@@ -11,7 +11,6 @@ Spinner:defaults {
 }
 
 Spinner:persistent "count" "min" "max" "step" "step2" "step3"
-Spinner:sync "set"
 
 function Spinner:__init(...)
     felt.ImageToken.__init(self, ...)

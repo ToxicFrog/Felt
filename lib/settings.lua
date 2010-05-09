@@ -48,29 +48,3 @@ function felt.configure()
     felt.screen:add(win)
 end
 
-local joinwindow = new 'SettingsWindow' {
-    'Host', 'localhost';
-    'Port', '8008';
-    'Password', '';
-    call = function(win)
-        client.connect(win:get "Host", tonumber(win:get "Port"), win:get "Password")
-    end;
-}
-
-function felt.join()
-    felt.screen:add(joinwindow)
-end
-
-local hostwindow = new 'SettingsWindow' {
-    'Port', '8008';
-    'Password', '';
-    call = function(win)
-        server.start(tonumber(win:get "Port"), win:get "Password")
-        client.connect("localhost", tonumber(win:get "Port"), win:get "Password")
-    end;
-}
-
-function felt.host()
-    felt.screen:add(hostwindow)
-end
-

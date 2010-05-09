@@ -8,7 +8,6 @@ Token:defaults {
 }
 
 Token:persistent "name" "hiddenname" "theta"
-Token:sync "moveto" "raise" "lower" "rotate"
 
 function Token:rotate(theta)
     self.theta = theta % 360
