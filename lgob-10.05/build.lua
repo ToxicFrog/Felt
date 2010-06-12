@@ -5,15 +5,14 @@
 
 local lfs = require('lfs')
 local sf = string.format
-local function ex(cmd,...) cmd = sf(cmd,...) print(cmd) os.execute(cmd) end
+local function ex(cmd,...) cmd = sf(cmd,...) print(cmd) assert(os.execute(cmd) == 0, "error in command execution") end
 local function cd(dir) print('cd ' .. dir) lfs.chdir(dir) end
 
-local dest      = arg[1] or '/usr/local'
+local dest      = arg[1] or '../lgob'
 local opts      = arg[2] or ''
 local modules   = {
     'codegen', 'common', 'gobject', 'loader', 'cairo', 'gdk', 'gtk',
-    'pango', 'pangocairo', 'vte', 'webkit', 'atk', 'gstreamer', 'gtkspell',
-    'gtksourceview', 'goocanvas', 'poppler', 'clutter', 'cluttergtk'
+    'pango', 'pangocairo'
 }
 
 for i, m in ipairs(modules) do
