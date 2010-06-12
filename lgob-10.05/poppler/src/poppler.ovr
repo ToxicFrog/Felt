@@ -1,0 +1,6 @@
+include('poppler.def')
+
+undef{
+	'poppler_document_new_from_data',
+	'poppler_date_parse',
+}
