@@ -9,10 +9,10 @@ function ImageToken:__init(...)
     self.backi = love.graphics.newImage(self.back or self.face)
     self.facei = love.graphics.newImage(self.face)
 
-    self.w = self.w or self.facei:getWidth()
-    self.h = self.h or self.facei:getHeight()
     self.iw = self.facei:getWidth()
     self.ih = self.facei:getHeight()
+    self.w = self.w or self.iw
+    self.h = self.h or self.ih
 end
 
 function ImageToken:draw(scale, x, y, w, h)

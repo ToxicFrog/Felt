@@ -13,11 +13,11 @@ function table.pack(...)
     return { n = select('#', ...), ... }
 end
 
--- instantiate something on all nodes simultaneously
+-- create a new instance of a thing
 function new(type)
     return function(...)
         local obj = require(type)(...)
-        print("new", type, obj.id, felt.widgets[obj.id])
+        print("new", type, obj.id, felt.widgets[obj.id], ...)
         return obj
     end
 end

@@ -80,5 +80,5 @@ function unrepr.L(buf)
     return require(module)[func](require(module), unpack(argv, 1, argc)),buf:sub(2,-1)
 end
 
-felt.deserialize = deserialize
+string.deserialize = deserialize
 

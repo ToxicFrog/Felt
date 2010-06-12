@@ -6,12 +6,30 @@
 local mainmenu,joingame,hostgame
 local show_mainmenu,show_joingame,show_hostgame
 
+local function test()
+	felt.background = new "Table" {
+		name = "Background";
+		z = -math.huge;
+		x = 0, y = 0;
+		w = love.graphics.getWidth(), h = love.graphics.getHeight();
+		menu = felt.menu
+	}
+	
+	felt.screen:add(felt.background)
+	
+	
+	-- create the grasping hand
+	felt.hand = new "Hand" {}
+	felt.screen:add(felt.hand)
+end
+
+
 function show_mainmenu()
     mainmenu = new "PopupWindow" {
         buttons = {
-            "Join Game", function() mainmenu:destroy(); show_hostgame(); end;
-            "Host Game", function() mainmenu:destroy(); show_joingame(); end;
-            "Quit", function() mainmenu:destroy(); love.event.push "q"; end;
+            "Join Game", function() mainmenu:destroy(); show_joingame(); end;
+            "Host Game", function() mainmenu:destroy(); show_hostgame(); end;
+            "Quit", function() mainmenu:destroy(); love.quit(); end;
         };
     }
     felt.screen:add(mainmenu)
@@ -46,7 +64,8 @@ function show_hostgame()
                 -- server.start(tonumber(win:get "Port"), win:get "Password")
                 -- client.connect("localhost", tonumber(win:get "Port"), win:get "Password")
                 print(win:get "Port", win:get "Password")
-                --win:destroy()
+                test()
+                win:destroy()
             end;
             "Cancel", function(win)
                 win:destroy()

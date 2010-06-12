@@ -1,31 +1,5 @@
 local Widget = require("Object"):subclass "Widget"
 
-local function set(init)
-    local set = {}
-    
-    for k in pairs(init or {}) do
-        set[k] = true
-    end
-    
-    local function add(key)
-        set[key] = true
-        return add
-    end
-    
-    local function remove(key)
-        set[key] = nil
-        return remove
-    end
-    
-    return setmetatable(set, {
-        __call = function(list, self, key)
-            return add(key)
-        end;
-    }),function(self, key)
-        return remove(key)
-    end
-end
-
 Widget:defaults {
     x = 0,
     y = 0,
@@ -40,16 +14,9 @@ Widget:defaults {
     mixins = {};
 }
 
-Widget.persistent,Widget.transitory = set()
-
-Widget:persistent "x" "y" "z" "w" "h" "id" "mixins" "__type"
+Widget:save "x" "y" "z" "w" "h" "id" "mixins" "__type"
 
 function Widget:setHidden() end
-
-function Widget:__clone(child)
-    child.persistent,child.transitory = set(self.persistent)
-    child.mixins = { unpack(self.mixins) }
-end
 
 function Widget:__init(...)
     self.children = setmetatable({}, { __call = function() return self:ichildren() end })
@@ -68,15 +35,14 @@ function Widget:__init(...)
         self.menu = new "Menu" (self.menu)
         self.menu.context = self
     end
+    
+    if self.id and self.menu then
+    	print("init complete", self.id, self, self.__type, self._NAME, self.menu)
+	end
 end
 
 function Widget:__tostring()
     return self.name or self.title or self._NAME
-end
-
-function Widget:__send()
-    return string.format("L%sl"
-        , felt.serialize("felt", "byID", self.id))
 end
 
 function Widget:__save()
@@ -125,6 +91,10 @@ function Widget:load(t, children)
     end
     
     w:sort()
+    
+    if w.menu then
+	    print("done loading", w, w.menu, w.menu.__type, w.menu._NAME)
+	end
     
     return w
 end
@@ -326,7 +296,11 @@ end
 
 function Widget:click_right(x, y)
     if self.menu then
+    	print("menu", self, self.name, self._NAME, self.__type)
         local _x,_y = self:trueXY()
+    
+        print(self._NAME, "menu", self.menu, self.menu.__type, self.menu._NAME, self.menu.show)
+
         self.menu:show(_x + x, _y + y)
         felt.log("display menu at (%d,%d)", _x+x, _y+y)
         return true

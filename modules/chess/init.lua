@@ -1,4 +1,47 @@
-local t = felt.new { w = 400, h = 400, name = "Chess" }
+do
+end
+do
+	foo.bar()
+	foo:bar()
+	foo[bar]
+	foo [[asf]]
+end
+do
+	-- do return end
+	--[[if foo then adf else]]
+	--[==[ asdf
+	]]
+	]==]
+	
+		bash
+	end
+	if foo then
+		asfd
+	else
+		fdsa
+	end
+	if foo then
+		asdf
+	elseif bar then
+		fdsa
+	else
+		adfasg
+	end
+	while true do
+		asdf
+	end
+	repeat
+		asdf
+	until bar
+	foo {
+		fdsaadf
+		adf
+	}
+end
+
+nil true false
+
+local t = felt.newtable { w = 400, h = 400, name = "Chess" }
 local board = new "felt.ImageToken" {
     face = "modules/chess/board.png";
     z=-1;

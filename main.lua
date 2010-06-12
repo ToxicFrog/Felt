@@ -1,6 +1,9 @@
 -- bootstrap
 love.filesystem.load "lib/init.lua" ()
 
+-- enable the debugger
+require "debugger"
+
 -- initialize love2d
 love.filesystem.setIdentity("Felt")
 love.graphics.setFont(10)
@@ -10,26 +13,12 @@ love.graphics.setColourMode("modulate")
 
 -- load supporting libraries
 require "felt"
---require "serialize"
---require "deserialize"
+require "serialize"
+require "deserialize"
 require "input"
---require "settings"
+require "settings"
 --require "net"
 --require "dispatch"
-
--- install update callback
-function love.update(...)
-    input.update(...)
---    net.update(...)
-    if felt.update then
-        felt.update(...)
-    end
-end
-
--- install rendering callback
-function love.draw()
-    felt.screen:render(1.0, felt.screen.x, felt.screen.y, felt.screen.w, felt.screen.h)
-end
 
 -- create main menu
 felt.menu = {
@@ -76,10 +65,24 @@ infowin:resize(200,200)
 felt.screen:add(infowin)
 felt.info = infowin.content
 
--- hand off to the start-of-game routines
-require "startup"
+-- install update callback
+function love.update(...)
+    input.update(...)
+--    net.update(...)
+    if felt.update then
+        felt.update(...)
+    end
+end
 
---[[
+-- install rendering callback
+function love.draw()
+    felt.screen:render(1.0, felt.screen.x, felt.screen.y, felt.screen.w, felt.screen.h)
+end
+
+
+-- hand off to the start-of-game routines
+--require "startup"
+
 -- install the background
 felt.background = new "Table" {
     name = "Background";
@@ -91,13 +94,12 @@ felt.background = new "Table" {
 
 felt.screen:add(felt.background)
 
-
 -- create the grasping hand
 felt.hand = new "Hand" {}
 felt.screen:add(felt.hand)
 
-felt.loadmodule "descent"
---felt.loadmodule "chess"
+--felt.loadmodule "descent"
+felt.loadmodule "chess"
 --require "modules.descent.jitd.heroes"
-]]
+--]]
 
