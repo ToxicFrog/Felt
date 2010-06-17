@@ -8,7 +8,7 @@ local sf = string.format
 local function ex(cmd,...) cmd = sf(cmd,...) print(cmd) assert(os.execute(cmd) == 0, "error in command execution") end
 local function cd(dir) print('cd ' .. dir) lfs.chdir(dir) end
 
-local dest      = arg[1] or '../lgob'
+local dest      = arg[1] or lfs.currentdir()..'/../lgob'
 local opts      = arg[2] or ''
 local modules   = {
     'codegen', 'common', 'gobject', 'loader', 'cairo', 'gdk', 'gtk',
