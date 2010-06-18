@@ -1,6 +1,30 @@
+-- set up library search paths
+package.path = "?.lua;?/init.lua;"..package.path
+package.cpath = "lib/?.so;lib/?.dll;"..package.cpath
+
+-- initialize RNG
 math.randomseed(os.time())
 
-package.cpath = "lgob/lib/lua/5.1/?.so"
+require "lfs"
+
+-- auto-expanding stub tables - FIXME discard this when we no longer need stubs
+function stubify(name)
+	local mt = {}
+	
+	function mt:__call(...)
+		print("STUB", name, ...)
+		if ui.message then
+			felt.log("STUB: %s", name)
+		end
+	end
+	
+	function mt:__index(key)
+		self[key] = stubify(name.."."..key)
+		return self[key]
+	end
+	
+	return setmetatable({}, mt)
+end
 
 -- an xpcall that permits varargs
 function va_xpcall(f, e, ...)
@@ -15,12 +39,10 @@ function table.pack(...)
     return { n = select('#', ...), ... }
 end
 
--- instantiate something on all nodes simultaneously
+-- instantiate something using 'new "type" {ctor}'
 function new(type)
     return function(...)
-        local obj = require(type)(...)
-        print("new", type, obj.id, felt.widgets[obj.id])
-        return obj
+        return require(type)(...)
     end
 end
 

@@ -2,29 +2,9 @@ require "lgob.gdk"
 require "lgob.gtk"
 require "lgob.cairo"
 
---[[
-UI:add_table
-UI:remove_table
-UI:set_held
-UI:log
-UI:set_info(text, image)
---]]
-
 ui = {}
 
-function ui.run()
-	require "ui.mainwindow" .window :show_all()
-	
-	gtk.main()
-end
-
-function ui.message(str)
-	print("log", str)
-	local win = require "ui.mainwindow"
-	win.messages:get_buffer():insert_at_cursor(str.."\n", #str+1)
-end
-
-function gtk.Builder.new_from_file(file)
+function gtk.Builder.new_from_file(file, root)
 	local builder = gtk.Builder.new()
 
 	local success,code,err = builder:add_from_file(file)
@@ -56,3 +36,7 @@ function gtk.Builder.new_from_file(file)
 		end;
 	})
 end
+
+require "ui.api"
+require "ui.field"
+require "ui.mainwindow"

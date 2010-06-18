@@ -63,10 +63,10 @@
                   <object class="GtkMenu" id="menu2">
                     <property name="visible">True</property>
                     <child>
-                      <object class="GtkMenuItem" id="menu_newtable">
+                      <object class="GtkMenuItem" id="menu_new_field">
                         <property name="visible">True</property>
-                        <property name="tooltip_text" translatable="yes">Create a new, empty table window</property>
-                        <property name="label" translatable="yes">_New Table</property>
+                        <property name="tooltip_text" translatable="yes">Create a new, empty field window</property>
+                        <property name="label" translatable="yes">_New Field</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
@@ -89,17 +89,17 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="menu_load_table">
+                      <object class="GtkMenuItem" id="menu_load_field">
                         <property name="visible">True</property>
-                        <property name="tooltip_text" translatable="yes">Load a single table which was saved earlier</property>
-                        <property name="label" translatable="yes">Load _Table...</property>
+                        <property name="tooltip_text" translatable="yes">Load a single field which was saved earlier</property>
+                        <property name="label" translatable="yes">Load _Field...</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menu_load_module">
                         <property name="visible">True</property>
-                        <property name="tooltip_text" translatable="yes">Load a game module, which may contain several tables</property>
+                        <property name="tooltip_text" translatable="yes">Load a game module, which may contain several fields</property>
                         <property name="label" translatable="yes">Load _Module...</property>
                         <property name="use_underline">True</property>
                       </object>
@@ -168,38 +168,13 @@
               </packing>
             </child>
             <child>
-              <object class="GtkHPaned" id="hpaned1">
+              <object class="GtkScrolledWindow" id="list_players_window">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hscrollbar_policy">never</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <child>
-                  <object class="GtkScrolledWindow" id="list_players_window">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">never</property>
-                    <property name="vscrollbar_policy">automatic</property>
-                    <child>
-                      <placeholder/>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="resize">True</property>
-                    <property name="shrink">True</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="list_tables_window">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">never</property>
-                    <property name="vscrollbar_policy">automatic</property>
-                    <child>
-                      <placeholder/>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="resize">True</property>
-                    <property name="shrink">True</property>
-                  </packing>
+                  <placeholder/>
                 </child>
               </object>
               <packing>
