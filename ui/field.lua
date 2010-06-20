@@ -16,8 +16,12 @@ function ui.field(field)
     --]]
     
     function win.surface:realize()
-		local size = math.max(self:get_size())
-		self:set("width-request", size, "height-request", size)
+    	if field.w and field.h then
+    		self:set("width-request", field.w, "height-request", field.h)
+    	else
+    		local size = math.max(self:get_size())
+    		self:set("width-request", size, "height-request", size)
+    	end
 	end
 
     function win.surface:expose_event()

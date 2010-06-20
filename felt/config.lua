@@ -50,7 +50,7 @@ function felt.config.load(file)
 	
 	configuration = felt.deserialize(fin:read '*a')
 	fin:close()
-	felt.log('Configuration loaded from "%s".', file)
+	felt.log('Configuration loaded.', file)
 	
 	return true
 end
@@ -65,6 +65,5 @@ function felt.config.save(file)
 	else
 		fout:write(felt.serialize(configuration))
 		fout:close()
-		felt.log("Configuration saved to %s.", file)
 	end
 end
