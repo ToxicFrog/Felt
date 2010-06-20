@@ -18,6 +18,7 @@ local function serialize(...)
     end)(...)
 end
 
+--[[
 local function net_serialize(v, ...)
     if v == nil and select('#', ...) == 0 then return "" end
     
@@ -31,6 +32,7 @@ local function net_serialize(v, ...)
     
     return error("Cannot serialize type '"..type(v).."'")
 end
+--]]
 
 function repr.string(s)
     return string.format("S%08d%s", #s, s)
@@ -57,5 +59,5 @@ end
 
 repr["nil"] = function() return "." end
 
-felt.serialize = serialize
+string.serialize = serialize
 

@@ -1,3 +1,4 @@
+
 function felt.save_settings()
     love.filesystem.write("config", felt.serialize(felt.config))
 end
@@ -24,6 +25,7 @@ function felt.load_settings()
         }
     end
     commit()
+	print("load", felt.config)
 end
 
 felt.load_settings()
