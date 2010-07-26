@@ -2,6 +2,8 @@ require "lgob.gdk"
 require "lgob.gtk"
 require "lgob.cairo"
 
+require "ui.lgobfix"
+
 ui = {}
 
 function gtk.Builder.new_from_file(file, root)

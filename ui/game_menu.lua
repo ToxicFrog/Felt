@@ -14,15 +14,8 @@ end
 
 -- Game -> New Field
 function win.menu_new_field:activate()
-	felt.newtable()
-	local field = {
-		draw = function(self, cr)
-			cr:set_source_rgba(0, 0, 1, 1)
-			cr:rectangle(-10, -10, 20, 20)
-			cr:fill()
-		end;
-	}
-	ui.field(field).window:show_all()
+	--felt.newtable()
+	ui.field(new "felt.Field" {}).window:show_all()
 end
 
 -- Game -> Save

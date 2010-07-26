@@ -59,5 +59,5 @@ end
 
 repr["nil"] = function() return "." end
 
-string.serialize = serialize
+felt.serialize = serialize
 

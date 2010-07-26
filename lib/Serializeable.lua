@@ -1,6 +1,10 @@
 local Object = require "Object"
 local Serializeable = Object:subclass "Serializeable"
 
+Serializeable:defaults {
+	id = false
+}
+
 Serializeable.save = new "CallableSet" {}
 
 function Serializeable:__clone(child)
@@ -9,6 +13,10 @@ end
 
 function Serializeable:__init(...)
 	Object.__init(self, ...)
+	
+	if self.id then
+		-- FIXME assign an ID to this object
+	end
 end
 
 function Serializeable:__save()

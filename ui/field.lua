@@ -1,19 +1,93 @@
 ui.fields = {}
 
+-- events are:
+-- click_{left,center,right}
+-- drag_{left,center,right}
+-- key_*
+-- move
+-- enter
+-- leave
+
+local buttonnames = { "left", "middle", "right" }
+
+local dirnames = {
+	[0] = "up",
+	[1] = "down",
+	[2] = "left",
+	[3] = "right",
+}
+
+local function keystate(n)
+	local state = {}
+
+	for _,key in ipairs { "shift", "lock", "ctrl", "alt" } do
+		if n % 2 == 1 then
+			state[key] = true
+			n = n - 1
+		end
+		n = n/2
+	end
+	
+	return state
+end
+
 function ui.field(field)
 	local win = gtk.Builder.new_from_file("ui/field.glade")
 	
-    for _,event in ipairs { "EXPOSURE", "POINTER_MOTION", "BUTTON_MOTION",
-    	"BUTTON_PRESS", "KEY_PRESS", "ENTER_NOTIFY", "LEAVE_NOTIFY"
-    } do
-    	win.surface:add_events(gdk[event.."_MASK"])
-    end
+	local mouse_x,mouse_y = 0,0
+	local _,x,y = nil,0,0
+	
+	local events = {}
+	
+	local function dispatch(...)
+		if field:dispatchEvent(...) then
+			win.surface:queue_draw()
+		end
+	end
+	
+	function events:motion_notify(evt)
+		_,x,y = gdk.Event.get_coords(evt)
+			
+		dispatch("motion", x, y)
+	end
+	
+	function events:button_press(evt)
+		local button,state = gdk.Event.buttons(evt)
+		_,x,y = gdk.Event.get_coords(evt)
+		
+		button = buttonnames[button]
+		state = keystate(state)
+		
+		dispatch("click_"..button, x, y, state)
+	end
+	
+	function events:scroll(evt)
+		local direction,state = gdk.Event.scroll(evt)
+		_,x,y = gdk.Event.get_coords(evt)
+			
+		direction = dirnames[direction]
+		state = keystate(state)
+		
+		dispatch("scroll_"..direction, x, y, state)
+	end
+	
+	function events:key_press(evt)
+		local key,state = gdk.Event.keys(evt)
+		if key <= 0 or key > 255 then return end
+		
+		-- key events in GTK don't have mouse coordinates attached
+		-- fortunately the x and y upvalues were updated last time a mouse
+		-- event happened
+		
+		key = string.char(key)
+		state = keystate(state)
+		
+		dispatch("key_"..key, x, y, state)
+	end
 
-    --[[
-    obj:connect("motion-notify-event", felt.Table.motion, obj)
-    obj:connect("enter-notify-event", felt.Table.enterleave, obj)
-    obj:connect("leave-notify-event", felt.Table.enterleave, obj)
-    --]]
+    for _,event in ipairs { "motion-notify", "key-press", "button-press", "scroll" } do
+    	win.surface:connect(event.."-event", events[event:gsub("-", "_")], field)
+    end
     
     function win.surface:realize()
     	if field.w and field.h then
@@ -38,35 +112,10 @@ function ui.field(field)
     	cr:rotate(0)
     	
     	-- draw the underlying field
-    	field:draw(cr)
+    	field:render(cr)
     	
     	cr:destroy()
     end
 
 	return win;
 end
-
---[[
-function felt.Table:motion(evt)
-    local _,x,y = gdk.Event.get_coords(evt)
-    getmetatable(self).x = x
-    getmetatable(self).y = y
-    self:queue_draw()
-end
-
-function felt.Table:enterleave(evt)
-    local mt = getmetatable(self)
-    mt.mouse = true
-end
--- Test program
-
-local window = gtk.Window.new()
-
-window:set("title", "Felt", "window-position", gtk.WIN_POS_CENTER)
-window:connect("delete-event", gtk.main_quit)
-window:set("width-request", 200, "height-request", 200)
-
-window:add(felt.Table.new())
-window:show_all()
-gtk.main()
---]]

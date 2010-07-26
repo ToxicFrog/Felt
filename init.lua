@@ -1,6 +1,8 @@
 -- set up library search paths
-package.path = "?.lua;?/init.lua;"..package.path
+package.path = "?.lua;lib/?.lua;?/init.lua;modules/?.lua;"..package.path
 package.cpath = "lib/?.so;lib/?.dll;"..package.cpath
+
+require "debugger"
 
 -- initialize RNG
 math.randomseed(os.time())

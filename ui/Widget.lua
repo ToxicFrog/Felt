@@ -1,4 +1,4 @@
-local Widget = require("Object"):subclass "Widget"
+local Widget = require("Serializeable"):subclass "Widget"
 
 Widget:defaults {
     x = 0,
@@ -6,6 +6,7 @@ Widget:defaults {
     z = 0,
     w = 16,
     h = 16,
+    scale = 1,
     z_sort = L 'lhs,rhs -> lhs.z > rhs.z';
     visible = true;
     focused = false;
@@ -14,36 +15,136 @@ Widget:defaults {
     mixins = {};
 }
 
-Widget:save "x" "y" "z" "w" "h" "id" "mixins" "__type"
-
-function Widget:setHidden() end
-
 function Widget:__init(...)
-    self.children = setmetatable({}, { __call = function() return self:ichildren() end })
+	self.children = {}
     Object.__init(self, ...)
     
-    function self:mixin(name, ...)
-        table.insert(self.mixins, { name, ... })
-        require("mixins."..name)(self, ...)
+    for i,child in ipairs((...)) do
+    	self:add(child)
     end
-    
-    if self.id then
-        felt.id(self)
-    end
-    
-    if self.menu and self.menu._NAME ~= "Menu" then
-        self.menu = new "Menu" (self.menu)
-        self.menu.context = self
-    end
-    
-    if self.id and self.menu then
-    	print("init complete", self.id, self, self.__type, self._NAME, self.menu)
-	end
 end
 
 function Widget:__tostring()
     return self.name or self.title or self._NAME
 end
+
+-- recieve an event
+-- event handling rules are as follows:
+-- - parent's "before" or "event_before"
+-- - all children in Z-order
+-- - parent's event handler or event()
+function Widget:dispatchEvent(evt, x, y, ...)
+	print("event", evt, x, y, ...)
+    local function callhandler(key, ...)
+        local eventhandler = self[key]
+        if eventhandler then
+            local result = eventhandler(self, ...)
+            assert(type(result) == "boolean", "event handler "..self._NAME..":"..key.." did not return a value")
+            return result
+        end
+    end
+    
+    local r = callhandler(evt.."_before", x, y, ...)
+    	   or callhandler("event_before", evt, x, y, ...)
+    if r then return r end
+
+    for child in self:childrenDescending() do
+        if child:inBounds(child:parentToChildCoordinates(x, y)) then
+        	local x,y = child:parentToChildCoordinates(x,y)
+            r = child:dispatchEvent(evt, x, y, ...)
+            if r then return r end
+        end
+    end
+
+    return callhandler(evt, x, y, ...) or callhandler("event", evt, x, y, ...)
+end
+
+-- translate coordinates in the parent's coordinate space to the child's.
+function Widget:parentToChildCoordinates(x, y)
+	return (x and x - self.x or nil), (y and y - self.y or nil)
+end
+
+-- return true if the specified coordinates are within the widget's bounding
+-- box. Coordinates are relative to the widget's coordinate space, so by default
+-- anything from (0,0) to (w,h) is in bounds.
+-- If x or y is unspecified, return true.
+function Widget:inBounds(x, y)
+	return (not x or not y)
+		or (x >= 0 and x <= self.w and y >= 0 and y <= self.h)
+end
+
+-- internal rendering function. Render self, then render all children in
+-- reverse order
+function Widget:render(cr)
+    if not self.visible then return end
+    
+    cr:translate(self.x, self.y)
+    cr:scale(self.scale, self.scale)
+    
+    self:draw(cr)
+    
+    for child in self:childrenAscending() do
+    	cr:save()
+    	child:render(cr)
+    	cr:restore()
+    end
+end
+
+function Widget:draw(cr)
+	cr:set_source_rgba(1, 0, 0, 1)
+	cr:rectangle(0, 0, w, h)
+	cr:fill()
+end
+
+-- returns an iterator over the children of this widget in Z-order, that is to
+-- say, highest first
+function Widget:childrenDescending()
+	return coroutine.wrap(function()
+		for i=1,#self.children do
+			coroutine.yield(self.children[i])
+		end
+	end)
+end
+
+-- returns an iterator over the children of this widget in reverse Z-order, that
+-- is to say, lowest first
+function Widget:childrenAscending()
+	return coroutine.wrap(function()
+		for i=#self.children,1,-1 do
+			coroutine.yield(self.children[i])
+		end
+	end)
+end
+
+-- add a new child widget
+function Widget:add(child, x, y)
+    if child.parent then
+        child.parent:remove(child)
+    end
+    child.x = x or child.x
+    child.y = y or child.y
+    child.parent = self
+    self.children[#self.children+1] = child
+    self:sort()
+    return child
+end
+
+-- sort the children by Z-value
+function Widget:sort()
+    table.sort(self.children, self.z_sort)
+end
+
+do return Widget end
+
+-----------------------------
+-- old code
+-----------------------------
+
+--[==[
+function Widget:setHidden() end
+
+-- Widget:save "x" "y" "z" "w" "h" "id" "mixins" "__type" FIXME
+
 
 function Widget:__save()
     local buf = { "L" }
@@ -101,19 +202,6 @@ end
 --
 -- functions for manipulating children
 --
-
--- add a new child widget
-function Widget:add(child, x, y)
-    if child.parent then
-        child.parent:remove(child)
-    end
-    child.x = x or child.x
-    child.y = y or child.y
-    child.parent = self
-    self.children[#self.children+1] = child
-    self:sort()
-    return child
-end
 
 -- remove a child widget
 function Widget:remove(child)
@@ -220,67 +308,13 @@ function Widget:find(x, y)
     end
 end
 
--- sort the children by Z-value
-function Widget:sort()
-    table.sort(self.children, self.z_sort)
-end
-
 --
 -- event handling
 --
 
--- recieve an event
--- first, we see if we have an event handler for it, and if so call it
--- if it returns true, the event stops there
--- otherwise, dispatch it also to our children, with the same rules   
-function Widget:event(type, x, y, ...)
-    if not self.visible then return end
-    
-    local function callhandler(key, alt, ...)
-        local eventhandler = self[key] or self[alt]
-        if eventhandler then
-            local result = eventhandler(self, x, y, ...)
-            assert(result or result == false, "event handler "..self._NAME..":"..key.." did not return a value")
-            return result
-        end
-    end
-    
-    local r = callhandler(type.."_before", "all_events_before", ...)
-    if r then return r end
-
-    for child in self:children() do
-        if not x or child:inBounds(x - child.x, y - child.y) then
-            r = child:event(type, x and x - child.x, y and y - child.y, ...)
-            if r then return r end
-        end
-    end
-
-    return callhandler(type, "all_events", ...)
-end
-
 --
 -- drawing functions
 --
-
--- internal rendering function. Render self, then render all children in
--- reverse order
-function Widget:render(scale, x, y, w, h)
-    if not self.visible then return end
-    x = math.floor(x)
-    y = math.floor(y)
-    
-    if self:draw(scale, x, y, w, h) then return end
-    
-    for i=#self.children,1,-1 do
-        local child = self.children[i]
-        
-        child:render(scale
-            , child.x * scale + x
-            , child.y * scale + y
-            , child.w * scale
-            , child.h * scale)
-    end
-end
 
 -- overloadable drawing function. Draw this widget to the screen at the specified
 -- coordinates and scale
@@ -335,6 +369,4 @@ function Widget:leave()
     self.focused = false
     return false
 end
-
-return Widget
-
+--]==]--

@@ -45,7 +45,7 @@ function _M:clone()
     return self:cloneto {}
 end
 
-function _M:instanceof(t)
+function _M:isInstanceOf(t)
     if type(self) == t then
         return true
     elseif self._NAME == t then
@@ -85,8 +85,13 @@ function _M:subclass(name)
     module(name)
     self:cloneto(package.loaded[name])
     package.loaded[name]._NAME = name
+    package.loaded[name]._SUPER = self
     package.loaded[name].mixins = { unpack(self.mixins) }
-    return setmetatable(package.loaded[name], { __call = package.loaded[name].__new, __class = name })
+    return setmetatable(package.loaded[name], {
+    	__call = package.loaded[name].__new;
+    	__class = name;
+    	__super = self;
+    })
 end
 
 function _M:defaults(t)
@@ -96,6 +101,7 @@ function _M:defaults(t)
 end
 
 function _M:close(method)
+	method = type(method) == "string" and self[method] or method
     return function(...)
         return method(self, ...)
     end

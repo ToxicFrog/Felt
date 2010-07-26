@@ -3,9 +3,13 @@ local Token = require("Widget"):subclass "felt.Token"
 Token:defaults {
     name = "token";
     id = true;
-    hidden = false;
-    theta = 0;
 }
+
+function Token:click_left()
+	self:pickup()
+end
+
+do return Token end
 
 Token:persistent "name" "hiddenname" "theta"
 
@@ -41,29 +45,6 @@ function Token:__tostring()
     end
     return self.name or self._NAME or "(unnamed object)"
 end
-
--- internal rendering function. Render self, then render all children in
--- reverse order
-function Token:render(scale, x, y, w, h)
-    if not self.visible then return end
-    x = math.floor(x)
-    y = math.floor(y)
-    
-    local method = self.hidden and "drawHidden" or "draw"
-    
-    if self[method](self, scale, x, y, w, h) then return end
-    
-    for i=#self.children,1,-1 do
-        local child = self.children[i]
-        
-        child:render(scale
-            , child.x * scale + x
-            , child.y * scale + y
-            , child.w * scale
-            , child.h * scale)
-    end
-end
-
 
 function Token:draw(scale, x, y, w, h)
     love.graphics.setColour(255, 255, 255)
