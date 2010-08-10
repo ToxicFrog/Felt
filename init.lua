@@ -1,6 +1,6 @@
 -- set up library search paths
 package.path = "?.lua;lib/?.lua;?/init.lua;modules/?.lua;"..package.path
-package.cpath = "lib/?.so;lib/?.dll;"..package.cpath
+--package.cpath = "lib/?.so;lib/?.dll;"..package.cpath
 
 require "debugger"
 

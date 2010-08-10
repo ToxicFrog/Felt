@@ -1,19 +1,8 @@
-ui.mainwindow = gtk.Builder.new_from_file("ui/felt.glade")
+ui.win = ui.loadFile("ui/felt.glade")
 
-require "ui.felt_menu"
-require "ui.game_menu"
+require "ui.settings"
+require "ui.join_game"
+require "ui.host_game"
 
-local win = ui.mainwindow
-
--- hook up the kill-window decoration
-function win.window:delete_event()
-	os.exit() -- FIXME - proper shutdown
-end
-
--- Help -> about
-function win.menu_about:activate()
-	win.dialog_about:run()
-	win.dialog_about:hide()
-end
-
-return win
+ui.win.main_window:connect("delete-event", gtk.main_quit)
+ui.win.message_window:connect("delete-event", gtk.main_quit)

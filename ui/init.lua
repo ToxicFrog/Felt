@@ -1,31 +1,20 @@
-require "lgob.gdk"
-require "lgob.gtk"
-require "lgob.cairo"
-
-require "ui.lgobfix"
+require "gtk"
+require "gdk"
+require "cairo"
 
 ui = {}
 
-function gtk.Builder.new_from_file(file, root)
-	local builder = gtk.Builder.new()
-
-	local success,code,err = builder:add_from_file(file)
-	local seen_err = {}
-	while not success do
-		if err:match("^Invalid object type") and not seen_err[err] then
-			seen_err[err] = true
-			gtk[err:match("Invalid object type `Gtk(.*)'")].new()
-			success,code,err = builder:add_from_file(file)
-		else
-			error(err)
-		end
-	end
+function ui.loadFile(file)
+	local builder = gtk.builder_new()
+	
+	local success,code,err = builder:add_from_file(file, gnome.NIL)
+	assert(success, err)
 	
 	local function wrapwidget(widget)
-		if getmetatable(widget).__newindex then return widget end
+		local old_newindex = getmetatable(widget).__newindex
 		getmetatable(widget).__newindex = function(self, key, value)
 			if type(value) ~= "function" then
-				self[key] = value; return
+				return old_newindex(self, key, value)
 			end
 			self:connect(key:gsub("_", "-"), value, self)
 		end

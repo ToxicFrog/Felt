@@ -1,6 +1,0 @@
-#! /usr/bin/env sh
-
-# Fix for your path
-cd DESTDIR/share/lua/5.1/lgob
-
-./gir-parser.lua "$@"
