@@ -10,8 +10,6 @@
 
 local file = nil
 
-server = stubify("server")
-
 -- automatically save configuration settings on page change
 -- FIXME: do we want to save more settings than just these?
 function ui.win.main_notebook:switch_page(...)
@@ -46,4 +44,5 @@ function ui.win.host_ok:clicked()
 	end
 	
 	server.start(port, pass, file)
+	client.connectlocal()
 end

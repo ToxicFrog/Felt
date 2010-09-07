@@ -1,0 +1,3 @@
+server = {}
+
+require "server.api"
