@@ -1,10 +1,4 @@
-local configuration = {
-	["name"]      = "Player";
-	["colour"]    = "#FF0000";
-	["join-host"] = "localhost";
-	["join-port"] = 8088;
-	["host-port"] = 8088;
-}
+local configuration = {}
 
 felt.config = {
 	dirty = false;
@@ -34,7 +28,7 @@ function felt.config.init()
 	felt.config.file = felt.userdir.."configuration"
 
 	if not felt.config.load() then
-		felt.log("Unable to load configuration file, creating default configuration.")
+		felt.log("Creating default configuration.")
 		felt.config.save()
 	end
 end
@@ -44,13 +38,16 @@ function felt.config.load(file)
 	
 	local fin,err = io.open(file, "r")
 	if not fin then
-		felt.log('Unable to load configuration file "%s": %s', file, err)
+		felt.log('Unable to load configuration file: %s', err)
 		return false
 	end
 	
 	configuration = felt.deserialize(fin:read '*a')
 	fin:close()
-	felt.log('Configuration loaded.', file)
+	felt.log('Configuration loaded from %s.', file)
+	for k,v in pairs(configuration) do
+		felt.log("    %s = %s", tostring(k), tostring(v))
+	end
 	
 	return true
 end
@@ -60,7 +57,7 @@ function felt.config.save(file)
 	
 	local fout,err = io.open(file, "w")
 	if not fout then
-		felt.log("Unable to create configuration file %s: %s", file, err)
+		felt.log("Unable to create configuration file: %s", err)
 		return false
 	else
 		fout:write(felt.serialize(configuration))

@@ -8,6 +8,7 @@ require "debugger"
 math.randomseed(os.time())
 
 require "lfs"
+require "List"
 
 -- auto-expanding stub tables - FIXME discard this when we no longer need stubs
 function stubify(name)
@@ -16,7 +17,7 @@ function stubify(name)
 	function mt:__call(...)
 		print("STUB", name, ...)
 		if ui.message then
-			felt.log("STUB: %s", name)
+			felt.log("STUB: %s (%s)", name, List(...):map(tostring):concat(","))
 		end
 	end
 	

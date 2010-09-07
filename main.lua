@@ -1,9 +1,15 @@
 require "init"
 require "felt"
+client = stubify("client") --require "client"
+server = stubify("server") --require "server"
 require "ui"
 
 felt.init()
 ui.run()
+
+-- FIXME: once ui.run returns, that indicates that the user requested a quit.
+-- If we're currently connected to or, god forbid, hosting a game, we need to
+-- shut that down cleanly before exiting.
 
 --[[
 
