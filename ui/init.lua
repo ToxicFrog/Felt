@@ -1,3 +1,4 @@
+require "glib"
 require "gtk"
 require "gdk"
 require "cairo"

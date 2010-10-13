@@ -37,7 +37,7 @@ return function()
 		
 		name = ""
 		colour = {
-			red   = math.random(0,65535);
+			red   = math.random(0, 65535);
 			green = math.random(0, 65535);
 			blue  = math.random(0, 65535);
 		}
