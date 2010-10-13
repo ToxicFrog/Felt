@@ -1,31 +1,25 @@
-local Widget = require("Serializeable"):subclass "Widget"
+local super = class(..., "felt.Object")
 
-Widget:defaults {
-    x = 0,
-    y = 0,
-    z = 0,
-    w = 16,
-    h = 16,
-    scale = 1,
-    z_sort = L 'lhs,rhs -> lhs.z > rhs.z';
-    visible = true;
-    focused = false;
-    save = false;
-    id = false;
-    mixins = {};
-}
+x,y,z = 0,0,0
+w,h = 16,16
+alpha = 1.0
+scale = 1.0
+z_sort = L 'lhs,rhs -> lhs.z > rhs.z'
+visible = true
+focused = false
+id = false
 
-function Widget:__init(...)
+function __init(self, ...)
 	self.children = {}
-    Object.__init(self, ...)
+    super.__init(self, ...)
     
     for i,child in ipairs((...)) do
     	self:add(child)
     end
 end
 
-function Widget:__tostring()
-    return self.name or self.title or self._NAME
+function __tostring(self)
+    return self.name or self.title or super.__tostring(self)
 end
 
 -- recieve an event
@@ -33,7 +27,7 @@ end
 -- - parent's "before" or "event_before"
 -- - all children in Z-order
 -- - parent's event handler or event()
-function Widget:dispatchEvent(evt, x, y, ...)
+function dispatchEvent(self, evt, x, y, ...)
 	print("event", evt, x, y, ...)
     local function callhandler(key, ...)
         local eventhandler = self[key]
@@ -60,7 +54,7 @@ function Widget:dispatchEvent(evt, x, y, ...)
 end
 
 -- translate coordinates in the parent's coordinate space to the child's.
-function Widget:parentToChildCoordinates(x, y)
+function parentToChildCoordinates(self, x, y)
 	return (x and x - self.x or nil), (y and y - self.y or nil)
 end
 
@@ -68,17 +62,17 @@ end
 -- box. Coordinates are relative to the widget's coordinate space, so by default
 -- anything from (0,0) to (w,h) is in bounds.
 -- If x or y is unspecified, return true.
-function Widget:inBounds(x, y)
+function inBounds(self, x, y)
 	return (not x or not y)
 		or (x >= 0 and x <= self.w and y >= 0 and y <= self.h)
 end
 
 -- internal rendering function. Render self, then render all children in
 -- reverse order
-function Widget:render(cr)
+function render(self, cr)
     if not self.visible then return end
     
-    cr:translate(self.x, self.y)
+	cr:translate(self.x, self.y)
     cr:scale(self.scale, self.scale)
     
     self:draw(cr)
@@ -90,15 +84,15 @@ function Widget:render(cr)
     end
 end
 
-function Widget:draw(cr)
+function draw(self, cr)
 	cr:set_source_rgba(1, 0, 0, 1)
-	cr:rectangle(0, 0, w, h)
+	cr:rectangle(0, 0, self.w, self.h)
 	cr:fill()
 end
 
 -- returns an iterator over the children of this widget in Z-order, that is to
 -- say, highest first
-function Widget:childrenDescending()
+function childrenDescending(self)
 	return coroutine.wrap(function()
 		for i=1,#self.children do
 			coroutine.yield(self.children[i])
@@ -108,7 +102,7 @@ end
 
 -- returns an iterator over the children of this widget in reverse Z-order, that
 -- is to say, lowest first
-function Widget:childrenAscending()
+function childrenAscending(self)
 	return coroutine.wrap(function()
 		for i=#self.children,1,-1 do
 			coroutine.yield(self.children[i])
@@ -117,7 +111,7 @@ function Widget:childrenAscending()
 end
 
 -- add a new child widget
-function Widget:add(child, x, y)
+function add(self, child, x, y)
     if child.parent then
         child.parent:remove(child)
     end
@@ -129,12 +123,60 @@ function Widget:add(child, x, y)
     return child
 end
 
+-- remove a child widget
+function remove(self, child)
+    for i,c in ipairs(self.children) do
+        if c == child then
+            table.remove(self.children, i)
+            return c
+        end
+    end
+    return nil
+end
+
 -- sort the children by Z-value
-function Widget:sort()
+function sort(self)
     table.sort(self.children, self.z_sort)
 end
 
-do return Widget end
+-- raise this widget to the top of the stack
+function raise(self)
+	-- widgets pinned at top or bottom ignore raise
+    if self.z == -math.huge or self.z == math.huge then return end
+    
+    local z = 0
+    
+    for sibling in self.parent:childrenDescending() do
+    	if sibling.z == -math.huge then break end
+    	if sibling.z < math.huge then
+    		z = sibling.z + 1
+    		break
+    	end
+    end
+    
+    self.z = z
+    self.parent:sort()
+end
+
+function lower(self)
+	-- widgets pinned at top or bottom ignore raise
+    if self.z == -math.huge or self.z == math.huge then return end
+    
+    local z = 0
+    
+    for sibling in self.parent:childrenDescending() do
+    	if sibling.z == math.huge then break end
+    	if sibling.z > -math.huge then
+    		z = sibling.z - 1
+    		break
+    	end
+    end
+    
+    self.z = z
+    self.parent:sort()
+end
+
+
 
 -----------------------------
 -- old code
@@ -203,26 +245,6 @@ end
 -- functions for manipulating children
 --
 
--- remove a child widget
-function Widget:remove(child)
-    for i,c in ipairs(self.children) do
-        if c == child then
-            table.remove(self.children, i)
-            return c
-        end
-    end
-    return nil
-end
-
--- iterate over all children of this widget, in order
-function Widget:ichildren()
-    local i = 0
-    return function()
-        i = i+1
-        return self.children[i]
-    end
-end
-
 function Widget:hide()
     self:event("leave")
     self.parent:remove(self)
@@ -261,41 +283,6 @@ function Widget:inBounds(x, y)
     and y > 0
     and x < self.w
     and y < self.h
-end
-
--- raise this widget to the top of the stack
-function Widget:raise()
-    if self.z == -math.huge or self.z == math.huge then return end
-    
-    local siblings = self.parent.children
-    local z = 0
-    
-    for i=1,#siblings do
-        if siblings[i].z == -math.huge then break end
-        if siblings[i].z < math.huge then
-            z = siblings[i].z + 1
-            break
-        end
-    end
-    self.z = z
-    self.parent:sort()
-end
-
-function Widget:lower()
-    if self.z == -math.huge or self.z == math.huge then return end
-
-    local siblings = self.parent.children
-    local z = 0
-    
-    for i=#siblings,1,-1 do
-        if siblings[i].z == math.huge then break end
-        if siblings[i].z > -math.huge then
-            z = siblings[i].z - 1
-            break
-        end
-    end
-    self.z = z
-    self.parent:sort()
 end
 
 

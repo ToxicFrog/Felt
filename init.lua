@@ -8,26 +8,6 @@ require "debugger"
 math.randomseed(os.time())
 
 require "lfs"
-require "List"
-
--- auto-expanding stub tables - FIXME discard this when we no longer need stubs
-function stubify(name)
-	local mt = {}
-	
-	function mt:__call(...)
-		print("STUB", name, ...)
-		if ui.message then
-			felt.log("STUB: %s (%s)", name, List(...):map(tostring):concat(","))
-		end
-	end
-	
-	function mt:__index(key)
-		self[key] = stubify(name.."."..key)
-		return self[key]
-	end
-	
-	return setmetatable({}, mt)
-end
 
 -- an xpcall that permits varargs
 function va_xpcall(f, e, ...)
@@ -35,6 +15,14 @@ function va_xpcall(f, e, ...)
     local argv = {...}
     
     return xpcall(function() return f(unpack(argv,1,argc)) end, e)
+end
+
+-- an unpack that respects t.n rather than using #
+local _unpack = unpack
+function unpack(t, first, last)
+	first = first or 1
+	last  = last or t.n or #t
+	return _unpack(t, first, last)
 end
 
 -- converse of unpack
@@ -62,3 +50,17 @@ end
 function L(src)
     return assert(loadstring(src:gsub("%s+%-%>%s+", " = ...; return ")))
 end
+
+-- Class(Object, SubClass)
+function Class(super, name)
+	if not name then
+		name,super = super,Object
+	end
+	
+	if type(super) == "string" then
+		super = require(super)
+	end
+	
+	return super:subclass(name)
+end
+

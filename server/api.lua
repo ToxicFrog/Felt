@@ -1,16 +1,14 @@
 -- public API to the server subsystem
 
-server.is_running = false
-
 function server.start(port, pass, file)
-	assert(not server.is_running, "Server is already running!")
+	assert(not server.server, "Server is already running!")
 	local game
 	
 	if file then
-		-- load game from file
+		-- load game from file - FIXME
 		game = deserialize_file(file)
 	else
-		game = new "Game" {}
+		game = new "felt.Game" {}
 	end
 	
 	server.server = new "server.Server" {
@@ -18,15 +16,25 @@ function server.start(port, pass, file)
 		port = port;
 		pass = pass;
 	}
-	
-	server.server:start()
-	
-	server.is_running = true	
 end
 
-function server.stop()
-	assert(server.is_running, "Server is already stopped")
+function server.stop(reason)
+	assert(server.server, "Server is already stopped")
 	
-	server.server:stop()
+	server.server:shutdown(reason)
 	server.server = nil
+end
+
+function server.update()
+	if server.server then
+		server.updating = true
+		server.server:update()
+		server.updating = false
+	end
+	return true
+end
+
+function server.broadcast(...)
+	assert(server.server)
+	server.server:broadcast(...)
 end

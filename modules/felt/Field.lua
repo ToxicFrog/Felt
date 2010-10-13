@@ -1,19 +1,34 @@
-local Field = require("ui.Widget"):subclass "Field"
+local super = class(..., "felt.Widget")
 
-Field:defaults {
-    id = true;
-    w = false; -- the UI will autoselect a reasonable width and height
-    h = false; -- set these to override that behaviour
-    name = "(untitled field)";
-}
+id = true
+w = false
+h = false
+name = "(untitled field)"
 
-function Field:__init(...)
-    Widget.__init(self, ...)
+function __init(self, ...)
+    super.__init(self, ...)
     
     self.vis = self.vis or { [felt.config.get "name"] = true }
 end
 
-do return Field end
+function draw(self)
+	-- no-op
+end
+
+function click_left_before(self, x, y)
+	if felt.me.held then
+		return self:dispatchEvent("drop", x, y, felt.me.held)
+	end
+	return false
+end
+
+function drop(self, x, y, item)
+	felt.me:drop(self, x, y)
+    
+    return true
+end
+
+do return end
 
 Table:persistent "name" "visibleTo"
 
@@ -35,14 +50,6 @@ function Table:drag_right(x, y, dx, dy)
     return true
 end
 Table.drag_middle = Table.drag_right
-
-function Table:drop(x, y, item)
-    felt.held = nil
-    item:moveto(self, x - item.w/2, y - item.h/2)
-    item:raise()
-    
-    return true
-end
 
 function Table:key_c()
     self:pan(0,0)

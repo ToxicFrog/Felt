@@ -1,15 +1,43 @@
-local Token = require("Widget"):subclass "felt.Token"
+local super = class(..., "felt.Widget")
 
-Token:defaults {
-    name = "token";
-    id = true;
-}
+name = "token"
+id = true
 
-function Token:click_left()
-	self:pickup()
+function click_left(self)
+	felt.me:pickup(self)
+	return true
 end
 
-do return Token end
+-- move the token to a new parent
+-- moveto(nil) can be used to remove a token from the object heirarchy entirely
+-- without deleting it
+function moveto(self, parent, x, y)
+	if self.parent then
+		self.parent:remove(self)
+	end
+	if parent then
+		parent:add(self, x, y)
+	end
+end
+
+function render(self, cr)
+	if self.held_by then
+		local colour = self.held_by.colour
+		cr:push_group()
+		cr:set_source_rgb(0, 1, 1)
+		cr:rectangle(self.x - 2, self.y - 2, self.w+4, self.h+4)
+		cr:fill()
+	end
+	
+	super.render(self, cr)
+	
+	if self.held_by then
+		cr:pop_group_to_source()
+		cr:paint_with_alpha(0.5)
+	end
+end
+
+do return end
 
 Token:persistent "name" "hiddenname" "theta"
 
@@ -54,30 +82,6 @@ end
 function Token:drawHidden(scale, x, y, w, h)
     love.graphics.setColour(0, 0, 0)
     love.graphics.rectangle("fill", x, y, w, h)
-end
-
-function Token:moveto(parent, ...)
-    if parent and self.parent then
-        felt.log("%s moves %s from %s to %s"
-            , felt.config.name
-            , tostring(self)
-            , tostring(self.parent)
-            , tostring(parent))
-        self.parent:remove(self)
-        parent:add(self, ...)
-    elseif self.parent then
-        felt.log("%s takes %s from %s"
-            , felt.config.name
-            , tostring(self)
-            , tostring(self.parent))
-        self.parent:remove(self)
-    elseif parent then
-        felt.log("%s places %s on %s"
-            , felt.config.name
-            , tostring(self)
-            , tostring(parent))
-        parent:add(self, ...)
-    end
 end
 
 function Token:add(child, ...)

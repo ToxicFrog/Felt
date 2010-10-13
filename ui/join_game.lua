@@ -6,8 +6,6 @@
 --  join_password - the game password, if reuired (server will ignore it if it's not)
 --  join_ok       - the button that makes the magic happen
 
-client = stubify("client")
-
 -- automatically save configuration settings on page change
 function ui.win.main_notebook:switch_page(...)
 	local host = ui.win.join_host:get("text")

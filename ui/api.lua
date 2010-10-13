@@ -3,11 +3,18 @@
 
 -- Enter the UI mainloop. Called once the initialization routines are done
 -- setting everything up. Returns on program exit.
+
 function ui.run()
 	require "ui.settings" ()
 	
 	ui.win.main_window:show_all()
 	ui.win.message_window:show_all()
+	
+	server.update_closure = gnome.closure(server.update)
+	client.update_closure = gnome.closure(client.update)
+	
+	glib.timeout_add(50, server.update_closure, nil)
+	glib.timeout_add(50, client.update_closure, nil)
 	
 	gtk.main()
 end
@@ -42,15 +49,19 @@ function ui.set_info(text, image)
 	ui.message("STUB: set_info")
 end
 
--- Add a new field to the display.
-function ui.add_field(field)
-	--FIXME update field list
-	ui.fields[field] = ui.field(field)
+function ui.show_game(game)
+	assert(not ui.game, "double call to ui.show_game")
+	ui.game = game
+	
+	ui.win.main_window:hide_all()
+	for _,field in pairs(ui.game.fields) do
+		ui.show_field(field)
+	end
+	
+	-- FIXME: enable player/field visibility controls
 end
 
--- Remove a field from the display.
-function ui.remove_field(field)
-	-- FIXME update field list
-	ui.fields[field]:destroy()
-	ui.fields[field] = nil
+function ui.show_field(field)
+	assert(ui.game, "call to ui.show_field before ui.show_game")
+	ui.field(field).window:show_all()
 end

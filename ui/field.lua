@@ -11,11 +11,14 @@ ui.fields = {}
 local buttonnames = { "left", "middle", "right" }
 
 local dirnames = {
-	[0] = "up",
-	[1] = "down",
-	[2] = "left",
-	[3] = "right",
+	["GdkScrollDirection:GDK_SCROLL_UP"] = "up",
+	["GdkScrollDirection:GDK_SCROLL_DOWN"] = "down",
+	["GdkScrollDirection:GDK_SCROLL_UP"] = "left",
+	["GdkScrollDirection:GDK_SCROLL_UP"] = "right",
 }
+local function dirname(dir)
+	return tostring(dir):match("[^_]+$"):lower()
+end
 
 local function keystate(n)
 	local state = {}
@@ -32,28 +35,29 @@ local function keystate(n)
 end
 
 function ui.field(field)
-	local win = gtk.Builder.new_from_file("ui/field.glade")
-	
-	local mouse_x,mouse_y = 0,0
-	local _,x,y = nil,0,0
+	local win = ui.loadFile("ui/field.glade")
+	win.window:set_title(field.name)
+
+	local x,y = 0,0
 	
 	local events = {}
 	
 	local function dispatch(...)
 		if field:dispatchEvent(...) then
-			win.surface:queue_draw()
+--			win.surface:queue_draw() FIXME - currently this happens automatically every 100ms
+			return
 		end
 	end
 	
 	function events:motion_notify(evt)
-		_,x,y = gdk.Event.get_coords(evt)
+		x,y = evt.motion.x,evt.motion.y
 			
 		dispatch("motion", x, y)
 	end
 	
 	function events:button_press(evt)
-		local button,state = gdk.Event.buttons(evt)
-		_,x,y = gdk.Event.get_coords(evt)
+		local button,state = evt.button.button,evt.button.state
+		x,y = evt.button.x,evt.button.y
 		
 		button = buttonnames[button]
 		state = keystate(state)
@@ -61,18 +65,27 @@ function ui.field(field)
 		dispatch("click_"..button, x, y, state)
 	end
 	
+	function events:enter_notify()
+		print("enter")
+	end
+	
+	function events:leave_notify()
+		print("leave")
+	end
+	
 	function events:scroll(evt)
-		local direction,state = gdk.Event.scroll(evt)
-		_,x,y = gdk.Event.get_coords(evt)
+		local direction,state = evt.scroll.direction,evt.scroll.state
+		x,y = evt.scroll.x,evt.scroll.y
 			
-		direction = dirnames[direction]
+		direction = dirname(direction)
 		state = keystate(state)
+		print(direction)
 		
 		dispatch("scroll_"..direction, x, y, state)
 	end
 	
 	function events:key_press(evt)
-		local key,state = gdk.Event.keys(evt)
+		local key,state = evt.key.keyval,evt.key.state
 		if key <= 0 or key > 255 then return end
 		
 		-- key events in GTK don't have mouse coordinates attached
@@ -93,14 +106,14 @@ function ui.field(field)
     	if field.w and field.h then
     		self:set("width-request", field.w, "height-request", field.h)
     	else
-    		local size = math.max(self:get_size())
+    		local size = math.max(self:get_window():get_size(0,0))
     		self:set("width-request", size, "height-request", size)
     	end
 	end
 
-    function win.surface:expose_event()
+    function win.surface:expose_event(evt)
     	local cr = gdk.cairo_create(self:get_window())
-    	local w,h = self:get_size()
+    	local w,h = self:get_window():get_size(0,0)
     	
     	cr:set_source_rgba(0, 0.5, 0, 1)
     	cr:rectangle(0, 0, w, h)
@@ -114,8 +127,27 @@ function ui.field(field)
     	-- draw the underlying field
     	field:render(cr)
     	
+    	-- if the player is holding something and the mouse is infield, draw that
+    	if felt.me.held then
+    		local item = felt.me.held
+    		cr:push_group()
+    		cr:translate(-item.x+x-item.w/2, -item.y+y-item.h/2)
+    		item:render(cr)
+    		cr:pop_group_to_source()
+    		cr:paint_with_alpha(0.5)
+    	end
+    	
     	cr:destroy()
+    	
+    	return false
     end
-
+    
+	local function redraw()
+		win.surface:queue_draw()
+		return true
+	end
+	field.redraw_closure = gnome.closure(redraw)
+	glib.timeout_add(50, field.redraw_closure, nil)
+	
 	return win;
 end

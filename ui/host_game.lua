@@ -44,5 +44,5 @@ function ui.win.host_ok:clicked()
 	end
 	
 	server.start(port, pass, file)
-	client.connectlocal()
+	client.connectlocal(pass)
 end

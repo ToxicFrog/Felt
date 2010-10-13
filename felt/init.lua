@@ -1,6 +1,9 @@
-require "lfs"
+-- the central library of the game
+-- this contains a variety of useful global functions, as well as globals
+-- important to the operation of the game itself such as the game state
+-- and configuration subsystem
 
-felt = stubify "felt"
+require "lfs"
 
 function felt.log(...)
 	ui.message(string.format(...))

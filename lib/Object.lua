@@ -1,5 +1,5 @@
-local pairs,setmetatable,module,package,require,unpack,ipairs,table,type
-    = pairs,setmetatable,module,package,require,unpack,ipairs,table,type
+local pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv
+	= pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv
 
 local print = print
 
@@ -18,7 +18,6 @@ end
 
 module(...)
 
-__super = false
 mixins = {}
 
 function _M:__init(t)
@@ -62,9 +61,7 @@ function _M:cloneto(child)
     for k,v in pairs(self) do
         child[k] = v
     end
-    
-    child.__super = self
-    
+        
     if self.__clone then
         self:__clone(child)
     end
@@ -75,29 +72,15 @@ end
 function _M:__new(...)
     local obj = self:clone()
     obj._NAME = self._NAME
+    obj._ID   = tostring(obj):gsub("^table: ", "")
     
     obj:__init(...)
 
     return setmetatable(obj, obj)
 end
 
-function _M:subclass(name)
-    module(name)
-    self:cloneto(package.loaded[name])
-    package.loaded[name]._NAME = name
-    package.loaded[name]._SUPER = self
-    package.loaded[name].mixins = { unpack(self.mixins) }
-    return setmetatable(package.loaded[name], {
-    	__call = package.loaded[name].__new;
-    	__class = name;
-    	__super = self;
-    })
-end
-
-function _M:defaults(t)
-    for k,v in pairs(t) do
-        self[k] = v
-    end
+function _M:__tostring()
+	return self._NAME.."("..self._ID..")"
 end
 
 function _M:close(method)
@@ -113,3 +96,35 @@ end
 
 _M.__type = _M._NAME
 
+function _G.class(name, superclass)
+	superclass = superclass or _M
+	
+	if type(superclass) == "string" then
+		superclass = require(superclass)
+	end
+	
+	module(name)
+	local class = package.loaded[name]
+	superclass:cloneto(class)
+	class._NAME = name
+	class._SUPER = superclass
+	class.mixins = { unpack(superclass.mixins) }
+	setmetatable(class, { __call = class.__new })
+	
+	local env = {}
+	local mt = {}
+	function mt:__index(key)
+		return class[key] or _G[key]
+	end
+	function mt:__newindex(key, value)
+		if type(value) == "function" then
+			setfenv(value, _G)
+		end
+		class[key] = value
+	end
+	
+	setmetatable(env, mt)
+	setfenv(2, env)
+	return superclass
+end
+	
