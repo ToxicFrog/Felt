@@ -9,19 +9,16 @@
 --   - this implies a set of clients and a broadcast API
 require "socket"
 
-local super = class(..., felt.Object)
+class(..., felt.Object)
 
 id = "S" -- the server always has id "S" so that clients can refer to it
+updating = false -- true during a server update step; the automatic RMI dispatcher
+-- needs to be able to tell whether it's executing in a server or client ctx
 
+local _init = __init
 function __init(self, t)
-	super.__init(self, t)
+	_init(self, t)
 	self.events = {}
-	self.players = {}
-	
-	assert(self.game, "No game state passed to server at initialization")
-	
-	self.socket = assert(socket.
-	--self.game:putObject(self) -- store the reference to the server in the game state
 end
 
 -- server message function, prefixes messages with [server]
@@ -31,10 +28,16 @@ end
 
 -- mainloop tick function, called every frame by main
 function update(self)
+	if not self.socket then return end
+	
+	self.updating = true
 	local i = 1
 	local events = self.events
 	
-	-- collect events from network sockets
+	-- TODO: collect events from network sockets
+	self:tryAccept()
+	
+	self:collectMessages()
 	
 	while events[i] do
 		self:dispatch(events[i])
@@ -42,6 +45,31 @@ function update(self)
 	end
 	
 	self.events = {}
+	self.updating = false
+end
+
+function tryAccept(self)
+	local sock = self.socket:accept()
+	if sock then
+		print("connection accepted", sock)
+	end
+	table.insert(self.sockets, sock)
+end
+
+function collectMessages(self)
+	local ready = socket.select(self.sockets, {}, 0)
+	for i=1,#self.sockets do
+		if ready[i] then
+			local buf,err = ready[i]:receive()
+			if not buf then
+				-- whoops, error reading from socket (closed?)
+				self:message("closing connection to <FIXME> (%s)", err)
+				table.remove(sockets, i)
+			else
+				self:pushEvent { self, "message", "%s", buf }
+			end
+		end
+	end
 end
 
 function pushEvent(self, evt)
@@ -94,4 +122,37 @@ function addPlayer(self, client, name, colour, pass)
 	-- saving it) and shoves it down the pipe
 	client:setGame(self.game)
 	client:setPlayer(self.game.players[name])
+end
+
+-- public API to the server subsystem
+
+function start(self, port, pass, file)
+	self.players = {}
+	self.sockets = {}
+	
+	local err
+	self.socket,err = socket.bind("*", port)
+	
+	if not self.socket then
+		ui.error("Unable to start server (networking error): "..err)
+		return false
+	end
+	
+	self.socket:settimeout(0)
+	
+	if file then
+		-- load game from file - FIXME
+		error("not implemented")
+		self.game = deserialize_file(file)
+	else
+		self.game = new "felt.Game" {}
+	end
+	
+	self:message("server listening on port %d", port)
+	
+	return true
+end
+
+function stop(self, reason)
+	error("not implemented")
 end

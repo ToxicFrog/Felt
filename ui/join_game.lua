@@ -26,5 +26,5 @@ function ui.win.join_ok:clicked()
 		return ui.error("You must specify a valid numeric port.")
 	end
 	
-	client.connect(host, port, pass)
+	client:connect(host, port, pass)
 end

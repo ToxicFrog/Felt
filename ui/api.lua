@@ -4,17 +4,27 @@
 -- Enter the UI mainloop. Called once the initialization routines are done
 -- setting everything up. Returns on program exit.
 
+local function server_update()
+	server:update(); return true
+end
+
+local function client_update()
+	client:update(); return true
+end
+
+local su_closure,cu_closure
+
 function ui.run()
 	require "ui.settings" ()
 	
 	ui.win.main_window:show_all()
 	ui.win.message_window:show_all()
 	
-	server.update_closure = gnome.closure(server.update)
-	client.update_closure = gnome.closure(client.update)
+	su_closure = gnome.closure(server_update)
+	cu_closure = gnome.closure(client_update)
 	
-	glib.timeout_add(50, server.update_closure, nil)
-	glib.timeout_add(50, client.update_closure, nil)
+	glib.timeout_add(50, su_closure, nil)
+	glib.timeout_add(50, cu_closure, nil)
 	
 	gtk.main()
 end

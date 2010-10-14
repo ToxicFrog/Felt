@@ -24,13 +24,6 @@ class(..., felt.Object)
 game = nil; -- the game state
 server = nil; -- the local representation of the remote server
 
-local _init = __init
-function __init(self, t)
-	_init(self, t)
-	
-	self.server:login(self, self.name, self.pass)
-end
-
 function setGame(self, game)
 	felt.game = game
 	felt.me = new "felt.Player" {
@@ -53,4 +46,32 @@ function send(self, object, method, ...)
 end
 
 function update(self)
+end
+
+-- establish a connection to the server and send a message saying who
+-- we are. The server will reply either telling us to shut up (and closing
+-- the connection) or by telling us to set up a game.
+function connect(self, host, port, pass)
+	error("not yet implemented")
+	assert(not self.server, "Already connected to "..tostring(self.server))
+	
+	self.server = new "client.RemoteServer" {
+		host = host;
+		port = port;
+	}
+
+	self.server:login(self, self.name, self.pass)
+end
+
+-- this is a bit different; the server is running in the same process as the
+-- client. We need to push our join event into the server's event queue
+-- directly.
+function connectlocal(self, pass)
+	self.name = felt.config.get "name"
+	self.colour = felt.config.get "colour"
+	self.pass = pass
+
+	self.server = new "client.LocalServer" {}
+
+	self.server:login(self, self.name, self.pass)
 end

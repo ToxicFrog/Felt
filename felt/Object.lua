@@ -27,11 +27,11 @@ function __init(self, ...)
 				if server.updating then
 					-- we are in server context
 					-- broadcast a call to the client version to all clients
-					server.broadcast(self, "client."..stem, ...)
+					server:broadcast(self, "client."..stem, ...)
 				else
 					-- we are in client context
 					-- unicast to the server
-					client.send(self, "server."..stem, ...)
+					client:send(self, "server."..stem, ...)
 				end
 			end
 			self[k] = nil

@@ -43,6 +43,7 @@ function ui.win.host_ok:clicked()
 		return ui.error("You must specify a valid numeric port.")
 	end
 	
-	server.start(port, pass, file)
-	client.connectlocal(pass)
+	if server:start(port, pass, file) then
+		client:connectlocal(pass)
+	end
 end

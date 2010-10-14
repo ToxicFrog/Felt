@@ -1,3 +1,1 @@
-server = {}
-
-require "server.api"
+server = new "server.Server" {}
