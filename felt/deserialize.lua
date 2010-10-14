@@ -1,83 +1,85 @@
 local unrepr = {}
 
-local function deserialize_one(buf)
-    if #buf == 0 then
-        return
-    end
-    
-    if unrepr[buf:sub(1,1)] then
-        return unrepr[buf:sub(1,1)](buf:sub(2,-1))
-    end
-    
-    print(buf)
-    return error("Unknown tag '"..buf:sub(1,1).."' while deserializing")
+local function wrap(str)
+	local t = {}
+	
+	function t:read(n)
+		local buf
+		if type(n) == "number" then
+			buf = str:sub(1,n)
+			assert(#buf == n, "Serialized data is truncated")
+		elseif type(n) == "string" then
+			buf = assert(str:match("^"..n), "Serialized data is corrupt")
+		else
+			buf = assert(str:match("^([^:]+):"), "Serialized data is corrupt")
+			str = str:sub(#buf+2, -1)
+			return buf
+		end
+
+		str = str:sub(#buf+1,-1)
+		return buf
+	end
+	
+	function t:skip()
+		str = str:gsub("^%s+", "")
+	end
+	
+	function t:len()
+		return #str
+	end
+	
+	function t:raw() return str end
+	
+	return t
 end
 
-local function deserialize(buf)
-    if buf then
-        assert(type(buf) == "string", "invalid argument to deserialize: "..type(buf))
-        local val,buf = deserialize_one(buf)
-        return val,deserialize(buf)
-    end
-    
-    return
+local function next(data)
+	data:skip()
+	local key = data:read(1)
+	return unrepr[key](data)
 end
 
-function unrepr.S(buf)
-    local len = tonumber(buf:sub(1,8))
-    return buf:sub(9, 8+len),buf:sub(9+len, -1)
+function unrepr.S(data)
+	local len = tonumber(data:read())
+	return data:read(len)
 end
 
-function unrepr.N(buf)
-    local len = tonumber(buf:sub(1,8))
-    return tonumber(buf:sub(9, 8+len)),buf:sub(9+len, -1)
+function unrepr.N(data)
+	return tonumber(data:read())
 end
 
-function unrepr.B(buf)
-    return buf:sub(1,1) == "t",buf:sub(2,-1)
+function unrepr.t() return true end
+function unrepr.f() return false end
+function unrepr.n() return nil end
+
+function unrepr.T(data)
+	local T = {}
+	local n = tonumber(data:read())
+	
+	for i=1,n do
+		local k = next(data)
+		local v = next(data)
+		T[k] = v
+	end
+	
+	return T
 end
 
-unrepr["."] = function(buf)
-    return nil,buf
+function unrepr.I(data)
+	local id = next(data)
+	
+	return felt.game:getObject(id)
 end
 
-function unrepr.T(buf)
-    local function next()
-        local val
-        val,buf = deserialize_one(buf)
-        return val
-    end
-
-    local val = {}
-    
-    while buf:sub(1,1) ~= "t" do
-        local k,v = next(),next()
-        val[k] = v
-    end
-
-    return val,buf:sub(2,-1)
+function felt.deserialize(buf)
+	local data = wrap(buf)
+	local t = { n=0 }
+	
+	while data:len() > 0 do
+		t.n = t.n +1
+		t[t.n] = next(data)
+		data:skip()
+	end
+	
+	return unpack(t, 1, t.n)
 end
-
--- unpack via library load
-function unrepr.L(buf)
-    local function next()
-        local val
-        val,buf = deserialize_one(buf)
-        return val
-    end
-    
-    local module = next()
-    local func = next()
-    
-    local argv = {}
-    local argc = 0
-    
-    while buf:sub(1,1) ~= "l" do
-        argc = argc+1
-        argv[argc] = next()
-    end
-    
-    return require(module)[func](require(module), unpack(argv, 1, argc)),buf:sub(2,-1)
-end
-
-felt.deserialize = deserialize
