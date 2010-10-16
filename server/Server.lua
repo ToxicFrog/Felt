@@ -51,7 +51,7 @@ end
 function tryAccept(self)
 	local sock = self.socket:accept()
 	if sock then
-		print("connection accepted", sock)
+		self:message("Connection accepted from %s", sock:getpeername())
 	end
 	table.insert(self.sockets, sock)
 end
@@ -59,12 +59,14 @@ end
 function collectMessages(self)
 	local ready = socket.select(self.sockets, {}, 0)
 	for i=1,#self.sockets do
+		print(i, ready[i])
 		if ready[i] then
 			local buf,err = ready[i]:receive()
+			print(buf, err)
 			if not buf then
 				-- whoops, error reading from socket (closed?)
-				self:message("closing connection to <FIXME> (%s)", err)
-				table.remove(sockets, i)
+				self:message("closing connection to %s (%s)", ready[i]:getpeername(), err)
+				table.remove(self.sockets, i)
 			else
 				self:pushEvent { self, "message", "%s", buf }
 			end
@@ -80,6 +82,7 @@ function dispatch(self, evt)
 	local obj = evt[1]
 	local method = evt[2]
 	
+	assert(obj, "Malformed RMI: no object")
 	assert(obj[method], "Malformed RMI: object "..tostring(obj).." has no method "..tostring(method)) 
 	obj[method](obj, unpack(evt, 3))
 end

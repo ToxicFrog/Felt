@@ -44,6 +44,7 @@ function ui.win.host_ok:clicked()
 	end
 	
 	if server:start(port, pass, file) then
-		client:connectlocal(pass)
+		client = new "client.LocalClient" {}
+		assert(client:connect("localhost", port, pass))
 	end
 end
