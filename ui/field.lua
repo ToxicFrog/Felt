@@ -79,7 +79,6 @@ function ui.field(field)
 			
 		direction = dirname(direction)
 		state = keystate(state)
-		print(direction)
 		
 		dispatch("scroll_"..direction, x, y, state)
 	end
@@ -142,12 +141,13 @@ function ui.field(field)
     	return false
     end
     
-	local function redraw()
+    print("adding redraw to ", field)
+	function field._redraw()
 		win.surface:queue_draw()
 		return true
 	end
-	field.redraw_closure = gnome.closure(redraw)
-	glib.timeout_add(50, field.redraw_closure, nil)
+	field._redraw_closure = gnome.closure(field._redraw)
+	glib.timeout_add(50, field._redraw_closure, nil)
 	
 	return win;
 end

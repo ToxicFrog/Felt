@@ -68,6 +68,8 @@ function pack(self, value)
 	else
 		error("Invalid type for serialization: "..type(value))
 	end
+	
+	return self
 end
 	
 repr["nil"] = function()

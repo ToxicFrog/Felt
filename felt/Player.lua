@@ -1,12 +1,20 @@
-local super = class(..., felt.Object)
+class(..., felt.Object)
 
-function __init(self, ...)
-	self.id = self.name
-	super.__init(self, ...)
+nextid = 0
+
+local _init = __init
+function __init(self, t)
+	t.id = t.name
+	_init(self, t)
 end
 
 function __tostring(self)
 	return self.name
+end
+
+function uniqueID(self)
+	self.nextid = self.nextid +1
+	return string.format("%s::%d", self.name, self.nextid)
 end
 
 function server_pickup(self, item)

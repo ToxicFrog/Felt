@@ -4,8 +4,5 @@ function felt.deserialize(buf)
 		game = felt.game;
 	}
 	
-	return (function(...)
-		for k,v in pairs(dc.refs) do print("ref", k,v) end
-		return ...
-	end)(dc:unpack())
+	return dc:unpack()
 end

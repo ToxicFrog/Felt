@@ -5,7 +5,5 @@ function felt.serialize(...)
 		sc:pack((select(i, ...)))
 	end
 	
-	for k,v in pairs(sc.refs) do print("pref", v, k) end
-	
 	return sc:finalize()
 end

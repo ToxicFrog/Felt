@@ -11,7 +11,6 @@ require "socket"
 
 class(..., felt.Object)
 
-id = "S" -- the server always has id "S" so that clients can refer to it
 updating = false -- true during a server update step; the automatic RMI dispatcher
 -- needs to be able to tell whether it's executing in a server or client ctx
 
@@ -19,6 +18,7 @@ local _init = __init
 function __init(self, t)
 	_init(self, t)
 	self.events = {}
+	self.id = "S"
 end
 
 -- server message function, prefixes messages with [server]
@@ -57,18 +57,35 @@ function tryAccept(self)
 end
 
 function collectMessages(self)
+	local function object(id)
+		if id == "S" then return self
+		else return self.game:getObject(id)
+		end
+	end
+
+	local function readmsg(sock)
+		local buf = assert(sock:receive())
+		local len = assert(tonumber(buf), "corrupt message header")
+		local data = assert(sock:receive(len))
+		return new "Deserialization" { data = data, object = object } :unpack()
+	end
+		
 	local ready = socket.select(self.sockets, {}, 0)
 	for i=1,#self.sockets do
-		print(i, ready[i])
 		if ready[i] then
-			local buf,err = ready[i]:receive()
-			print(buf, err)
-			if not buf then
-				-- whoops, error reading from socket (closed?)
-				self:message("closing connection to %s (%s)", ready[i]:getpeername(), err)
+			local status,message = pcall(readmsg, ready[i])
+			
+			if not status then
+				-- whoops, error reading from socket
+				self:message("closing connection to %s (%s)", tostring(ready[i]:getpeername()), tostring(message))
+				self.sockets[i]:close()
 				table.remove(self.sockets, i)
 			else
-				self:pushEvent { self, "message", "%s", buf }
+				local sock = ready[i]
+				function message.reply(_, ...)
+					self:send(sock, ...)
+				end
+				self:pushEvent(message)
 			end
 		end
 	end
@@ -78,53 +95,59 @@ function pushEvent(self, evt)
 	table.insert(self.events, evt)
 end
 
+function send(self, sock, ...)
+	local buf = new "Serialization" { metamethod = "__send" }
+		:pack(table.pack(...))
+		:finalize()
+	sock:send(tostring(#buf).."\n")
+	sock:send(buf)
+	print("SERVER SEND", #buf, buf)
+end
+
 function dispatch(self, evt)
+	self.reply = evt.reply
 	local obj = evt[1]
 	local method = evt[2]
 	
 	assert(obj, "Malformed RMI: no object")
 	assert(obj[method], "Malformed RMI: object "..tostring(obj).." has no method "..tostring(method)) 
 	obj[method](obj, unpack(evt, 3))
+	self.reply = nil
 end
 
-function login(self, client, name, pass)
-	print(self, client, name, pass)
+function login(self, name, pass)
 	self:message("Player connecting: %s", name)
 	if self.pass ~= pass then
 		self:message("Rejecting %s due to bad password.", name)
-		return client:disconnect("Invalid password.")
+		self:reply(client, "disconnect", "Invalid password.")
+		return
 	end
 
-	if self.players[name] then
+	if self.game:getPlayer(name) then
 		self:message("Rejecting %s due to name collision.", name)
-		return client:disconnect("A player with the name '"..tostring(name).."' is already present in game.")
+		self:reply(client, "disconnect", "A player with the name '"..tostring(name).."' is already present in game.")
+		return
 	end
 	
 	self:message("Handshake with %s completed.", name)
+	-- HACK HACK HACK
+	-- is it a local client?
+	if client.name == name then
+		self:reply(client, "setGame", self.game)
+	else
+		local sc = new "Serialization" { metamethod = "__save" }
+		sc:pack(self.game)
+		self:reply(client, "setGame", sc:finalize())
+	end -- HACK HACK HACK
 	
-	return client:setGame(self.game)
+	return
 end
 
 function broadcast(self, object, method, ...)
-	--[[
-	for k,v in pairs(self.players) do
-		self.players:
-		FIXME
-		]]
 	object[method](object, ...)
-end
-
-function addPlayer(self, client, name, colour, pass)
-	self.players[name] = client
-	self.game:addPlayer(name, colour)
-	
-	-- tell the player about the game state
-	-- if it's a local client, this just passes a reference to the gamestate
-	-- object
-	-- if it's a remote client, it packs the gamestate into a string (as though
-	-- saving it) and shoves it down the pipe
-	client:setGame(self.game)
-	client:setPlayer(self.game.players[name])
+	for _,socket in pairs(self.sockets) do
+		self:send(socket, object, method, ...)
+	end
 end
 
 -- public API to the server subsystem

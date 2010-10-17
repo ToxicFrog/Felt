@@ -28,7 +28,6 @@ end
 -- - all children in Z-order
 -- - parent's event handler or event()
 function dispatchEvent(self, evt, x, y, ...)
-	print("event", evt, x, y, ...)
     local function callhandler(key, ...)
         local eventhandler = self[key]
         if eventhandler then

@@ -29,6 +29,11 @@ function __init(self, t)
 	_init(self, t)
 	self.name = felt.config.get "name"
 	self.colour = felt.config.get "colour"
+	self.id = "C"
+end
+
+function message(self, format, ...)
+	return ui.message("[client] "..format, ...)
 end
 
 function setGame(self, game)
@@ -38,10 +43,10 @@ function setGame(self, game)
 		colour = felt.config.get "colour";
 	}
 	game:addPlayer(felt.me)
-	
-	game:addField("foo"):add(new "felt.Token" {}, 0, 0)
-	game:addField("bar"):add(new "felt.Token" {}, 16, 16)	
 	ui.show_game(game)
+	
+	local foo = new "felt.Field" { name = "foo" }; foo:add(new "felt.Token" {}, 0, 0)
+	game:addField(foo)
 end
 
 function setPlayer(self, player)
@@ -53,4 +58,14 @@ function send(self, object, method, ...)
 end
 
 function update()
+end
+
+function dispatch(self, evt)
+	print("dispatch", unpack(evt))
+	local obj = evt[1]
+	local method = evt[2]
+	
+	assert(obj, "Malformed RMI: no object")
+	assert(obj[method], "Malformed RMI: object "..tostring(obj).." has no method "..tostring(method)) 
+	obj[method](obj, unpack(evt, 3))
 end

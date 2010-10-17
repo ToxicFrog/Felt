@@ -1,5 +1,5 @@
-local pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv
-	= pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv
+local pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv,loadfile,assert
+	= pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv,loadfile,assert
 
 local print = print
 
@@ -18,8 +18,6 @@ end
 
 module(...)
 
-mixins = {}
-
 function _M:__init(t)
     if t then
         if t.mixins then
@@ -31,10 +29,6 @@ function _M:__init(t)
         for k,v in pairs(t) do
             self[k] = v
         end
-    end
-    
-    for i,mix in ipairs(self.mixins) do
-        require("mixins."..mix[1])(self, unpack(mix, 2))
     end
     
     return self
@@ -90,10 +84,6 @@ function _M:close(method)
     end
 end
 
-function _M:mixin(...)
-    table.insert(self.mixins, {...})
-end
-
 _M.__type = _M._NAME
 
 function _G.class(name, superclass)
@@ -108,7 +98,6 @@ function _G.class(name, superclass)
 	superclass:cloneto(class)
 	class._NAME = name
 	class._SUPER = superclass
-	class.mixins = { unpack(superclass.mixins) }
 	setmetatable(class, { __call = class.__new })
 	
 	local env = {}
@@ -125,6 +114,15 @@ function _G.class(name, superclass)
 	
 	setmetatable(env, mt)
 	setfenv(2, env)
+	
+	function class.mixin(name)
+		local f = assert(loadfile("mixins/"..name..".lua"))
+		setfenv(f, env)
+		return function(...)
+			return f(...)
+		end
+	end
+
 	return superclass
 end
 	

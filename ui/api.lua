@@ -72,6 +72,10 @@ function ui.show_game(game)
 end
 
 function ui.show_field(field)
-	assert(ui.game, "call to ui.show_field before ui.show_game")
-	ui.field(field).window:show_all()
+	if not ui.fields[field] then
+		ui.fields[field] = ui.field(field)
+	end
+	ui.fields[field].window:show_all()
 end
+
+ui.fields = {}

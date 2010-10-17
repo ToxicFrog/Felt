@@ -74,7 +74,6 @@ function unrepr:T()
 	local n = tonumber(self:read())
 	
 	for i=1,n do
-		print("T", n, i)
 		local k = self:next()
 		local v = self:next()
 		T[k] = v
@@ -86,13 +85,23 @@ end
 function unrepr:I()
 	local id = self:next()
 	
-	assert(self.game, "attempt to deserialize I-tags without a game state!")
+	assert(self.object, "attempt to deserialize I-tags without an id->object mapping!")
 	
-	return self.game:getObject(id)
+	return self.object(id)
 end
 
 function unrepr:R()
 	local id = tonumber(self:read())
 	
 	return self:ref(id)
+end
+
+function unrepr:C()
+	local class = self:next()
+	local arg = self:next()
+	local obj = new(class)(arg)
+	if obj.__load then
+		obj:__load(arg)
+	end
+	return obj
 end

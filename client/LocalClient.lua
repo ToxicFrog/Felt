@@ -5,13 +5,18 @@ class(..., "client.Client")
 -- queue, without serialization.
 
 function send(self, ...)
-	return server:pushEvent(table.pack(...))
+	local evt = table.pack(...)
+	function evt.reply(_, ...)
+		self:dispatch(table.pack(...))
+	end
+	print("client send", ...)
+	return server:pushEvent(evt)
 end
 
 function connect(self, host, port, pass)
 	self.pass = pass
 	
-	self:send(server, "login", self, self.name, self.pass)
+	self:send(server, "login", self.name, self.pass)
 	
 	return true
 end

@@ -6,12 +6,12 @@ socket = false
 events = {}
 
 function send(self, ...)
-	-- FIXME: send event through socket
-	local event = table.pack(...)
-	for i=1,event.n do
-		event[i] = tostring(event[i])
-	end
-	self.socket:send(table.concat(event, " ").."\n")
+	local buf = new "Serialization" { metamethod = "__send" }
+		:pack(table.pack(...))
+		:finalize()
+	self.socket:send(tostring(#buf).."\n")
+	self.socket:send(buf)
+	print("CLIENT SEND", #buf, buf)
 end
 
 function connect(self, host, port)
@@ -26,7 +26,7 @@ function connect(self, host, port)
 	self.port = port
 	self.socket = socket
 
-	self:send(server, "login", self, self.name, self.pass)
+	self:send(server, "login", self.name, self.pass)
 	return true
 end
 
@@ -37,16 +37,30 @@ function disconnect(self, reason)
 end
 
 function update(self)
+	local function object(id)
+		if id == "C" then return self
+		else return felt.game:getObject(id)
+		end
+	end
+
+	local function readmsg(sock)
+		local buf = assert(sock:receive())
+		local len = assert(tonumber(buf), "corrupt message header")
+		local data = assert(sock:receive(len))
+		return new "Deserialization" { data = data, object = object } :unpack()
+	end
+		
 	-- read messages from the socket
 	while true do
-		local msg,err = self.socket:receive()
-		if err == "timeout" then
-			break
-		elseif err then
-			self:pushEvent { self, "disconnect", err }
+		local status,message = pcall(readmsg, self.socket)
+		if not status then
+			if not message:match("timeout") then
+				-- whoops, error reading from the socket
+				self:pushEvent { self, "disconnect", message }
+			end
 			break
 		else
-			self:pushEvent { self, "message", "network traffic: %s", tostring(msg) }
+			self:pushEvent(message)
 		end
 	end
 	
@@ -72,4 +86,10 @@ function dispatch(self, evt)
 	assert(obj, "Malformed RMI: no object")
 	assert(obj[method], "Malformed RMI: object "..tostring(obj).." has no method "..tostring(method)) 
 	obj[method](obj, unpack(evt, 3))
+end
+
+local _setGame = setGame
+function setGame(self, game)
+	game = new "Deserialization" { data = game } :unpack()
+	_setGame(self, game)
 end

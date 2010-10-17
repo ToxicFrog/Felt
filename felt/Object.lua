@@ -6,40 +6,71 @@
 	network and disk, the ID system, automatic RMI, etc
 ]]
 
-local super = class(..., Object)
+class(..., Object)
 
-function __init(self, ...)
-	super.__init(self, ...)
-	
+id = false
+
+mixin "serialize" "id"
+
+local function setupRMI(self)
 	local rmi = {}
 	
 	for k,v in pairs(self) do
 		if k:match("^server_") or k:match("^client_") then
-			local stem = k:gsub("^[^_]+_", "")
-			local side = k:match("^[^_]+")
+			local side,stem = k:match("^([^_]+)_(.*)")
 			
-			rmi[side.."."..stem] = v
-			rmi[stem] = function(self, ...)
-				-- determine if we are in server or client context
-				-- if in client context: generate RMI of server.stem
-				-- if in server context: generate broadcast RMI of client.stem
-				ui.message("RMI stub %s:%s", tostring(self), stem)
-				if server.updating then
-					-- we are in server context
-					-- broadcast a call to the client version to all clients
-					server:broadcast(self, "client."..stem, ...)
-				else
-					-- we are in client context
-					-- unicast to the server
-					client:send(self, "server."..stem, ...)
-				end
-			end
+			rmi[stem] = rmi[stem] or {}
+			rmi[stem][side] = v
 			self[k] = nil
 		end
 	end
 	
-	for k,v in pairs(rmi) do
-		assert(not self[k], "Method name collision initializing RMI subsystem")
-		self[k] = v
+	for method,v in pairs(rmi) do
+		if not v.server then
+			function v:server(...)
+				self[method](self, "client."..method, ...)
+			end
+		end
+		
+		function v:stub(...)
+			-- determine if we are in server or client context
+			-- if in client context: generate RMI of server.stem
+			-- if in server context: generate broadcast RMI of client.stem
+			if server.updating then
+				-- we are in server context
+				-- broadcast a call to the client version to all clients
+				server:broadcast(self, "client."..method, ...)
+			else
+				-- we are in client context
+				-- unicast to the server
+				client:send(self, "server."..method, ...)
+			end
+		end
+		
+		assert(not self[method], "Method name collision initializing RMI subsystem")
+		self[method] = v.stub
+		self["client."..method] = v.client
+		self["server."..method] = v.server
+	end
+end
+
+function replicate(self, t)
+	t.id = self.id
+	t.replicant = true
+	client:send(felt.game, "newObject", self._NAME, t)
+end
+
+local _init = __init
+function __init(self, ...)
+	_init(self, ...)
+	
+	setupRMI(self)
+	
+	if self.id == true then
+		self.id = felt.me:uniqueID()
+	end
+	
+	if self.id and not self.replicant then
+		self:replicate(...)
 	end
 end
