@@ -17,6 +17,26 @@ function va_xpcall(f, e, ...)
     return xpcall(function() return f(unpack(argv,1,argc)) end, e)
 end
 
+-- tprint - recursively display the contents of a table
+-- does not generate something the terp can read; use table.dump() for that
+function table.print(T, prefix)
+        assert(T, "bad argument to table.print")
+        local done = {}
+        local function tprint_r(T, prefix)
+                for k,v in pairs(T) do
+                        print(prefix..tostring(k),'=',tostring(v))
+                        if type(v) == 'table' then
+                                if not done[v] then
+                                        done[v] = true
+                                        tprint_r(v, prefix.."  ")
+                                end
+                        end
+                end
+        end
+        done[T] = true
+        tprint_r(T, prefix or "")
+end
+
 -- an unpack that respects t.n rather than using #
 local _unpack = unpack
 function unpack(t, first, last)

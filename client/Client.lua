@@ -44,9 +44,7 @@ function setGame(self, game)
 	}
 	game:addPlayer(felt.me)
 	ui.show_game(game)
-	
-	local foo = new "felt.Field" { name = "foo" }; foo:add(new "felt.Token" {}, 0, 0)
-	game:addField(foo)
+	self:message("show_game complete")
 end
 
 function setPlayer(self, player)

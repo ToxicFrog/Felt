@@ -5,8 +5,10 @@ w = false
 h = false
 name = "(untitled field)"
 
-function __init(self, ...)
-    super.__init(self, ...)
+mixin "serialize" ("name")
+
+function __init(self, t)
+    super.__init(self, t)
     
     self.vis = self.vis or { [felt.config.get "name"] = true }
 end

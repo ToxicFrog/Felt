@@ -1,5 +1,5 @@
 local pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv,loadfile,assert
-	= pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv,loadfile,assert
+= pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv,loadfile,assert
 
 local print = print
 
@@ -20,12 +20,6 @@ module(...)
 
 function _M:__init(t)
     if t then
-        if t.mixins then
-            for i,v in ipairs(t.mixins) do
-                table.insert(self.mixins, v)
-            end
-            t.mixins = self.mixins
-        end
         for k,v in pairs(t) do
             self[k] = v
         end
@@ -68,9 +62,15 @@ function _M:__new(...)
     obj._NAME = self._NAME
     obj._ID   = tostring(obj):gsub("^table: ", "")
     
+    setmetatable(obj, obj)
+    
+    print("NEW", obj._NAME)
+    table.print((...), "  ")
+    print("------")
+    
     obj:__init(...)
 
-    return setmetatable(obj, obj)
+    return obj
 end
 
 function _M:__tostring()

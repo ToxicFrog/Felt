@@ -33,6 +33,7 @@ end
 function ui.message(...)
 	local buf = ui.win.messages:get_buffer()
 	local str = string.format(...)
+	print("[ui]", str)
 	
 	buf:insert_at_cursor(str.."\n", #str+1)
 

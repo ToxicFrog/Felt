@@ -9,6 +9,8 @@ visible = true
 focused = false
 id = false
 
+mixin "serialize" ("x", "y", "z", "w", "h", "alpha", "scale", "visible", "focused", "children")
+
 function __init(self, ...)
 	self.children = {}
     super.__init(self, ...)
@@ -19,7 +21,7 @@ function __init(self, ...)
 end
 
 function __tostring(self)
-    return self.name or self.title or super.__tostring(self)
+    return (self.name or self.title or super.__tostring(self))..":"..self._ID
 end
 
 -- recieve an event

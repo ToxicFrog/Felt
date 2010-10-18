@@ -1,15 +1,26 @@
 local super = class(..., felt.Object)
 
+replicant = true
+
 mixin "serialize" ("fields", "objects", "players")
 
-function __init(self, ...)
-	super.__init(self, ...)
+function __init(self, t)
+	assert(not felt.game)
+	self.id = "G"
 	self.fields = {}
 	self.players = {}
-	self.objects = {
-		G = self;
-	}
-	self.id = "G"
+	self.objects = {}
+	super.__init(self, t)
+	
+	-- even after serialization, we need to create this manually, because
+	-- recursive structures cannot be serialized fully
+	self.objects[self.id] = self
+end
+
+local _save = __save
+function __save(self, ...)
+	for k,v in pairs(self.objects) do print("game save", k, v) end
+	return _save(self, ...)
 end
 
 function client_addPlayer(self, player)
@@ -23,6 +34,15 @@ function getPlayer(self, name)
 	print("getplayer", '"'..name..'"', self.players[name])
 	for k,v in pairs(self.players) do print("", '"'..k..'"', v) end
 	return self.players[name]
+end
+
+function server_addField(self, field)
+	if self.fields[field.name] then
+		server:reply(server, "message", "a field named '%s' already exists", field.name)
+		return
+	end
+	
+	self:addField(field)
 end
 
 function client_addField(self, field)
@@ -42,12 +62,19 @@ function getObject(self, id)
 end
 
 function client_newObject(self, class, ctor)
-	assert(not self.objects[ctor.id], "object ID collision")
+	if self.objects[ctor.id] then
+		-- if this is a reflection from one of our own object creations, let
+		-- it be.
+		if self.objects[ctor.id]._ORIGINAL and ctor.replicant then return end
+		assert(not self.objects[ctor.id], "object ID collision")
+	end
 	
-	self:addObject(require(class)(ctor))
+	-- this happens automatically now
+	require(class)(ctor)
 end
 
 function addObject(self, obj)
 	assert(not self.objects[obj.id], "object ID collision")
+	ui.message("[game] Adding object %s (%s)", obj.id, tostring(obj))
 	self.objects[obj.id] = obj
 end

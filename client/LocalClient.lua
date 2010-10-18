@@ -27,3 +27,11 @@ function disconnect(self, reason)
 	self.player = nil
 	self.game = nil
 end
+
+local _setGame = setGame
+function setGame(self, ...)
+	_setGame(self, ...)
+		
+	local foo = new "felt.Field" { name = "foo" }; foo:add(new "felt.Token" {}, 0, 0)
+	felt.game:addField(foo)
+end

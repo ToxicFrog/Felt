@@ -9,8 +9,9 @@
 class(..., Object)
 
 id = false
+replicant = false
 
-mixin "serialize" "id"
+mixin "serialize" ("id", "replicant")
 
 local function setupRMI(self)
 	local rmi = {}
@@ -28,7 +29,7 @@ local function setupRMI(self)
 	for method,v in pairs(rmi) do
 		if not v.server then
 			function v:server(...)
-				self[method](self, "client."..method, ...)
+				self[method](self, ...)
 			end
 		end
 		
@@ -57,12 +58,14 @@ end
 function replicate(self, t)
 	t.id = self.id
 	t.replicant = true
+	self.replicant = true
+	self._ORIGINAL = true
 	client:send(felt.game, "newObject", self._NAME, t)
 end
 
 local _init = __init
-function __init(self, ...)
-	_init(self, ...)
+function __init(self, t)
+	_init(self, t)
 	
 	setupRMI(self)
 	
@@ -70,7 +73,10 @@ function __init(self, ...)
 		self.id = felt.me:uniqueID()
 	end
 	
-	if self.id and not self.replicant then
-		self:replicate(...)
+	if self.id then
+		if felt.game then felt.game:addObject(self) end
+		if not self.replicant then
+			self:replicate(t)
+		end
 	end
 end

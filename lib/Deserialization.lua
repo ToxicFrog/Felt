@@ -87,7 +87,7 @@ function unrepr:I()
 	
 	assert(self.object, "attempt to deserialize I-tags without an id->object mapping!")
 	
-	return self.object(id)
+	return assert(self.object(id), "no object with id "..tostring(id).." while deserializing")
 end
 
 function unrepr:R()

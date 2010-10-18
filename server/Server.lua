@@ -64,16 +64,14 @@ function collectMessages(self)
 	end
 
 	local function readmsg(sock)
-		local buf = assert(sock:receive())
-		local len = assert(tonumber(buf), "corrupt message header")
-		local data = assert(sock:receive(len))
-		return new "Deserialization" { data = data, object = object } :unpack()
+		local buf = assert(recvmsg(sock))
+		return new "Deserialization" { data = buf, object = object } :unpack(),data
 	end
 		
 	local ready = socket.select(self.sockets, {}, 0)
 	for i=1,#self.sockets do
 		if ready[i] then
-			local status,message = pcall(readmsg, ready[i])
+			local status,message,data = pcall(readmsg, ready[i])
 			
 			if not status then
 				-- whoops, error reading from socket
@@ -82,6 +80,7 @@ function collectMessages(self)
 				table.remove(self.sockets, i)
 			else
 				local sock = ready[i]
+				message.raw = data
 				function message.reply(_, ...)
 					self:send(sock, ...)
 				end
@@ -99,9 +98,7 @@ function send(self, sock, ...)
 	local buf = new "Serialization" { metamethod = "__send" }
 		:pack(table.pack(...))
 		:finalize()
-	sock:send(tostring(#buf).."\n")
-	sock:send(buf)
-	print("SERVER SEND", #buf, buf)
+	sendmsg(sock, buf)
 end
 
 function dispatch(self, evt)
@@ -175,7 +172,7 @@ function start(self, port, pass, file)
 	end
 	
 	self:message("server listening on port %d", port)
-	
+
 	return true
 end
 

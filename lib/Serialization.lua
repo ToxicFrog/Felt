@@ -53,7 +53,10 @@ function pack(self, value)
 	self.index = self.index +1
 
 	if self.refs[value] then
-		return self.repr.backref(self, value)
+		local t = type(value)
+		if t ~= "string" and t ~= "boolean" and t ~= "number" and t ~= "nil" then
+			return self.repr.backref(self, value)
+		end
 	end
 	
 	self.refs[value] = self.index

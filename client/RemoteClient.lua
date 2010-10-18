@@ -3,20 +3,20 @@ require "socket"
 class(..., "client.Client")
 
 socket = false
-events = {}
 
 function send(self, ...)
+	assert((...), "no object in client send")
 	local buf = new "Serialization" { metamethod = "__send" }
 		:pack(table.pack(...))
 		:finalize()
-	self.socket:send(tostring(#buf).."\n")
-	self.socket:send(buf)
-	print("CLIENT SEND", #buf, buf)
+	sendmsg(self.socket, buf)
 end
 
 function connect(self, host, port)
+	self:message("Connecting to %s:%d", host, port)
 	local socket,err = socket.connect(host, port)
 	if not socket then
+		self:message("Connection failed: %s", err)
 		return socket,err
 	end
 	
@@ -26,11 +26,13 @@ function connect(self, host, port)
 	self.port = port
 	self.socket = socket
 
+	self:message("Sending login request")
 	self:send(server, "login", self.name, self.pass)
 	return true
 end
 
 function disconnect(self, reason)
+	self:message("Disconnected: %s", reason)
 	ui.error("Disconnected: %s", reason)
 	self.socket:close()
 	os.exit(0)
@@ -44,10 +46,8 @@ function update(self)
 	end
 
 	local function readmsg(sock)
-		local buf = assert(sock:receive())
-		local len = assert(tonumber(buf), "corrupt message header")
-		local data = assert(sock:receive(len))
-		return new "Deserialization" { data = data, object = object } :unpack()
+		local buf = assert(recvmsg(sock))
+		return new "Deserialization" { data = buf, object = object } :unpack()
 	end
 		
 	-- read messages from the socket
@@ -55,28 +55,15 @@ function update(self)
 		local status,message = pcall(readmsg, self.socket)
 		if not status then
 			if not message:match("timeout") then
+				assert(status, message)
 				-- whoops, error reading from the socket
-				self:pushEvent { self, "disconnect", message }
+				self:dispatch { self, "disconnect", status }
 			end
 			break
 		else
-			self:pushEvent(message)
+			self:dispatch(message)
 		end
 	end
-	
-	local i = 1
-	local events = self.events
-	
-	while events[i] do
-		self:dispatch(events[i])
-		i = i+1
-	end
-	
-	self.events = {}
-end
-
-function pushEvent(self, evt)
-	table.insert(self.events, evt)
 end
 
 function dispatch(self, evt)
@@ -90,6 +77,7 @@ end
 
 local _setGame = setGame
 function setGame(self, game)
+	self:message("Game state received from server, unpacking...")
 	game = new "Deserialization" { data = game } :unpack()
 	_setGame(self, game)
 end
