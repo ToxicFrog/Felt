@@ -5,4 +5,3 @@ require "ui.join_game"
 require "ui.host_game"
 
 ui.win.main_window:connect("delete-event", gtk.main_quit)
-ui.win.message_window:connect("delete-event", gtk.main_quit)

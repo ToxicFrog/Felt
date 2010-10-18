@@ -12,9 +12,9 @@ function send(self, ...)
 	sendmsg(self.socket, buf)
 end
 
-function connect(self, host, port)
-	self:message("Connecting to %s:%d", host, port)
-	local socket,err = socket.connect(host, port)
+function connect(self)
+	self:message("Connecting to %s:%d", self.host, self.port)
+	local socket,err = socket.connect(self.host, self.port)
 	if not socket then
 		self:message("Connection failed: %s", err)
 		return socket,err
@@ -22,8 +22,6 @@ function connect(self, host, port)
 	
 	socket:settimeout(0)
 	
-	self.host = host
-	self.port = port
 	self.socket = socket
 
 	self:message("Sending login request")

@@ -18,7 +18,6 @@ function ui.run()
 	require "ui.settings" ()
 	
 	ui.win.main_window:show_all()
-	ui.win.message_window:show_all()
 	
 	su_closure = gnome.closure(server_update)
 	cu_closure = gnome.closure(client_update)
@@ -64,7 +63,6 @@ function ui.show_game(game)
 	assert(not ui.game, "double call to ui.show_game")
 	ui.game = game
 	
-	ui.win.main_window:hide_all()
 	for _,field in pairs(ui.game.fields) do
 		ui.show_field(field)
 	end

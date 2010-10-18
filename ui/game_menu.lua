@@ -1,4 +1,4 @@
-local win = ui.mainwindow
+local win = ui.win
 
 -- helper function to display save/load dialog
 local function sldialog(title, action)
@@ -12,40 +12,36 @@ local function sldialog(title, action)
 	return nil
 end
 
--- Game -> New Field
-function win.menu_new_field:activate()
-	--felt.newtable()
-	ui.field(new "felt.Field" {}).window:show_all()
-end
-
 -- Game -> Save
-function win.menu_save:activate()
+function win.menu_game_save:activate()
+	ui.message("[STUB] Save Game")
+	do return end
 	local file = sldialog("Save Game", "SAVE")
 	if file then
 		felt.savegame(file)
 	end
 end
 
--- Game -> Load Table
-function win.menu_load_field:activate()
-	local file = sldialog("Load Table", "OPEN")
-	if file then
-		felt.loadtable(file)
-	end
+-- Game -> Load
+function win.menu_game_load:activate()
+	ui.message("[STUB] Load Game")
 end
 
--- Game -> Load Module
-function win.menu_load_module:activate()
-	local file = sldialog("Load Module", "OPENDIR")
-	if file then
-		felt.loadmodule(file)
-	end
+-- Fields -> New
+function win.menu_field_new:activate()
+	ui.message("[STUB] New Field")
+	--ui.field(new "felt.Field" {}).window:show_all()
 end
 
--- Game -> Load Game
-function win.menu_load_game:activate()
-	local file = sldialog("Load Game", "OPEN")
-	if file then
-		felt.loadgame(file)
-	end
+-- Fields -> Vis
+
+-- Fields -> Load
+function win.menu_field_load:activate()
+	ui.message("[STUB] Load Field")
 end
+
+-- Fields -> Save
+
+-- Players -> Vis
+
+-- Help -> About

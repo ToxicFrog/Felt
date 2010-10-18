@@ -13,16 +13,14 @@ function send(self, ...)
 	return server:pushEvent(evt)
 end
 
-function connect(self, host, port, pass)
-	self.pass = pass
-	
+function connect(self)
 	self:send(server, "login", self.name, self.pass)
 	
 	return true
 end
 
 function disconnect(self, reason)
-	ui.error("Disconnected by server: %s")
+	ui.error("Disconnected by server: %s", reason)
 	self.server = nil
 	self.player = nil
 	self.game = nil

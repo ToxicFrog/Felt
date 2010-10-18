@@ -27,8 +27,6 @@ server = nil; -- the local representation of the remote server
 local _init = __init
 function __init(self, t)
 	_init(self, t)
-	self.name = felt.config.get "name"
-	self.colour = felt.config.get "colour"
 	self.id = "C"
 end
 
@@ -38,6 +36,7 @@ end
 
 function setGame(self, game)
 	felt.game = game
+	-- FIXME - the player objects should be provided by the server!
 	felt.me = new "felt.Player" {
 		name = felt.config.get "name";
 		colour = felt.config.get "colour";

@@ -70,6 +70,7 @@ function client_newObject(self, class, ctor)
 	end
 	
 	-- this happens automatically now
+	-- self:addObject(require(class)(ctor))
 	require(class)(ctor)
 end
 

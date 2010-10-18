@@ -116,6 +116,8 @@ function login(self, name, pass)
 	self:message("Player connecting: %s", name)
 	if self.pass ~= pass then
 		self:message("Rejecting %s due to bad password.", name)
+		self:message("my pass: '%s'", tostring(self.pass))
+		self:message("their pass: '%s'", tostring(pass))
 		self:reply(client, "disconnect", "Invalid password.")
 		return
 	end
@@ -149,9 +151,11 @@ end
 
 -- public API to the server subsystem
 
-function start(self, port, pass, file)
+function start(self, port, pass)
 	self.players = {}
 	self.sockets = {}
+	self.port = port
+	self.pass = pass
 	
 	local err
 	self.socket,err = socket.bind("*", port)
@@ -163,13 +167,7 @@ function start(self, port, pass, file)
 	
 	self.socket:settimeout(0)
 	
-	if file then
-		-- load game from file - FIXME
-		error("not implemented")
-		self.game = deserialize_file(file)
-	else
-		self.game = new "felt.Game" {}
-	end
+	self.game = new "felt.Game" {}
 	
 	self:message("server listening on port %d", port)
 
