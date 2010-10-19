@@ -37,6 +37,11 @@ function render(self, cr)
 	end
 end
 
+local _tostring = __tostring
+function __tostring(self)
+	return self.name or _tostring(self)
+end
+
 do return end
 
 Token:persistent "name" "hiddenname" "theta"

@@ -30,7 +30,12 @@ end
 local _sg = setGame
 function setGame(self, ...)
 	_sg(self, ...)
-		
-	local foo = new "felt.Field" { name = "foo" }; foo:add(new "felt.Token" {}, 0, 0)
+
+	--[[
+	local foo = new "felt.Field" { name = "foo" }
+	foo:add(new "felt.Token" {}, 0, 0)
+	foo:add(new "felt.ImageToken" { face = "modules/chess/wpawn.png" }, 32, 32)
 	felt.game:addField(foo)
+	]]
+	require "modules.chess"
 end

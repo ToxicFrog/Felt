@@ -31,7 +31,6 @@ function client_pickup(self, item)
 	ui.message("%s picks up %s", tostring(self), tostring(item))
 	self.held = item
 	item.held_by = self
-	ui.message("%s holding %s held_by %s", tostring(self), tostring(self.held), tostring(item.held_by))
 end
 
 function server_drop(self, onto, x, y)
@@ -40,8 +39,6 @@ function server_drop(self, onto, x, y)
 end
 
 function client_drop(self, onto, x, y)
-	ui.message("%s holding %s", tostring(self), tostring(self.held))
-	ui.message("drop onto %s at %d,%d", tostring(onto), x, y)
 	local item = self.held
 	self.held = nil
 	item.held_by = nil
