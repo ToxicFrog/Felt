@@ -24,7 +24,7 @@ function render(self, cr)
 	if self.held_by then
 		local colour = self.held_by.colour
 		cr:push_group()
-		cr:set_source_rgb(0, 1, 1)
+		cr:set_source_rgb(colour.red/65535, colour.green/65535, colour.blue/65535)
 		cr:rectangle(self.x - 2, self.y - 2, self.w+4, self.h+4)
 		cr:fill()
 	end

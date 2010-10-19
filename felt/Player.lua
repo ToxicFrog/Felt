@@ -50,3 +50,7 @@ function client_drop(self, onto, x, y)
 	item:raise()
 	ui.message("%s drops %s onto %s", tostring(self), tostring(item), tostring(onto))
 end
+
+function client_setColour(self, colour)
+	self.colour = colour
+end

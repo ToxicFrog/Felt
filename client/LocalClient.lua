@@ -9,6 +9,7 @@ function send(self, ...)
 	function evt.reply(_, ...)
 		self:dispatch(table.pack(...))
 	end
+	evt.sock = self
 	print("client send", ...)
 	return server:pushEvent(evt)
 end
@@ -26,9 +27,9 @@ function disconnect(self, reason)
 	self.game = nil
 end
 
-local _setGame = setGame
+local _sg = setGame
 function setGame(self, ...)
-	_setGame(self, ...)
+	_sg(self, ...)
 		
 	local foo = new "felt.Field" { name = "foo" }; foo:add(new "felt.Token" {}, 0, 0)
 	felt.game:addField(foo)

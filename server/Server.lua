@@ -77,10 +77,15 @@ function collectMessages(self)
 				-- whoops, error reading from socket
 				self:message("closing connection to %s (%s)", tostring(ready[i]:getpeername()), tostring(message))
 				self.sockets[i]:close()
-				table.remove(self.sockets, i)
+				local sock = table.remove(self.sockets, i)
+				local name = self.players[sock]
+				if name then
+					self.players[name],self.players[sock] = nil,nil
+				end
 			else
 				local sock = ready[i]
 				message.raw = data
+				message.sock = sock
 				function message.reply(_, ...)
 					self:send(sock, ...)
 				end
@@ -103,6 +108,7 @@ end
 
 function dispatch(self, evt)
 	self.reply = evt.reply
+	self.sender = evt.sock
 	local obj = evt[1]
 	local method = evt[2]
 	
@@ -110,6 +116,7 @@ function dispatch(self, evt)
 	assert(obj[method], "Malformed RMI: object "..tostring(obj).." has no method "..tostring(method)) 
 	obj[method](obj, unpack(evt, 3))
 	self.reply = nil
+	self.sender = nil
 end
 
 function login(self, name, pass)
@@ -122,13 +129,12 @@ function login(self, name, pass)
 		return
 	end
 
-	if self.game:getPlayer(name) then
+	if self.players[name] then
 		self:message("Rejecting %s due to name collision.", name)
 		self:reply(client, "disconnect", "A player with the name '"..tostring(name).."' is already present in game.")
 		return
 	end
-	
-	self:message("Handshake with %s completed.", name)
+		
 	-- HACK HACK HACK
 	-- is it a local client?
 	if client.name == name then
@@ -138,6 +144,15 @@ function login(self, name, pass)
 		sc:pack(self.game)
 		self:reply(client, "setGame", sc:finalize())
 	end -- HACK HACK HACK
+
+	self.players[name] = self.sender
+	self.players[self.sender] = name
+	
+	-- we don't need to pass them a player object - if they're reconnecting,
+	-- they'll claim the existing object, and if they're new, their first
+	-- action will be to create a new player object
+	
+	self:message("Handshake with %s completed.", name)
 	
 	return
 end
@@ -145,7 +160,9 @@ end
 function broadcast(self, object, method, ...)
 	object[method](object, ...)
 	for _,socket in pairs(self.sockets) do
-		self:send(socket, object, method, ...)
+		if self.players[socket] then -- skip players who haven't logged in
+			self:send(socket, object, method, ...)
+		end
 	end
 end
 

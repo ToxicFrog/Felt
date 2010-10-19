@@ -36,18 +36,18 @@ end
 
 function setGame(self, game)
 	felt.game = game
-	-- FIXME - the player objects should be provided by the server!
-	felt.me = new "felt.Player" {
-		name = felt.config.get "name";
-		colour = felt.config.get "colour";
-	}
-	game:addPlayer(felt.me)
+	local player = game:getPlayer(self.name)
+	if player then
+		player:setColour(self.colour)
+	else
+		player = new "felt.Player" {
+			name = self.name;
+			colour = self.colour;
+		}
+		game:addPlayer(player)
+	end
+	felt.me = player
 	ui.show_game(game)
-	self:message("show_game complete")
-end
-
-function setPlayer(self, player)
-	self.player = player
 end
 
 function send(self, object, method, ...)
