@@ -38,7 +38,7 @@ function ui.message(...)
 
 	local mark = buf:get_mark "scroller"
 	if not mark then
-		local iter = gtk.new "TextIter" --gtk.text_iter_new()
+		local iter = glib.new "GtkTextIter" --gtk.text_iter_new()
 		buf:get_end_iter(iter)
 		mark = buf:create_mark("scroller", iter, false)
 	end
