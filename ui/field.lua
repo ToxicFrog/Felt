@@ -39,6 +39,7 @@ function ui.field(field)
 	win.window:set_title(field.name)
 
 	local x,y = 0,0
+	local focus = false
 	
 	local events = {}
 	
@@ -66,11 +67,11 @@ function ui.field(field)
 	end
 	
 	function events:enter_notify()
-		print("enter")
+		focus = true
 	end
 	
 	function events:leave_notify()
-		print("leave")
+		focus = false
 	end
 	
 	function events:scroll(evt)
@@ -97,7 +98,7 @@ function ui.field(field)
 		dispatch("key_"..key, x, y, state)
 	end
 
-    for _,event in ipairs { "motion-notify", "key-press", "button-press", "scroll" } do
+    for _,event in ipairs { "motion-notify", "enter-notify", "leave-notify", "key-press", "button-press", "scroll" } do
     	win.surface:connect(event.."-event", events[event:gsub("-", "_")], field)
     end
     
@@ -127,7 +128,7 @@ function ui.field(field)
     	field:render(cr)
     	
     	-- if the player is holding something and the mouse is infield, draw that
-    	if felt.me.held then
+    	if felt.me.held and focus then
     		local item = felt.me.held
     		cr:push_group()
     		cr:translate(-item.x+x-item.w/2, -item.y+y-item.h/2)
