@@ -5,3 +5,7 @@ require "ui.join_game"
 require "ui.host_game"
 
 ui.win.main_window:connect("delete-event", gtk.main_quit)
+
+function ui.win.menu_game_quit:activate()
+	gtk.main_quit()
+end
