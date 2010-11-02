@@ -35,14 +35,12 @@ function ui.message(...)
 	print("[ui]", str)
 	
 	buf:insert_at_cursor(str.."\n", #str+1)
-
-	local mark = buf:get_mark "scroller"
-	if not mark then
-		local iter = glib.new "GtkTextIter" --gtk.text_iter_new()
-		buf:get_end_iter(iter)
-		mark = buf:create_mark("scroller", iter, false)
-	end
-	ui.win.messages:scroll_to_mark(mark, 0.1, false, 0, 0)
+	
+	-- FIXME - if adding lots of text, may not scroll all the way to the bottom
+	-- older versions used scroll_to_mark but that crashed on windows
+	-- and changing it to this was easier
+	local adj = ui.win.scrolledwindow1:get_vadjustment()
+	adj:set("value", adj:get_upper())
 end
 
 -- display an error to the user
