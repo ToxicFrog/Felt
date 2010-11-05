@@ -3,7 +3,14 @@ class(..., "felt.ImageToken")
 mixin "serialize" ("module")
 
 function click_left(self)
-	require(self.module)
-	self:moveto(nil)
+	self:open_box()
 	return true
+end
+
+function server_open_box(self)
+	if not self.open then
+		require(self.module)
+		self.open = true
+		self.parent:remove(self)
+	end
 end

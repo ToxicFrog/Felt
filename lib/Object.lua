@@ -64,9 +64,11 @@ function _M:__new(...)
     
     setmetatable(obj, obj)
     
-    print("NEW", obj._NAME)
-    table.print((...), "  ")
-    print("------")
+    if self._TRACE then
+		print("NEW", obj._NAME)
+		table.print((...), "  ")
+		print("------")
+	end
     
     obj:__init(...)
 

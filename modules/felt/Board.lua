@@ -2,6 +2,15 @@ class(..., "felt.ImageToken")
 
 mixin "serialize" ("grid")
 
+function drop_before(self, x, y, item)
+	-- don't drop items onto themselves or any of their children. Otherwise
+	-- you end up with a closed cycle in the widget graph.
+	if item == self then
+		return 'skip'
+	end
+	return false
+end	
+
 function drop(self, x, y, item)
 	if self.grid then
 		x = math.floor((x - self.grid.x)/self.grid.w)

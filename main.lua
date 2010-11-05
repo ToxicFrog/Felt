@@ -1,12 +1,13 @@
 require "init"
 
+require "ui"
+
 require "Object"
 require "felt.Object"
 
 require "felt"
 require "client"
 require "server"
-require "ui"
 
 felt.init()
 ui.run()

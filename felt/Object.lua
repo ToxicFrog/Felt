@@ -22,7 +22,7 @@ local function setupRMI(self)
 			
 			rmi[stem] = rmi[stem] or {}
 			rmi[stem][side] = v
-			self[k] = nil
+			--self[k] = nil
 		end
 	end
 	
@@ -60,7 +60,7 @@ function replicate(self, t)
 	t.replicant = true
 	self.replicant = true
 	self._ORIGINAL = true
-	client:send(felt.game, "newObject", self._NAME, t)
+	felt.game:newObject(self._NAME, t)
 end
 
 local _init = __init

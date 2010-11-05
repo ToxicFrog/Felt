@@ -12,10 +12,12 @@ id = false
 mixin "serialize" ("x", "y", "z", "w", "h", "alpha", "scale", "visible", "focused", "children")
 
 function __init(self, ...)
-	self.children = {}
     super.__init(self, ...)
     
-    for i,child in ipairs((...)) do
+    local children = self.children or {}
+	self.children = {}
+    for _,child in pairs(children) do
+    	print("add child", child)
     	self:add(child)
     end
 end
@@ -34,14 +36,14 @@ function dispatchEvent(self, evt, x, y, ...)
         local eventhandler = self[key]
         if eventhandler then
             local result = eventhandler(self, ...)
-            assert(type(result) == "boolean", "event handler "..self._NAME..":"..key.." did not return a value")
+            assert(result ~= nil, "event handler "..self._NAME..":"..key.." did not return a value")
             return result
         end
     end
     
     local r = callhandler(evt.."_before", x, y, ...)
     	   or callhandler("event_before", evt, x, y, ...)
-    if r then return r end
+	if r then return r == true end
 
     for child in self:childrenDescending() do
         if child:inBounds(child:parentToChildCoordinates(x, y)) then
@@ -112,9 +114,9 @@ function childrenAscending(self)
 end
 
 -- add a new child widget
-function add(self, child, x, y)
+function client_add(self, child, x, y)
     if child.parent then
-        child.parent:remove(child)
+        child.parent:client_remove(child)
     end
     child.x = x or child.x
     child.y = y or child.y
@@ -125,7 +127,7 @@ function add(self, child, x, y)
 end
 
 -- remove a child widget
-function remove(self, child)
+function client_remove(self, child)
     for i,c in ipairs(self.children) do
         if c == child then
             table.remove(self.children, i)
@@ -141,7 +143,7 @@ function sort(self)
 end
 
 -- raise this widget to the top of the stack
-function raise(self)
+function client_raise(self)
 	-- widgets pinned at top or bottom ignore raise
     if self.z == -math.huge or self.z == math.huge then return end
     
@@ -159,8 +161,8 @@ function raise(self)
     self.parent:sort()
 end
 
-function lower(self)
-	-- widgets pinned at top or bottom ignore raise
+function client_lower(self)
+	-- widgets pinned at top or bottom ignore lower
     if self.z == -math.huge or self.z == math.huge then return end
     
     local z = 0

@@ -65,7 +65,7 @@ function collectMessages(self)
 
 	local function readmsg(sock)
 		local buf = assert(recvmsg(sock))
-		return new "Deserialization" { data = buf, object = object } :unpack(),data
+		return new "Deserialization" { data = buf, object = object } :unpack()
 	end
 		
 	local ready = socket.select(self.sockets, {}, 0)
@@ -84,7 +84,6 @@ function collectMessages(self)
 				end
 			else
 				local sock = ready[i]
-				message.raw = data
 				message.sock = sock
 				function message.reply(_, ...)
 					self:send(sock, ...)

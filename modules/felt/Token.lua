@@ -12,11 +12,11 @@ end
 -- moveto(nil) can be used to remove a token from the object heirarchy entirely
 -- without deleting it
 function moveto(self, parent, x, y)
-	if self.parent then
-		self.parent:remove(self)
-	end
+	-- add() will automatically remove it from the previous parent if needed
 	if parent then
 		parent:add(self, x, y)
+	else
+		self.parent:remove(self)
 	end
 end
 

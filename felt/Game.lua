@@ -50,7 +50,6 @@ function client_addField(self, field)
 
 	self.fields[field.name] = field
 	ui.show_field(field)
-	return field
 end
 
 function getField(self, name)
