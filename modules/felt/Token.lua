@@ -1,4 +1,4 @@
-local super = class(..., "felt.Widget")
+class(..., "felt.Widget")
 
 name = "token"
 id = true
@@ -8,18 +8,7 @@ function click_left(self)
 	return true
 end
 
--- move the token to a new parent
--- moveto(nil) can be used to remove a token from the object heirarchy entirely
--- without deleting it
-function moveto(self, parent, x, y)
-	-- add() will automatically remove it from the previous parent if needed
-	if parent then
-		parent:add(self, x, y)
-	else
-		self.parent:remove(self)
-	end
-end
-
+local _render = render
 function render(self, cr)
 	if self.held_by then
 		local colour = self.held_by.colour
@@ -29,7 +18,7 @@ function render(self, cr)
 		cr:fill()
 	end
 	
-	super.render(self, cr)
+	_render(self, cr)
 	
 	if self.held_by then
 		cr:pop_group_to_source()
