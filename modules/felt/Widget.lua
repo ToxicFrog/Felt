@@ -45,7 +45,7 @@ function dispatchEvent(self, evt, x, y, ...)
     	   or callhandler("event_before", evt, x, y, ...)
 	if r then return r == true end
 
-    for child in self:childrenDescending() do
+    for child in self:childrenFTB() do
         if child:inBounds(child:parentToChildCoordinates(x, y)) then
         	local x,y = child:parentToChildCoordinates(x,y)
             r = child:dispatchEvent(evt, x, y, ...)
@@ -80,7 +80,7 @@ function render(self, cr)
     
     self:draw(cr)
     
-    for child in self:childrenAscending() do
+    for child in self:childrenBTF() do
     	cr:save()
     	child:render(cr)
     	cr:restore()
@@ -93,9 +93,8 @@ function draw(self, cr)
 	cr:fill()
 end
 
--- returns an iterator over the children of this widget in Z-order, that is to
--- say, highest first
-function childrenDescending(self)
+-- returns an iterator over the children of this widget in front-to-back order
+function childrenFTB(self)
 	return coroutine.wrap(function()
 		for i=1,#self.children do
 			coroutine.yield(self.children[i])
@@ -103,9 +102,8 @@ function childrenDescending(self)
 	end)
 end
 
--- returns an iterator over the children of this widget in reverse Z-order, that
--- is to say, lowest first
-function childrenAscending(self)
+-- returns an iterator over the children of this widget in back to front order
+function childrenBTF(self)
 	return coroutine.wrap(function()
 		for i=#self.children,1,-1 do
 			coroutine.yield(self.children[i])
@@ -149,7 +147,7 @@ function client_raise(self)
     
     local z = 0
     
-    for sibling in self.parent:childrenDescending() do
+    for sibling in self.parent:childrenFTB() do
     	if sibling.z == -math.huge then break end
     	if sibling.z < math.huge then
     		z = sibling.z + 1
@@ -167,7 +165,7 @@ function client_lower(self)
     
     local z = 0
     
-    for sibling in self.parent:childrenDescending() do
+    for sibling in self.parent:childrenFTB() do
     	if sibling.z == math.huge then break end
     	if sibling.z > -math.huge then
     		z = sibling.z - 1
