@@ -1,6 +1,6 @@
 class(..., "felt.ImageToken")
 
-mixin "serialize" ("module")
+mixin "mixins.serialize" ("module")
 
 function click_left(self)
 	self:open_box()

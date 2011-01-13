@@ -11,7 +11,7 @@ class(..., Object)
 id = false
 replicant = false
 
-mixin "serialize" ("id", "replicant")
+mixin "mixins.serialize" ("id", "replicant")
 
 local function setupRMI(self)
 	local rmi = {}

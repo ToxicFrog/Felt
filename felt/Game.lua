@@ -2,7 +2,7 @@ local super = class(..., felt.Object)
 
 replicant = true
 
-mixin "serialize" ("fields", "objects", "players")
+mixin "mixins.serialize" ("fields", "objects", "players")
 
 function __init(self, t)
 	assert(not felt.game)

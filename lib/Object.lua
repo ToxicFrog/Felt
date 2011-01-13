@@ -118,7 +118,7 @@ function _G.class(name, superclass)
 	setfenv(2, env)
 	
 	function class.mixin(name)
-		local f = assert(loadfile("mixins/"..name..".lua"))
+		local f = assert(loadfile(name:gsub('%.', '/')..".lua"))
 		setfenv(f, env)
 		return function(...)
 			return f(...)

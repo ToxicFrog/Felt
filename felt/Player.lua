@@ -2,7 +2,7 @@ class(..., felt.Object)
 
 nextid = 0
 
-mixin "serialize" ("nextid", "name", "colour")
+mixin "mixins.serialize" ("nextid", "name", "colour")
 
 local _init = __init
 function __init(self, t)

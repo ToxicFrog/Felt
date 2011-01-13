@@ -3,7 +3,12 @@ class(..., "felt.Token")
 w = false
 h = false
 
-mixin "serialize" ("face", "back")
+mixin "mixins.serialize" ("face", "back")
+
+--mixin "draw" ("image", "face")
+--mixin "drawHidden" ("image", "back")
+
+local surface
 
 local _init = __init
 function __init(self, ...)

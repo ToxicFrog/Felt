@@ -9,7 +9,7 @@ visible = true
 focused = false
 id = false
 
-mixin "serialize" ("x", "y", "z", "w", "h", "alpha", "scale", "visible", "focused", "children")
+mixin "mixins.serialize" ("x", "y", "z", "w", "h", "alpha", "scale", "visible", "focused", "children")
 
 function __init(self, ...)
     super.__init(self, ...)
@@ -70,28 +70,7 @@ function inBounds(self, x, y)
 		or (x >= 0 and x <= self.w and y >= 0 and y <= self.h)
 end
 
--- internal rendering function. Render self, then render all children in
--- reverse order
-function render(self, cr)
-    if not self.visible then return end
-    
-	cr:translate(self.x, self.y)
-    cr:scale(self.scale, self.scale)
-    
-    self:draw(cr)
-    
-    for child in self:childrenBTF() do
-    	cr:save()
-    	child:render(cr)
-    	cr:restore()
-    end
-end
-
-function draw(self, cr)
-	cr:set_source_rgba(1, 0, 0, 1)
-	cr:rectangle(0, 0, self.w, self.h)
-	cr:fill()
-end
+mixin "ui.render.default" ()
 
 -- returns an iterator over the children of this widget in front-to-back order
 function childrenFTB(self)

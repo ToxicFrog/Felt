@@ -1,6 +1,6 @@
 class(..., "felt.ImageToken")
 
-mixin "serialize" ("grid")
+mixin "mixins.serialize" ("grid")
 
 function drop_before(self, x, y, item)
 	-- don't drop items onto themselves or any of their children. Otherwise

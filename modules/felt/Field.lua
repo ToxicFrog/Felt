@@ -5,7 +5,7 @@ w = false
 h = false
 name = "(untitled field)"
 
-mixin "serialize" ("name")
+mixin "mixins.serialize" ("name")
 
 function __init(self, t)
     super.__init(self, t)
