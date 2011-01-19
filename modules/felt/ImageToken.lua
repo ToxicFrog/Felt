@@ -1,33 +1,12 @@
+-- A subclass of token that renders using a PNG image
+
 class(..., "felt.Token")
 
 w = false
 h = false
 
 mixin "mixins.serialize" ("face", "back")
-
---mixin "draw" ("image", "face")
---mixin "drawHidden" ("image", "back")
-
-local surface
-
-local _init = __init
-function __init(self, ...)
-    _init(self, ...)
-    
-    self.back_surface = cairo.image_surface_create_from_png(self.back or self.face)
-    self.face_surface = cairo.image_surface_create_from_png(self.face)
-
-    self.iw = cairo.image_surface_get_width(self.face_surface)
-    self.ih = cairo.image_surface_get_height(self.face_surface)
-    self.w = self.w or self.iw
-    self.h = self.h or self.ih
-end
-
-function draw(self, cr)
-	cr:set_source_surface(self.face_surface, 0, 0)
-	cr:rectangle(0, 0, self.w, self.h)
-	cr:fill()
-end
+mixin "ui.render.draw_png" ()
 
 do return end
 

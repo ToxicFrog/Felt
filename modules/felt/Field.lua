@@ -17,13 +17,11 @@ function draw(self)
 	-- no-op
 end
 
-function click_left_before(self, x, y)
-	if felt.me.held then
-		return self:dispatchEvent("drop", x, y, felt.me.held)
-	end
-	return false
-end
+-- you can drop things on a field
+-- by default this happens when you left-click on one while holding something
+mixin "ui.action.drop_on" ()
 
+-- the event handler for the actual drop event
 function drop(self, x, y, item)
 	felt.me:drop(self, x, y)
     
