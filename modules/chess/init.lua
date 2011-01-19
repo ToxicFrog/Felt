@@ -32,7 +32,7 @@ for r,colour in ipairs { "w", "b" } do
     
     -- create the ranks of pawns
     for x=10,360,45 do
-        board:add(new "felt.ImageToken" {
+        board:add(new "chess.ChessPiece" {
                 face = img "pawn";
                 name = name "pawn";
             }
@@ -42,21 +42,21 @@ for r,colour in ipairs { "w", "b" } do
 
     -- and the officers
     for i=0,1 do
-        board:add(new "felt.ImageToken" {
+        board:add(new "chess.ChessPiece" {
             face = img "rook";
             name = name "rook";
         }
         , 10 + (7*45)*i
         , colour == "b" and 10 or 325)
         
-        board:add(new "felt.ImageToken" {
+        board:add(new "chess.ChessPiece" {
             face = img "knight";
             name = name "knight";
         }
         , 55 + (5*45)*i
         , colour == "b" and 10 or 325)
         
-        board:add(new "felt.ImageToken" {
+        board:add(new "chess.ChessPiece" {
             face = img "bishop";
             name = name "bishop";
         }
@@ -64,14 +64,14 @@ for r,colour in ipairs { "w", "b" } do
         , colour == "b" and 10 or 325)
     end
     
-    board:add(new "felt.ImageToken" {
+    board:add(new "chess.ChessPiece" {
         face = img "queen";
         name = name "queen";
     }
     , 10 + 3 * 45
     , colour == "b" and 10 or 325)
         
-    board:add(new "felt.ImageToken" {
+    board:add(new "chess.ChessPiece" {
         face = img "king";
         name = name "king";
     }
