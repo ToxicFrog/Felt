@@ -22,16 +22,18 @@ end
 
 local function keystate(n)
 	local state = {}
+	local str = ""
 
 	for _,key in ipairs { "shift", "lock", "ctrl", "alt" } do
 		if n % 2 == 1 then
 			state[key] = true
+			str = str.."_"..key
 			n = n - 1
 		end
 		n = n/2
 	end
 	
-	return state
+	return state,str
 end
 
 function ui.field(field)
@@ -61,9 +63,9 @@ function ui.field(field)
 		x,y = evt.button.x,evt.button.y
 		
 		button = buttonnames[button]
-		state = keystate(state)
+		local state,ststr = keystate(state)
 		
-		dispatch("click_"..button, x, y, state)
+		dispatch("click_"..button..ststr, x, y)
 	end
 	
 	function events:enter_notify()
