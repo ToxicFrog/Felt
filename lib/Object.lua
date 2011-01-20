@@ -99,6 +99,7 @@ function _G.class(name, superclass)
 	local class = package.loaded[name]
 	superclass:cloneto(class)
 	class._NAME = name
+	class._CLASS = class
 	class._SUPER = superclass
 	setmetatable(class, { __call = class.__new })
 	

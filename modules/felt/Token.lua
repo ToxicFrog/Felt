@@ -3,12 +3,20 @@ class(..., "felt.Widget")
 name = "token"
 id = true
 
-mixin "ui.action.pickup" () -- tokens are pickupable
+mixin "ui.actions" {
+	picked_up = "click_left";
+}
+
 mixin "ui.render.hilight_pickup" () -- tokens glow when picked up
 
 local _tostring = __tostring
 function __tostring(self)
 	return self.name or _tostring(self)
+end
+
+function picked_up(self)
+	felt.me:pickup(self)
+	return true
 end
 
 do return end
