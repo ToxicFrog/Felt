@@ -51,3 +51,17 @@ function recvmsg(sock)
 	
 	return buf,err
 end
+
+function felt.save_game(filename)
+	local function aux()
+		assert(felt.game, "Can't save game when no game to save")
+		local fd = assert(io.open(filename, "w"))
+		local sc = new "Serialization" { metamethod = "__save" }
+		sc:pack(felt.game)
+		assert(fd:write(sc:finalize()))
+		fd:close()
+	end
+	xpcall(aux, function(err)
+		ui.error("Saving game: %s", tostring(err))
+	end)
+end

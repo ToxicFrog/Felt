@@ -65,7 +65,11 @@ function ui.show_game(game)
 		ui.show_field(field)
 	end
 	
-	-- FIXME: enable player/field visibility controls
+	-- set menu entries according to the fact that we are now in game
+	ui.win.menu_game_join:set("sensitive", false)
+	ui.win.menu_game_host:set("sensitive", false)
+	ui.win.menu_game_save:set("sensitive", true)
+	ui.win.menu_game_load:set("sensitive", true)
 end
 
 function ui.show_field(field)
