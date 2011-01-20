@@ -6,6 +6,9 @@ h = false
 name = "(untitled field)"
 
 mixin "mixins.serialize" ("name")
+mixin "ui.actions" {
+	maybe_drop = "click_left_before";
+}
 
 function __init(self, t)
     super.__init(self, t)
@@ -13,13 +16,18 @@ function __init(self, t)
     self.vis = self.vis or { [felt.config.get "name"] = true }
 end
 
-function draw(self)
-	-- no-op
-end
+-- no-op - fields are invisible
+function draw(self) end
 
--- you can drop things on a field
--- by default this happens when you left-click on one while holding something
-mixin "ui.action.drop_on" ()
+-- called when the user is possibly dropping something on the field.
+-- we check if there's actually something to drop, and if so, re-emit it as
+-- a "drop" event
+function maybe_drop(self, x, y)
+	if felt.me.held then
+		return self:dispatchEvent("drop", x, y, felt.me.held)
+	end
+	return false
+end
 
 -- the event handler for the actual drop event
 function drop(self, x, y, item)
@@ -29,8 +37,6 @@ function drop(self, x, y, item)
 end
 
 do return end
-
-Table:persistent "name" "visibleTo"
 
 function Table:childInBounds(child, x, y)
     x,y = self:toGrid(x,y)
@@ -50,20 +56,6 @@ function Table:drag_right(x, y, dx, dy)
     return true
 end
 Table.drag_middle = Table.drag_right
-
-function Table:key_c()
-    self:pan(0,0)
-    return true
-end
-
-function Table:key_v()
-    if self.closevis then
-        self:closevis()
-    else
-        self:openvis()
-    end
-    return true
-end
 
 function Table:openvis()
     local buttons = {}
