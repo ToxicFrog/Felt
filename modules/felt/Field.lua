@@ -7,7 +7,7 @@ name = "(untitled field)"
 
 mixin "mixins.serialize" ("name")
 mixin "ui.actions" {
-	maybe_drop = "click_left_before";
+	{ "maybe_drop", "Drop held item", "click_left_before" };
 }
 
 function __init(self, t)

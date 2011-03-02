@@ -1,10 +1,9 @@
 class(..., "felt.Widget")
 
-name = "token"
 id = true
 
 mixin "ui.actions" {
-	picked_up = "click_left";
+	{ "picked_up", "Pick Up", "click_left", "click_left_shift" };
 }
 
 mixin "ui.render.hilight_pickup" () -- tokens glow when picked up
