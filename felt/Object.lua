@@ -13,6 +13,11 @@ replicant = false
 
 mixin "mixins.serialize" ("id", "replicant")
 
+-- set up the RMI stubs:
+-- * search the object for methods starting with "server_" or "client_"
+-- * for each such method, install it as "server.method" or "client.method"
+-- * generate a plain 'method' that calls the server version if called by the
+--   client, and the client version if called by the server
 local function setupRMI(self)
 	local rmi = {}
 	
