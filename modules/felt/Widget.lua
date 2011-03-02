@@ -1,4 +1,4 @@
-local super = class(..., "felt.Object")
+class(..., "felt.Object")
 
 x,y,z = 0,0,0
 w,h = 16,16
@@ -11,8 +11,9 @@ id = false
 
 mixin "mixins.serialize" ("x", "y", "z", "w", "h", "alpha", "scale", "visible", "focused", "children")
 
+local _init = __init
 function __init(self, ...)
-    super.__init(self, ...)
+    _init(self, ...)
     
     local children = self.children or {}
 	self.children = {}
@@ -22,8 +23,9 @@ function __init(self, ...)
     end
 end
 
+local _tostring = __tostring
 function __tostring(self)
-    return (self.name or self.title or super.__tostring(self))..":"..self._ID
+    return (self.name or self.title or _tostring(self))..":"..self._ID
 end
 
 -- recieve an event
