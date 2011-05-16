@@ -26,6 +26,10 @@ function message(self, fmt, ...)
 	return ui.message("[server] "..fmt, ...)
 end
 
+function announce(self, fmt, ...)
+    self:broadcast(client, "message", fmt, ...)
+end
+
 -- mainloop tick function, called every frame by main
 function update(self)
 	if not self.socket then return end

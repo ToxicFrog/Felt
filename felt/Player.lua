@@ -19,7 +19,7 @@ function uniqueID(self)
 	return string.format("%s::%d", self.name, self.nextid)
 end
 
-function server_pickup(self, item)
+function server_pickup(self, who, item)
 	ui.message("pickup: holding %s, item %s, held by %s", tostring(self.held), tostring(item), tostring(item.held_by))
 	if self.held then return end
 	if item.held_by then return end
@@ -33,11 +33,10 @@ function client_pickup(self, item)
 	item.held_by = self
 end
 
-function server_drop(self, onto, x, y)
+function server_drop(self, who, onto, x, y)
 	if not self.held then return end -- sanity check
-	local item = self.held
-	item:moveto(onto, x - item.w/2, y - item.h/2)
-	item:raise()
+	self.held:dispatchEvent("dropped", x, y, onto)
+	onto:dispatchEvent("caught", x, y, self.held)
 	self:drop(onto, x, y)
 end
 

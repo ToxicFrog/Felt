@@ -8,11 +8,6 @@ mixin "ui.actions" {
 
 mixin "ui.render.hilight_pickup" () -- tokens glow when picked up
 
-local _tostring = __tostring
-function __tostring(self)
-	return self.name or _tostring(self)
-end
-
 function picked_up(self)
 	felt.me:pickup(self)
 	return true

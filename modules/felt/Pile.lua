@@ -1,3 +1,9 @@
+class(..., "felt.Token")
+
+
+
+
+do return end
 local Pile = require("felt.Token"):subclass "felt.Pile"
 
 Pile:defaults {

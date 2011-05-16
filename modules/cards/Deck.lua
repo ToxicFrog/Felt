@@ -1,14 +1,40 @@
-local Deck = require("felt.Token"):subclass "felt.Deck"
+class(..., "felt.Token")
 
-Deck:defaults {
-    name = "Deck";
-    menu = {
-        title = "Deck";
-        "Shuffle", function(self) return self:shuffle() end;
-        "Sort", function(self) return self:sortByName() end;
-    };
-    spread = false;
+mixin "ui.actions" {
+	{ "draw_card", "Draw", "click_left" };
+	{ "draw_bottom", "Draw from bottom", "click_left_ctrl" };
+	{ "search_deck", "Search" };
+	{ "shuffle_deck", "Shuffle" };
+	{ "sort_deck", "Sort" };
 }
+
+local _init = __init
+function __init(self, ...)
+end
+
+-- to draw a deck, we just draw the top card of the deck in the appropriate
+-- visibility state
+-- FIXME: react appropriately if the deck is being searched
+function draw(self, ...)
+    if self.searched then
+        
+    return self:top_child():draw(...)
+end
+
+function draw_concealed(self, ...)
+    return self:top_child():draw_concealed(...)
+end
+
+-- pick up a card
+function draw_card(self)
+    return self:top_child():picked_up()
+end
+
+function draw_bottom(self)
+    return self:bottom_child():picked_up()
+end
+
+do return end
 
 function Deck:__init(t)
     felt.Token.__init(self, t)
@@ -87,24 +113,6 @@ function Deck:sort()
             cx = cx + child.w/2
         end
     end
-end
-
-function Deck:draw(scale, x, y, w, h)
-    if #self.children == 0 then
-        love.graphics.setColour(128, 128, 128, 255)
-        love.graphics.rectangle("line", x, y, w, h)
-        return true
-    elseif not self.spread then
-        self.children[1]:render(scale, x, y, w, h)
-        return true
-    else
-        self:sort()
-        return false
-    end
-end
-
-function Deck:drawHidden(...)
-    return self:draw(...)
 end
 
 function Deck:click_middle_before()

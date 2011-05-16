@@ -1,19 +1,36 @@
 class(..., "felt.Object")
 
+-- coordinates, RELATIVE TO PARENT, of this object. Z is height: lower values are further "down".
 x,y,z = 0,0,0
+
+-- width and height of this object. Used for mouse collision detection, mostly.
 w,h = 16,16
+
+-- transparency
 alpha = 1.0
+
+-- scaling factor
 scale = 1.0
+
+-- sorting function to use for children; defaults to sort by descending Z order
 z_sort = L 'lhs,rhs -> lhs.z > rhs.z'
-visible = true
-focused = false
+
+-- true if the widget is fully invisible, ie, does not render or receive events
+invisible = false
+
+-- true if the widget is concealed, ie, it can be seen but its exact nature is unknown (a face-down card, for example)
+concealed = false
+
+-- the object's unique (within the scope of a game) ID, used for RMI
 id = false
 
-mixin "mixins.serialize" ("x", "y", "z", "w", "h", "alpha", "scale", "visible", "focused", "children")
+mixin "mixins.serialize" ("id", "x", "y", "z", "w", "h", "scale", "visible", "children")
 
 local _init = __init
 function __init(self, ...)
     _init(self, ...)
+    
+    assert(self.name, "Attempted to create a widget (%s) without a name" % tostring(self))
     
     local children = self.children or {}
 	self.children = {}
@@ -23,9 +40,14 @@ function __init(self, ...)
     end
 end
 
-local _tostring = __tostring
 function __tostring(self)
-    return (self.name or self.title or _tostring(self))..":"..self._ID
+	if _DEBUG then
+		return "%s (%s: %s)" % { self.name, self._NAME, self._ID }
+	end
+	if self.concealed and self.__tostring_concealed then
+		return self:__tostring_concealed()
+	end
+	return self.name
 end
 
 -- recieve an event
@@ -34,6 +56,9 @@ end
 -- - all children in Z-order
 -- - parent's event handler or event()
 function dispatchEvent(self, evt, x, y, ...)
+	-- invisible widgets do not process events
+	if self.invisible then return end
+	
     local function callhandler(key, ...)
         local eventhandler = self[key]
         if eventhandler then
@@ -52,7 +77,7 @@ function dispatchEvent(self, evt, x, y, ...)
         	local x,y = child:parentToChildCoordinates(x,y)
             r = child:dispatchEvent(evt, x, y, ...)
             if r then return r end
-        end
+            end
     end
 
     return callhandler(evt, x, y, ...) or callhandler("event", evt, x, y, ...)
@@ -83,6 +108,10 @@ function childrenFTB(self)
 	end)
 end
 
+function top_child(self)
+    return self.children[1]
+end
+
 -- returns an iterator over the children of this widget in back to front order
 function childrenBTF(self)
 	return coroutine.wrap(function()
@@ -92,11 +121,30 @@ function childrenBTF(self)
 	end)
 end
 
+function bottom_child(self)
+    return self.children[#self.children]
+end
+
+-- recursively update visibility status
+function client_conceal(self, concealed)
+	self.concealed = concealed
+	
+	for child in self:childrenFTB() do
+		child:client_conceal(concealed)
+	end
+end
+
 -- add a new child widget
 function client_add(self, child, x, y)
     if child.parent then
         child.parent:client_remove(child)
     end
+    
+    -- update visibility flags
+    if self.concealed ~= child.concealed then
+    	child:client_conceal(self.concealed)
+    end
+    
     child.x = x or child.x
     child.y = y or child.y
     child.parent = self

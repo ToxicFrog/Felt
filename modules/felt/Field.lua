@@ -36,6 +36,12 @@ function drop(self, x, y, item)
     return true
 end
 
+function caught(self, x, y, item)
+    item:moveto(self, x - item.w/2, y - item.h/2)
+    item:raise()
+    return true
+end
+
 do return end
 
 function Table:childInBounds(child, x, y)

@@ -1,14 +1,17 @@
 -- provides the default rendering/drawing infrastructure for Widgets
 
 -- default render behaviour:
---  skip if invisible
---  otherwise, call "draw"
---  then, draw all children
+-- * set up scaling and position
+-- * if concealed, call draw_concealed
+-- * otherwise, call draw, then render all children back to front
 function render(self, cr)
-    if not self.visible then return end
-    
 	cr:translate(self.x, self.y)
     cr:scale(self.scale, self.scale)
+
+    if self.concealed then
+    	self:draw_concealed(cr)
+    	return
+    end
     
     self:draw(cr)
     
@@ -25,4 +28,10 @@ function draw(self, cr)
 	cr:set_source_rgba(1, 0, 0, 1)
 	cr:rectangle(0, 0, self.w, self.h)
 	cr:fill()
+end
+
+-- default draw_concealed behaviour is to forward to draw()
+-- implicitly, this does not draw children (because render() will skip that step)
+function draw_concealed(self, cr)
+	return self:draw(cr)
 end

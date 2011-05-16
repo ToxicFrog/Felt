@@ -71,16 +71,11 @@ function L(src)
     return assert(loadstring(src:gsub("%s+%-%>%s+", " = ...; return ")))
 end
 
--- Class(Object, SubClass)
-function Class(super, name)
-	if not name then
-		name,super = super,Object
+-- permit 'fmt % foo' and 'fmt % { foo, bar }'
+getmetatable("").__mod = function(fmt, args)
+	if type(args) == "table" then
+		return fmt:format(unpack(args))
+	else
+		return fmt:format(args)
 	end
-	
-	if type(super) == "string" then
-		super = require(super)
-	end
-	
-	return super:subclass(name)
 end
-

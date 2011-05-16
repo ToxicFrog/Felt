@@ -23,7 +23,7 @@ function draw(self, cr)
 	cr:fill()
 end
 
-function drawBack(self, cr)
+function draw_concealed(self, cr)
 	cr:set_source_surface(surfaces[self.back], 0, 0)
 	cr:rectangle(0, 0, self.w, self.h)
 	cr:fill()

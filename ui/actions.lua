@@ -33,7 +33,9 @@ for _,v in pairs(...) do
 		-- some methods, like the RMI stubs, don't exist until after the constructor
 		-- runs
 		_CLASS[key] = function(self, ...)
-			return self[method](self, ...)
+			local rv = self[method](self, ...)
+			if rv == nil then return true end
+			return rv
 		end
 	end end
 end

@@ -48,8 +48,8 @@ local function setupRMI(self)
 				server:broadcast(self, "client."..method, ...)
 			else
 				-- we are in client context
-				-- unicast to the server
-				client:send(self, "server."..method, ...)
+				-- unicast to the server, along with our identity
+				client:send(self, "server."..method, felt.me, ...)
 			end
 		end
 		
