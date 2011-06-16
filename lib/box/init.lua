@@ -17,7 +17,7 @@ require "box.pack"
 -- returns the originally packed object
 -- for non-primitive objects, an __unpack metamethod may be invoked
 -- this is actually found by doing require(type).__unpack(arg)
---require "box.unpack"
+require "box.unpack"
 
 -- __pack(self, ...)
 -- metamethod for packing objects
