@@ -8,17 +8,50 @@
 -- - a means by which RMIs can be propagated to the clients
 --   - this implies a set of clients and a broadcast API
 require "socket"
+require "socket-helpers"
+require "copas"
 
-class(..., felt.Object)
+class("Server", "common.Object")
 
-updating = false -- true during a server update step; the automatic RMI dispatcher
--- needs to be able to tell whether it's executing in a server or client ctx
 
+-- constructor fields: 
+-- name: name of game, for server browsers
+-- host: interface to bind to
+-- port: port to bind to
+-- pass: game password. Optional.
+-- admin: port for admin console. Always binds to localhost. Optional.
+-- load: saved game to load on startup. Optional.
 local _init = __init
 function __init(self, t)
 	_init(self, t)
-	self.events = {}
+	self.sendq = {}
+	self.players = {}
 	self.id = "S"
+end
+
+function start(self)
+	-- if these aren't set, it's a programming error
+	assert(self.port and self.host and self.name, "Invalid arguments to constructor for server.Server")
+	assert(not self.game, "Server is already running")
+
+    local err
+    self.socket,err = socket.bind(self.host, self.port)
+    
+    if not self.socket then
+        return nil,err
+    end
+    
+    copas.addserver(self.socket, function(...) return self:receiver(...) end)
+    self.game = new "Game" {}
+    self:message("server listening on port %d", self.port)
+    
+    return true
+end
+
+-- cleanly shut down the server. FIXME: no implemented
+function stop(self)
+    assert(self.game, "server is not running")
+    error "not implemented"
 end
 
 -- server message function, prefixes messages with [server]
@@ -26,174 +59,85 @@ function message(self, fmt, ...)
 	return ui.message("[server] "..fmt, ...)
 end
 
-function announce(self, fmt, ...)
-    self:broadcast(client, "message", fmt, ...)
+-- each instance of this function is responsible for handling a single client.
+-- Whenever a client connects, copas will automatically create a new thread
+-- from this function; when it returns, the socket is closed.
+-- Note that neither this function, nor anything called by it, should EVER
+-- send data (or perform additional socket reads); doing so may permit the
+-- thread to block halfway through an operation on shared state and awaken
+-- another thread.
+-- Instead, use the server's :sendTo and :broadcast methods, which will
+-- insert the messages into a queue which is periodically emptied by another
+-- thread.
+function receiver(self, sock)
+    new "Client" {
+        socket = sock;
+        server = self;
+    }:run()
 end
 
--- mainloop tick function, called every frame by main
-function update(self)
-	if not self.socket then return end
-	
-	self.updating = true
-	local i = 1
-	local events = self.events
-	
-	-- TODO: collect events from network sockets
-	self:tryAccept()
-	
-	self:collectMessages()
-	
-	while events[i] do
-		self:dispatch(events[i])
-		i = i+1
-	end
-	
-	self.events = {}
-	self.updating = false
+function sendTo(self, player, ...)
+    local msg = table.pack(...)
+    msg.target = player
+    table.insert(self.sendq, msg)
 end
 
-function tryAccept(self)
-	local sock = self.socket:accept()
-	if sock then
-		self:message("Connection accepted from %s", sock:getpeername())
-	end
-	table.insert(self.sockets, sock)
+function broadcast(self, ...)
+    table.insert(self.sendq, table.pack(...))
 end
 
-function collectMessages(self)
-	local function object(id)
-		if id == "S" then return self
-		else return self.game:getObject(id)
-		end
-	end
-
-	local function readmsg(sock)
-		local buf = assert(recvmsg(sock))
-		return new "Deserialization" { data = buf, object = object } :unpack()
-	end
-		
-	local ready = socket.select(self.sockets, {}, 0)
-	for i=1,#self.sockets do
-		if ready[i] then
-			local status,message,data = pcall(readmsg, ready[i])
-			
-			if not status then
-				-- whoops, error reading from socket
-				self:message("closing connection to %s (%s)", tostring(ready[i]:getpeername()), tostring(message))
-				self.sockets[i]:close()
-				local sock = table.remove(self.sockets, i)
-				local name = self.players[sock]
-				if name then
-					self.players[name],self.players[sock] = nil,nil
-				end
-			else
-				local sock = ready[i]
-				message.sock = sock
-				function message.reply(_, ...)
-					self:send(sock, ...)
-				end
-				self:pushEvent(message)
-			end
-		end
-	end
+function sendQueuedMessages(self)
+    for i,msg in ipairs(self.sendq) do
+        if msg.target then
+            msg.target:sendmsg(table.unpack(msg))
+        else
+            -- send message to all connected players
+            for _,player in ipairs(self.players) do
+                player:sendmsg(table.unpack(msg))
+            end
+        end
+        self.sendq[i] = nil
+    end
 end
 
-function pushEvent(self, evt)
-	table.insert(self.events, evt)
+-- mainloop function for the server. The UI is expected to call this frequently
+-- (say, 5-30 times a second) to collect network traffic and process pending
+-- events.
+function update(self, timeout)
+    copas.step(timeout)
+    self:sendQueuedMessages()
+    return true
 end
 
-function send(self, sock, ...)
-	local buf = new "Serialization" { metamethod = "__send" }
-		:pack(table.pack(...))
-		:finalize()
-	sendmsg(sock, buf)
+function login(self, socket, info)
+    if not type(info) == "table" or not info.name then
+        return false,"malformed login request"
+    
+    elseif self.pass and (self.pass ~= info.pass) then
+        return false,"incorrect password"
+        
+    elseif self.players[info.name] then
+        return false,"name collision with existing player"
+    end
+    
+    self:addPlayer(socket, info.name, info.colour)
+    self:message("%s joined the game.", info.name)
+    
+    return true
 end
 
-function dispatch(self, evt)
-	self.reply = evt.reply
-	self.sender = evt.sock
-	local obj = evt[1]
-	local method = evt[2]
-	
-	assert(obj, "Malformed RMI: no object")
-	assert(obj[method], "Malformed RMI: object "..tostring(obj).." has no method "..tostring(method)) 
-	obj[method](obj, unpack(evt, 3))
-	self.reply = nil
-	self.sender = nil
+function logout(self, name)
+    self.players[name] = nil
+    self:message("%s left the game.", name)
 end
 
-function login(self, name, pass)
-	self:message("Player connecting: %s", name)
-	if self.pass ~= pass then
-		self:message("Rejecting %s due to bad password.", name)
-		self:message("my pass: '%s'", tostring(self.pass))
-		self:message("their pass: '%s'", tostring(pass))
-		self:reply(client, "disconnect", "Invalid password.")
-		return
-	end
-
-	if self.players[name] then
-		self:message("Rejecting %s due to name collision.", name)
-		self:reply(client, "disconnect", "A player with the name '"..tostring(name).."' is already present in game.")
-		return
-	end
-		
-	-- HACK HACK HACK
-	-- is it a local client?
-	if client.name == name then
-		self:reply(client, "setGame", self.game)
-	else
-		local sc = new "Serialization" { metamethod = "__save" }
-		sc:pack(self.game)
-		self:reply(client, "setGame", sc:finalize())
-	end -- HACK HACK HACK
-
-	self.players[name] = self.sender
-	self.players[self.sender] = name
-	
-	-- we don't need to pass them a player object - if they're reconnecting,
-	-- they'll claim the existing object, and if they're new, their first
-	-- action will be to create a new player object
-	
-	self:message("Handshake with %s completed.", name)
-	
-	return
-end
-
-function broadcast(self, object, method, ...)
-	object[method](object, ...)
-	for _,socket in pairs(self.sockets) do
-		if self.players[socket] then -- skip players who haven't logged in
-			self:send(socket, object, method, ...)
-		end
-	end
-end
-
--- public API to the server subsystem
-
-function start(self, port, pass)
-	self.players = {}
-	self.sockets = {}
-	self.port = port
-	self.pass = pass
-	
-	local err
-	self.socket,err = socket.bind("*", port)
-	
-	if not self.socket then
-		ui.error("Unable to start server (networking error): "..err)
-		return false
-	end
-	
-	self.socket:settimeout(0)
-	
-	self.game = new "felt.Game" {}
-	
-	self:message("server listening on port %d", port)
-
-	return true
-end
-
-function stop(self, reason)
-	error("not implemented")
+function addPlayer(self, socket, name, colour)
+    local p = new "Player" {
+        name = name;
+        colour = colour;
+        socket = socket;
+    }
+    
+    self.players[p.name] = p
+    -- FIXME add player object to the game as well
 end

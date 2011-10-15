@@ -82,7 +82,9 @@ end
 function unpack.C(buf, refs)
     local data = readtoc(buf)
     
-    local obj = assert(require(data[1]).__unpack(data[2]), "error deserializating object of type %s" % data[1])
+    local type,arg = do_unpack(data[1], refs),do_unpack(data[2], refs)
+    
+    local obj = assert(require(type).__unpack(arg), "error deserializating object of type %s" % tostring(type))
     refs[#refs+1] = obj
     return obj
 end

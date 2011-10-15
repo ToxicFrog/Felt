@@ -1,39 +1,56 @@
-local super = class(..., felt.Object)
-
-replicant = true
-
-mixin "mixins.serialize" ("fields", "objects", "players")
+local super = class(..., "common.Object")
 
 function __init(self, t)
-	assert(not felt.game)
 	self.id = "G"
 	self.fields = {}
 	self.players = {}
 	self.objects = {}
 	super.__init(self, t)
 	
-	-- even after serialization, we need to create this manually, because
-	-- recursive structures cannot be serialized fully
+	-- insert ourself into the objects table automatically
 	self.objects[self.id] = self
 end
 
-local _save = __save
-function __save(self, ...)
-	for k,v in pairs(self.objects) do print("game save", k, v) end
-	return _save(self, ...)
+function __pack(self, objects)
+    return "call","Game",{
+        id = id;
+        fields = self.fields;
+        players = self.players;
+        objects = self.objects;
+    }
 end
 
-function client_addPlayer(self, player)
-	-- we can assume that the enclosing server won't permit name collisions
-	-- thus, if we have one here, it means a player previously part of the
-	-- game has reconnected
-	self.players[player.name] = player
+function __unpack(arg)
+    return new(_CLASS)(arg)
 end
 
+-- returns the Player with the given name
 function getPlayer(self, name)
-	print("getplayer", '"'..name..'"', self.players[name])
-	for k,v in pairs(self.players) do print("", '"'..k..'"', v) end
 	return self.players[name]
+end
+
+-- returns the Field with the given name
+function getField(self, name)
+	return self.fields[name] {}
+end
+
+-- returns the in-game object with the given name
+-- there are a few "special" IDs; in particular S is always the server and
+-- G is always the game object itself
+function getObject(self, id)
+	return assert(self.objects[id], "no object in game with id "..tostring(id))
+end
+
+function addPlayer(self, player)
+end
+
+function addField(self, field)
+end
+
+function delPlayer(self, name)
+end
+
+function delField(self, name)
 end
 
 function server_addField(self, field)
@@ -50,14 +67,6 @@ function client_addField(self, field)
 
 	self.fields[field.name] = field
 	ui.show_field(field)
-end
-
-function getField(self, name)
-	return self.fields[name]
-end
-
-function getObject(self, id)
-	return assert(self.objects[id], "no object in game with id "..tostring(id))
 end
 
 function client_newObject(self, class, ctor)

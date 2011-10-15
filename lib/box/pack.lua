@@ -1,5 +1,6 @@
 local pack = {}
 local do_pack,getpackmethod,maketoc
+local map = list.map
 
 function box.pack(obj, ...)
     return do_pack(obj, {n=1}, ...)
@@ -28,7 +29,7 @@ function getpackmethod(obj, refs)
 end
 
 function maketoc(data)
-    return #data .. ":" .. table.concat(list.map(data, L "x -> tostring(#x)..':'")) 
+    return #data .. ":" .. table.concat(map(data, L "x -> tostring(#x)..':'")) 
 end
     
 -- nil is packed as the single character "n"

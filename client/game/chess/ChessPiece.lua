@@ -1,6 +1,6 @@
 -- A single chess piece. Basically a Token with a PNG face.
 
-class(..., "felt.Token")
+class("game.chess.ChessPiece", "felt.Token")
 
 w = false
 h = false

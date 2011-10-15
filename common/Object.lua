@@ -1,8 +1,18 @@
+-- common.Object
+-- this is the base class from which all other classes are derived
+-- It implements a few utility methods like Object:isInstanceOf(foo), but
+-- most of this is the basic pipe laying needed to let you create
+-- new classes and create instances of them
+
+-- we need to localize everything we plan on using, since this
+-- library uses module()
 local pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv,loadfile,assert
 = pairs,setmetatable,module,package,require,unpack,ipairs,table,type,tostring,_G,setfenv,loadfile,assert
-
 local print = print
 
+
+-- the global type() function gets overriden, to support the __type metamethod
+-- if __type is a function, it is called; otherwise it is the type
 do
     local _type = type
     function type(obj)
@@ -17,6 +27,9 @@ do
 end
 
 module(...)
+
+-- the type of an Object is "common.Object"
+_M.__type = _M._NAME
 
 function _M:__init(t)
     if t then
@@ -33,15 +46,21 @@ function _M:clone()
 end
 
 function _M:isInstanceOf(t)
+    if type(t) == "string" then
+        t = require(t)
+    end
+    
     if type(self) == t then
         return true
     elseif self._NAME == t then
         return true
     end
+    
     while self.__super do
         if self.__super._NAME == t then return true end
         self = self.__super
     end
+    
     return false
 end
 
@@ -86,8 +105,6 @@ function _M:close(method)
     end
 end
 
-_M.__type = _M._NAME
-
 function _G.class(name, superclass)
 	superclass = superclass or _M
 	
@@ -129,3 +146,11 @@ function _G.class(name, superclass)
 	return superclass
 end
 	
+-- instantiate something using 'new "type" {ctor}'
+function _G.new(name)
+    local class = require(name)
+    assert(type(class) == "table" and class._NAME == name, "Malformed or missing class definition for '%s'" % name)
+    return function(...)
+        return class(...)
+    end
+end
