@@ -1,0 +1,32 @@
+The server basically has two duties:
+- maintain the definitive game state, including the set of players and the mapping from players to open connections
+- react to messages from the players by updating the game state and then broadcasting the changes to all players
+
+The server workflow is a simple copas-based setup. It does its initialization (create settings struct, create a new empty game or load a game from disk, etc), and then creates a copas listener that creates a server.ClientReader thread when someone connects.
+
+A ClientReader is responsible for processing all incoming messages on a socket. First, it listens for a login message (which contains the connecting client's name, colour, password, and spectator flag). If it gets garbage, or doesn't get a message in a timely fashion, it drops the connection. If it does get a valid login message, it then verifies it against a bunch of checks, at least including:
+- password correct
+- no name collision
+- no colour collision
+- player limit not reached
+- spectating allowed (if spectator flag set)
+If any of these checks fail, it drops the connection (with an appropriately informative message).
+
+If the checks pass, it's time to get this show on the road.
+
+First, it creates a new ClientProxy associated with the socket. A ClientProxy is not a thread, but an object containing information about the client - the socket, the in-game player information structure (if any - spectators don't get one, just an out-of-game name), the send queue, and so forth. A ClientProxy has just two methods - :send(message) and :disconnect(message). :send queues a message for sending and, if there is no active ClientWriter thread for this client, creates one. :disconnect queues two messages - one to the client, telling it to disconnect and why, and one that will be processed by the ClientWriter (if any) to close the socket and delete the ClientProxy object. (The ClientWriter will shut down when it processes that message; the ClientReader will shut down when it realizes the socket is closed).
+
+Once the ClientProxy is created, there's a few more tasks to perform. If the new client is a player, it creates a new Player object for them in-game, or, if there is already an inactive Player with that name, associates them with it. There is now a Player<->ClientProxy mapping.
+
+Finally, it needs to send the player the current state of the game, which it does by boxing the entire game state and calling proxy:send() on it.
+
+Once this is done, it enters its main loop - it reads messages from the socket and acts on them. Most of the messages will be RMIs on objects in the game world, which it will pcall and then think no more of; some may be out-of-game messages (probably in server.api?) used for things like a client quit or sending chat messages.
+
+If the client chooses to quit, or if something goes wrong (corrupt message received, socket closed), the ClientReader closes the socket and deletes the associated ClientProxy. The ClientWriter should shut down automatically when it realizes the socket is closed.
+
+Note that no messages actually get sent from the ClientReader; this is to avoid cases where different clients get messages in different orders. Instead, each ClientProxy maintains a sendq; when a message is broadcast, it gets appended to every sendq. Each sendq has an associated ClientWriter which just sits in a loop pulling messages from the queue and sending them.
+
+Since copas does not support a non-socket-associated sleep() function, when the ClientWriter hits the end of the sendq, it has no way of suspending. Fortunately, coroutines are cheap; it unsets the "ClientWriter active" flag in the corresponding ClientProxy and then returns. The next time a message is pushed, a new ClientWriter thread will be created.
+
+
+:wrap=soft:
