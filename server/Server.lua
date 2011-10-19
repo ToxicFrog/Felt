@@ -41,22 +41,17 @@ function start(self)
         return nil,err
     end
     
-    copas.addserver(self.socket, function(...) return self:receiver(...) end)
+    copas.addserver(self.socket, function(...) return self:clientWorker(...) end)
     self.game = new "Game" {}
-    self:message("server listening on port %d", self.port)
+    self:message("Listening on port %d", self.port)
     
     return true
 end
 
--- cleanly shut down the server. FIXME: no implemented
+-- cleanly shut down the server. FIXME: not implemented
 function stop(self)
     assert(self.game, "server is not running")
     error "not implemented"
-end
-
--- server message function, prefixes messages with [server]
-function message(self, fmt, ...)
-	return ui.message("[server] "..fmt, ...)
 end
 
 -- each instance of this function is responsible for handling a single client.
@@ -69,75 +64,57 @@ end
 -- Instead, use the server's :sendTo and :broadcast methods, which will
 -- insert the messages into a queue which is periodically emptied by another
 -- thread.
-function receiver(self, sock)
-    new "Client" {
+function clientWorker(self, sock)
+    new "ClientWorker" {
         socket = sock;
         server = self;
-    }:run()
+    }:ClientReader()
 end
 
-function sendTo(self, player, ...)
-    local msg = table.pack(...)
-    msg.target = player
-    table.insert(self.sendq, msg)
-end
-
-function broadcast(self, ...)
-    table.insert(self.sendq, table.pack(...))
-end
-
-function sendQueuedMessages(self)
-    for i,msg in ipairs(self.sendq) do
-        if msg.target then
-            msg.target:sendmsg(table.unpack(msg))
-        else
-            -- send message to all connected players
-            for _,player in ipairs(self.players) do
-                player:sendmsg(table.unpack(msg))
-            end
-        end
-        self.sendq[i] = nil
-    end
-end
-
--- mainloop function for the server. The UI is expected to call this frequently
--- (say, 5-30 times a second) to collect network traffic and process pending
--- events.
-function update(self, timeout)
-    copas.step(timeout)
-    self:sendQueuedMessages()
-    return true
-end
-
-function login(self, socket, info)
-    if not type(info) == "table" or not info.name then
-        return false,"malformed login request"
+-- register a player attempting to log in. This is called by the ClientWorker
+-- when it receives a login request, and should raise errors on failure.
+function register(self, client, login)
+    assert(type(login) == "table", "malformed login request (type mismatch)")
+    assert(#login.name > 0, "malformed login request (empty name)")
+    assert((not self.pass) or self.pass == login.pass, "password incorrect")
+    assert(not self.players[login.name], "name collision")
     
-    elseif self.pass and (self.pass ~= info.pass) then
-        return false,"incorrect password"
-        
-    elseif self.players[info.name] then
-        return false,"name collision with existing player"
-    end
+    -- all of these checks pass? Good. Register them.
+    self.clients[client] = true
+    client.player = self.game:registerPlayer(client, login.name, login.r, login.g, login.b)
+    self.players[login.name] = client.player
     
-    self:addPlayer(socket, info.name, info.colour)
-    self:message("%s joined the game.", info.name)
-    
-    return true
-end
+    self:message("Player %s logged in.", login.name)
 
-function logout(self, name)
-    self.players[name] = nil
-    self:message("%s left the game.", name)
-end
-
-function addPlayer(self, socket, name, colour)
-    local p = new "Player" {
-        name = name;
-        colour = colour;
-        socket = socket;
+    -- send them the initial gamestate
+    client:send {
+        method = "game";
+        self.game;
     }
-    
-    self.players[p.name] = p
-    -- FIXME add player object to the game as well
+
+    -- tell everyone that they've arrived
+    self:broadcast {
+        method = "message";
+        "%s joins the game.", login.name;
+    }
+end
+
+function broadcast(msg)
+    for client in pairs(self.clients) do
+        client:send(msg)
+    end
+end
+
+function step(self, timeout)
+    copas.step(timeout)
+    return true
+end
+
+function mainloop(self)
+    return copas.loop()
+end
+
+-- server message function, prefixes messages with [server]
+function message(self, fmt, ...)
+	return ui.message("[server] "..fmt, ...)
 end
