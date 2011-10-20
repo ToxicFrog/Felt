@@ -25,8 +25,7 @@ local _init = __init
 function __init(self, t)
 	_init(self, t)
 	self.sendq = {}
-	self.players = {}
-	self.id = "S"
+	self.clients = {}
 end
 
 function start(self)
@@ -68,7 +67,7 @@ function clientWorker(self, sock)
     new "ClientWorker" {
         socket = sock;
         server = self;
-    }:ClientReader()
+    }
 end
 
 -- register a player attempting to log in. This is called by the ClientWorker
@@ -77,7 +76,7 @@ function register(self, client, login)
     assert(type(login) == "table", "malformed login request (type mismatch)")
     assert(#login.name > 0, "malformed login request (empty name)")
     assert((not self.pass) or self.pass == login.pass, "password incorrect")
-    assert(not self.players[login.name], "name collision")
+    assert(not self.game:getPlayer(login.name) or not self.game:getPlayer(login.name).client, "name collision")
     
     -- all of these checks pass? Good. Register them.
     self.clients[client] = true
@@ -110,11 +109,22 @@ function step(self, timeout)
     return true
 end
 
-function mainloop(self)
+function loop(self)
     return copas.loop()
 end
 
 -- server message function, prefixes messages with [server]
 function message(self, fmt, ...)
 	return ui.message("[server] "..fmt, ...)
+end
+
+-- public API callable by clients
+-- signature is (self, client, ...)
+api = {}
+
+function api:chat(client, ...)
+    self:broadcast {
+        method = "chat";
+        client.player.name, ...;
+    }
 end

@@ -32,8 +32,6 @@ local defaults = {
 local S = new "Server" (ddgetopts(defaults, ...))
 S:start()
 
--- the server needs to be manually "pumped"; each call to update processes all
--- pending events.
-while S:update() do end
+S:loop()
 
 S:shutdown()

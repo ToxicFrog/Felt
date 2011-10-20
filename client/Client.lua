@@ -40,14 +40,13 @@ function stop(self)
     error "not implemented"
 end
 
--- server message function, prefixes messages with [server]
-function message(self, fmt, ...)
-	return ui.message("[client] "..fmt, ...)
-end
-
 -- server worker function. Handles all communication with the server. Runs
 -- inside copas.
 function worker(_, self)
+    copas.setErrorHandler(function(message, thread, socket)
+        self:message("Error receiving message from server: %s", message)
+        socket:close()
+    end)
     
     self:message("Sending login request")
     -- attempt login
@@ -58,43 +57,47 @@ function worker(_, self)
     }
     
     self:message("Waiting for reply")
-    -- read response
-    local result = box.unpack(copas.recvmsg(self.socket))
     
-    if not result then
-        local reason = box.unpack(copas.recvmsg(self.socket))
-        self:message("connection rejected: %s", reason)
-        self:shutdown()
-        return
-    end
-    
-    self:message("login accepted")
-    self.game = box.unpack(copas.recvmsg(self.socket))
-
-    -- enter event loop
+    -- enter dispatch loop
     while true do
         print(box.unpack(copas.recvmsg(self.socket)))
     end
 end
 
-function send(self, message)
---    self.sendq[#self.sendq+1] = message
-    socket.sendmsg(self.socket, box.pack(message))
-end 
-
-function sendQueuedMessages(self)
-    for i,msg in ipairs(self.sendq) do
-        self:message(">> %s", tostring(msg))
-        socket.sendmsg(self.socket, box.pack(msg))
-        self.sendq[i] = nil
+function ServerWriter(self)
+    copas.setErrorHandler(function(message, thread, socket)
+        self:message("Error sending message to server: %s", message)
+        socket:close()
+    end)
+    
+    while #self.sendq > 0 do
+        local msg = table.remove(self.sendq, 1)
+                
+        copas.sendmsg(self.socket, box.pack(msg, self.objects))
     end
+    -- no more messages in queue? Shut down. A new thread will be spawned if needed.
+end
+
+function send(self, msg)
+    table.insert(self.sendq, msg)
+    
+    -- if the queue was previously empty, we need to spawn a worker
+    copas.addthread(self.ServerWriter, self)
+    
+    return self
+end
+
+function message(self, fmt, ...)
+	return ui.message("[client] "..fmt, ...)
 end
 
 -- mainloop function for the client. The UI is expected to call this frequently
 -- (say, 5-30 times a second) to collect network traffic and process pending
 -- events.
-function update(self, timeout)
-    copas.step(timeout)
-    self:sendQueuedMessages()
-    return true
+function step(self, timeout)
+    return copas.step(timeout)
+end
+
+function loop(self)
+    return copas.loop()
 end

@@ -1,7 +1,7 @@
 require "copas"
 require "box"
 
-class("Client", "common.Object")
+class("ClientWorker", "common.Object")
 
 local _init = __init
 function __init(self, t)
@@ -11,6 +11,8 @@ function __init(self, t)
     -- needed by the serializer to determine which objects to serialize entire
     -- and which ones to serialize by ID.
     self.objects = {}
+    
+    return self:ClientReader()
 end
 
 function ClientReader(self)
