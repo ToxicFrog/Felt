@@ -812,7 +812,7 @@ local function report(ev, vars, file, line, idx_watch)
     io.write(prefix.."Error in application: "..file.." line "..line.."\n")
   end
   if ev ~= events.SET then
-    if pausemsg and pausemsg ~= '' then io.write('Message: '..pausemsg..'\n') end
+    if pausemsg and pausemsg ~= '' then io.write('Message: '..tostring(pausemsg)..'\n') end
     pausemsg = ''
   end
   return vars, file, line
