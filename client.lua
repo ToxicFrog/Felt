@@ -30,8 +30,8 @@ local defaults = {
 local C = new "Client" (ddgetopts(defaults, ...))
 assert(C:start())
 
--- Each call to Client::update processes some pending messages. In the final
--- version we register a GTK+ timer to call this ten times a second or so
-while C:update(0.1) do end
-
-C:shutdown()
+-- loop infinitely sending and receiving messages
+-- once a UI is hooked up, it should call C:step() several times a second instead
+-- if something goes wrong, C:loop() will return at all, and C:step() will return
+-- false instead of true.
+C:loop()

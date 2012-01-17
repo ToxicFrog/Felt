@@ -1,6 +1,22 @@
-class("game.felt.Token", "game.felt.Widget")
+class(..., "game.felt.Entity")
 
-id = true
+held_by = false
+
+actions = {
+    action  "Pick up"   "pickup"    "mouse_left";
+}
+
+function pickup(self, who)
+    -- 'who' is trying to pick us up
+    -- you can't snatch pieces out of another player's hand
+    -- nor can you hold more than one item at a time
+    if self.held_by or who.held then
+        return
+    end
+     
+    self:set("held_by", who)
+    who:set("held", self)
+end
 
 function picked_up(self, who)
     if self.held_by then
