@@ -7,18 +7,12 @@ local super = class(..., "common.Object")
 
 -- instiate a new instance of this type or a subtype thereof
 function __unpack(type, ctor)
-    print("__unpack", type._NAME)
-    for k,v in pairs(ctor) do
-        print("", k, v)
-    end
     -- walk the inheritance chain and instantiate the most specialized type in
     -- it that we have a definition for
+    print("unpack felt.Object", ctor._ANCESTRY[1])
     for _,type in ipairs(ctor._ANCESTRY) do
-        print(type, srequire(type))
         if srequire(type) then
             obj = new(type)(ctor)
-            print(obj)
-            for k,v in pairs(obj) do print(k,v) end
             return obj
         end
     end
@@ -47,5 +41,6 @@ end
 function set(self, key, value, ...)
     if not key then return end
     self[key] = value
+    print(self, key, value)
     return self:set(...)
 end

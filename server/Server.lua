@@ -77,6 +77,8 @@ end
 
 function register(self, client)
     self:message("Client connected from %s.", tostring(client))
+    
+    self.clients[client] = true
 
     -- send them the initial gamestate
     client:send {
@@ -89,6 +91,17 @@ function register(self, client)
         method = "message";
         "%s joins the game.", tostring(client);
     }
+    
+    self:broadcast {
+        self = self.game.objects[1];
+        method = "set";
+        "foo", "bar", "baz", "moby";
+    }
+end
+
+function unregister(self, client)
+    self.clients[client] = nil
+    self:message("Client %s disconnected.", tostring(client))
 end
 
 function broadcast(self, msg)

@@ -70,11 +70,11 @@ function unpack.T(buf)
 end
 
 -- tables are "T" followed by a TOC followed by a sequence of K,V pairs
-function unpack.T(buf, refs)
+function unpack.T(buf, refs, objs)
     local T = {}
     refs[#refs+1] = T
     
-    local data = map(readtoc(buf), function(x) return do_unpack(x, refs) end)
+    local data = map(readtoc(buf), function(x) return do_unpack(x, refs, objs) end)
     
     for i=1,#data,2 do
         T[data[i]] = data[i+1]
@@ -84,13 +84,13 @@ function unpack.T(buf, refs)
 end
 
 -- metamethod calls are a "C" followed a TOC, type name, and single argument
-function unpack.C(buf, refs)
+function unpack.C(buf, refs, ...)
     local ref = #refs+1
     refs[ref] = false -- marker - FIXME
     
     local data = readtoc(buf)
     
-    local type,arg = do_unpack(data[1], refs),do_unpack(data[2], refs)
+    local type,arg = do_unpack(data[1], refs, ...),do_unpack(data[2], refs, ...)
     
     local mm = assert(require(type).__unpack, "error deserializing object of type %s - no __unpack metamethod" % tostring(type))
     local obj = assert(require(type):__unpack(arg), "error deserializating object of type %s - error in __unpack" % tostring(type))

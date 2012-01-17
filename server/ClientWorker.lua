@@ -12,12 +12,13 @@ function __init(self, t)
     -- and which ones to serialize by ID.
     self.objects = {}
     self.sendq = {}
+    self.name = "client:"..self.socket:getpeername()
     
     return self:ClientReader()
 end
 
 function __tostring(self)
-    return "client:"..self.socket:getpeername()
+    return self.name
 end
 
 function ClientReader(self)
@@ -32,6 +33,7 @@ function ClientReader(self)
         end
 
         self:message("  Disconnecting client %s.", socket:getpeername())
+        self.server:unregister(self)
     end)
     
     self:message("Client connecting from %s", self.socket:getpeername())
@@ -65,6 +67,7 @@ function ClientWriter(self)
         end
 
         self:message("  Disconnecting client %s.", socket:getpeername())
+        self.server:unregister(self)
     end)
     
     while #self.sendq > 0 do

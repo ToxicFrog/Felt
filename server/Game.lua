@@ -10,8 +10,6 @@ end
 
 function __pack(self, objects)
     print("pack Game")
-    table.print(self.fields)
-    table.print(self.objects)
     return "call","Game",{
         id = id;
         fields = self.fields;

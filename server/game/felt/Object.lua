@@ -13,20 +13,19 @@ function __init(self, ...)
     self.game:addObject(self)
 end
 
-function __pack(self, ...)
+function __pack(self, objs)
     -- pack all of the saveable fields and generate the inheritance chain
     local ctor = { _ANCESTRY = {} }
     local class = self
-    print("__pack", self._NAME)
     repeat
-        print("", class._NAME)
         table.insert(ctor._ANCESTRY, class._NAME)
         for _,key in ipairs(class.pack) do
-            print("", key, self[key])
             ctor[key] = self[key]
         end
         class = class._SUPER
     until not class.pack
+    
+    objs[self] = self.id
     
     return "call","game.felt.Object",ctor
 end

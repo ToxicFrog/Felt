@@ -8,7 +8,6 @@ local _NAME = _NAME
 
 function __unpack(type, arg)
     print("unpack game")
-    table.print(arg)
     local self = new(type._NAME)(arg)
     self.objects.G = self
     return self

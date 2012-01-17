@@ -64,6 +64,7 @@ end
 -- references to objects the deserializer already has are "O" followed by an
 -- object id
 pack["obj"] = function(obj, refs, objs)
+    print("O-ref", objs[obj])
     return "O"..objs[obj]
 end
 

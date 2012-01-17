@@ -91,7 +91,7 @@ function send(self, msg)
 end
 
 function recv(self)
-    return box.unpack(copas.recvmsg(self.socket), self.objects)
+    return box.unpack(copas.recvmsg(self.socket), (self.game and self.game.objects))
 end
 
 function message(self, fmt, ...)
@@ -127,8 +127,8 @@ end
 
 api = {}
 
-function api:message(msg)
-    return ui.message("%s", msg)
+function api:message(...)
+    return ui.message(...)
 end
 
 function api:game(game)
@@ -136,6 +136,4 @@ function api:game(game)
     for k,v in pairs(game.objects) do
         print(k,v,v.name,v._TYPE,v.x,v.y,v.z)
     end
-    for k,v in pairs(game.objects[1]) do
-    print(k,v) end
 end
