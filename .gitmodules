@@ -1,0 +1,3 @@
+[submodule "src/lqt"]
+	path = src/lqt
+	url = https://github.com/mkottman/lqt.git
