@@ -29,7 +29,7 @@ end
 module(...)
 
 -- the type of an Object is "common.Object"
-_M.__type = _M._NAME
+function _M:__type() return self._NAME end
 
 function _M:__init(t)
     if t then
@@ -39,6 +39,14 @@ function _M:__init(t)
     end
     
     return self
+end
+
+function _M:__pack(...)
+    error("abstract metamethod __pack not implemented in class %s" % self._NAME)
+end
+
+function _M:__unpack(...)
+    error("abstract metamethod __unpack not implemented in class %s" % self._NAME)
 end
 
 function _M:clone()

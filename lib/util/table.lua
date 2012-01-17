@@ -62,3 +62,17 @@ function table.pack(...)
     return { n = select('#', ...), ... }
 end
 
+function table.isomorphic(t, r)
+    for k,v in pairs(t) do
+        if type(v) ~= type(r[k]) then return false
+        elseif type(v) == "table" and not table.isomorphic(v, r[k]) then return false
+        end
+    end
+    for k,v in pairs(r) do
+        if type(v) ~= type(t[k]) then return false
+        elseif type(v) == "table" and not table.isomorphic(v, t[k]) then return false
+        end
+    end
+    
+    return true
+end

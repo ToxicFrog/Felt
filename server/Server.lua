@@ -42,6 +42,7 @@ function start(self)
     
     copas.addserver(self.socket, function(...) return self:clientWorker(...) end)
     self.game = new "Game" {}
+    self.game:addField("test")
     self:message("Listening on port %d", self.port)
     
     return true
@@ -49,8 +50,12 @@ end
 
 -- cleanly shut down the server. FIXME: not implemented
 function stop(self)
-    assert(self.game, "server is not running")
-    error "not implemented"
+    self:broadcast {
+        method = "message";
+        "Disconnected: server shutting down";
+    }
+    self:broadcast(false)
+    self._break = true
 end
 
 -- each instance of this function is responsible for handling a single client.
@@ -70,20 +75,8 @@ function clientWorker(self, sock)
     }
 end
 
--- register a player attempting to log in. This is called by the ClientWorker
--- when it receives a login request, and should raise errors on failure.
-function register(self, client, login)
-    assert(type(login) == "table", "malformed login request (type mismatch)")
-    assert(#login.name > 0, "malformed login request (empty name)")
-    assert((not self.pass) or self.pass == login.pass, "password incorrect")
-    assert(not self.game:getPlayer(login.name) or not self.game:getPlayer(login.name).client, "name collision")
-    
-    -- all of these checks pass? Good. Register them.
-    self.clients[client] = true
-    client.player = self.game:registerPlayer(client, login.name, login.r, login.g, login.b)
-    self.players[login.name] = client.player
-    
-    self:message("Player %s logged in.", login.name)
+function register(self, client)
+    self:message("Client connected from %s.", tostring(client))
 
     -- send them the initial gamestate
     client:send {
@@ -94,11 +87,11 @@ function register(self, client, login)
     -- tell everyone that they've arrived
     self:broadcast {
         method = "message";
-        "%s joins the game.", login.name;
+        "%s joins the game.", tostring(client);
     }
 end
 
-function broadcast(msg)
+function broadcast(self, msg)
     for client in pairs(self.clients) do
         client:send(msg)
     end
@@ -109,13 +102,26 @@ function step(self, timeout)
     return true
 end
 
-function loop(self)
-    return copas.loop()
+function loop(self, timeout)
+    self._break = nil
+    repeat
+        copas.step(timeout)
+    until self._break
+    self._break = nil
 end
 
 -- server message function, prefixes messages with [server]
 function message(self, fmt, ...)
 	return ui.message("[server] "..fmt, ...)
+end
+
+function dispatch(self, sender, msg)
+    if not msg.self then
+        assert(self.api[msg.method], "no method "..tostring(msg.method).." in server API")
+        self.api[msg.method](self, sender, table.unpack(msg))
+    else
+        msg.self[msg.method](msg.self, sender, table.unpack(msg))
+    end
 end
 
 -- public API callable by clients

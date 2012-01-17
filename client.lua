@@ -13,6 +13,7 @@
 require "felt"
 require "ddgetopts"
 require "client.init"
+_DEBUG = true
 
 -- set up UI
 ui = {}

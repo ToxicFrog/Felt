@@ -3,7 +3,16 @@
 -- existence in the UI, there's no user interface code for this either
 -- so all this needs is a few accessors
 
-local super = class("Game", "FeltObject")
+local super = class("Game", "common.Object")
+local _NAME = _NAME
+
+function __unpack(type, arg)
+    print("unpack game")
+    table.print(arg)
+    local self = new(type._NAME)(arg)
+    self.objects.G = self
+    return self
+end
 
 -- returns the Player with the given name
 function getPlayer(self, name)

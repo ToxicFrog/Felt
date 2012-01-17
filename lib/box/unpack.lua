@@ -2,12 +2,13 @@ local unpack = {}
 local do_unpack,getunpacker,readtoc
 local map = list.map
 
-function box.unpack(buf)
-    return do_unpack(buf, {})
+function box.unpack(buf, objs)
+    assert(type(buf) == "string", "non-string argument to box.unpack")
+    return do_unpack(buf, {}, objs)
 end
 
-function do_unpack(buf, refs)
-    return getunpackmethod(buf:sub(1,1))(buf:sub(2), refs)
+function do_unpack(buf, refs, objs)
+    return getunpackmethod(buf:sub(1,1))(buf:sub(2), refs, objs)
 end
     
 function getunpackmethod(key)
@@ -61,6 +62,10 @@ function unpack.R(buf, refs)
     return (assert(refs[tonumber(buf)], "invalid backreference %s" % buf))
 end
 
+function unpack.O(buf, refs, objs)
+    return (assert(objs[tonumber(buf)], "invalid object reference %s" % buf))
+end
+
 function unpack.T(buf)
 end
 
@@ -80,11 +85,15 @@ end
 
 -- metamethod calls are a "C" followed a TOC, type name, and single argument
 function unpack.C(buf, refs)
+    local ref = #refs+1
+    refs[ref] = false -- marker - FIXME
+    
     local data = readtoc(buf)
     
     local type,arg = do_unpack(data[1], refs),do_unpack(data[2], refs)
     
-    local obj = assert(require(type).__unpack(arg), "error deserializating object of type %s" % tostring(type))
-    refs[#refs+1] = obj
+    local mm = assert(require(type).__unpack, "error deserializing object of type %s - no __unpack metamethod" % tostring(type))
+    local obj = assert(require(type):__unpack(arg), "error deserializating object of type %s - error in __unpack" % tostring(type))
+    refs[ref] = obj
     return obj
 end

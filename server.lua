@@ -14,6 +14,8 @@ require "felt"
 require "ddgetopts"
 require "server.init"
 
+_DEBUG = true
+
 -- set up UI
 ui = {}
 function ui.message(...)

@@ -13,7 +13,7 @@ require "copas"
 -- data[self] is set, and if so, generate an ID reference rather than a complete
 -- packed object.
 local function sendmsg(send, msg)
-    return send(string.format("%d\n%s", #msg, msg))
+    return assert(send(string.format("%d\n%s", #msg, msg)))
 end
 
 function socket:sendmsg(msg)
@@ -25,12 +25,10 @@ function copas:sendmsg(msg)
 end
 
 local function recvmsg(recv)
-    local buf,err = recv()
-    local len = tonumber(buf)
+    local buf = assert(recv())
+    local len = assert(tonumber(buf), "corrupt message header")
     
-    if not buf or not len then return nil,(err or "corrupt message header") end
-    
-    return recv(len)
+    return assert(recv(len))
 end
 
 function socket:recvmsg()
@@ -40,3 +38,4 @@ end
 function copas:recvmsg()
     return recvmsg(function(...) return copas.receive(self, ...) end)
 end
+

@@ -9,7 +9,28 @@ function va_xpcall(f, e, ...)
 end
         
 -- fast lambda creation
-function L(src)
+function f(src)
     return assert(loadstring(src:gsub("%s+%-%>%s+", " = ...; return ")))
 end
 
+-- turn a function that raises hard errors into one that returns nil,err
+function tosofte(f)
+    return function(...)
+        return (function (result, ...)
+            if not result then
+                return nil,...
+            end
+            return ...
+        end)(pcall(f, ...))
+    end
+end
+   
+-- the converse of tosofte
+function toharde(f)
+    return function(...)
+        return assert(f(...))
+    end
+end
+
+-- a 'safe' require that doesn't raise errors on failure
+srequire = tosofte(require)

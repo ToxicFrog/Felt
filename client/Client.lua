@@ -29,50 +29,53 @@ function start(self)
 	
 	self:message("connected to %s", self.socket:getpeername())
 	
-	copas.addthread(self.worker, self)
+	copas.addthread(self.ServerReader, self)
 	
 	return true
 end
 
 -- cleanly shut down the client. FIXME: not implemented
 function stop(self)
-    assert(self.game, "client is not connected")
-    error "not implemented"
+    if self.socket then
+        self.socket:close()
+        self.socket = nil
+    end
+    self._break = true
+    print("stop")
 end
 
 -- server worker function. Handles all communication with the server. Runs
 -- inside copas.
-function worker(_, self)
+function ServerReader(_, self)
     copas.setErrorHandler(function(message, thread, socket)
         self:message("Error receiving message from server: %s", message)
-        socket:close()
+        self:message(debug.traceback(thread, "  Stack trace:"))
+        self:stop()
     end)
     
-    self:message("Sending login request")
-    -- attempt login
-    self:send {
-        name = self.name;
-        pass = self.pass;
-        colour = self.colout;
-    }
-    
-    self:message("Waiting for reply")
+    self:message("Waiting for acknowledgement from server")
     
     -- enter dispatch loop
     while true do
-        print(box.unpack(copas.recvmsg(self.socket)))
+        local msg = self:recv()
+        if not msg then break end
+        self:message(" << %s %s", tostring(msg.self), tostring(msg.method))
+        self:dispatch(msg)
     end
+    
+    self:message("client terminating")
 end
 
-function ServerWriter(self)
+function ServerWriter(_, self)
     copas.setErrorHandler(function(message, thread, socket)
         self:message("Error sending message to server: %s", message)
-        socket:close()
+        self:stop()
     end)
     
     while #self.sendq > 0 do
         local msg = table.remove(self.sendq, 1)
                 
+        self:message(" >> %s %s", tostring(msg.self), tostring(msg.method))
         copas.sendmsg(self.socket, box.pack(msg, self.objects))
     end
     -- no more messages in queue? Shut down. A new thread will be spawned if needed.
@@ -87,17 +90,52 @@ function send(self, msg)
     return self
 end
 
+function recv(self)
+    return box.unpack(copas.recvmsg(self.socket), self.objects)
+end
+
 function message(self, fmt, ...)
 	return ui.message("[client] "..fmt, ...)
+end
+
+function dispatch(self, msg)
+    if not msg.self then
+        assert(self.api[msg.method], "no method "..tostring(msg.method).." in client API")
+        self.api[msg.method](self, table.unpack(msg))
+    else
+        msg.self[msg.method](msg.self, table.unpack(msg))
+    end
 end
 
 -- mainloop function for the client. The UI is expected to call this frequently
 -- (say, 5-30 times a second) to collect network traffic and process pending
 -- events.
 function step(self, timeout)
-    return copas.step(timeout)
+    if not self._break then
+        copas.step(timeout)
+    end
+    return not self._break
 end
 
-function loop(self)
-    return copas.loop()
+function loop(self, timeout)
+    while not self._break do
+        print("loop", self._break)
+        copas.step(timeout)
+    end
+    self._break = nil
+end
+
+api = {}
+
+function api:message(msg)
+    return ui.message("%s", msg)
+end
+
+function api:game(game)
+    self.game = game
+    for k,v in pairs(game.objects) do
+        print(k,v,v.name,v._TYPE,v.x,v.y,v.z)
+    end
+    for k,v in pairs(game.objects[1]) do
+    print(k,v) end
 end

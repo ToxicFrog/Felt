@@ -11,44 +11,42 @@ function __init(self, t)
     -- needed by the serializer to determine which objects to serialize entire
     -- and which ones to serialize by ID.
     self.objects = {}
+    self.sendq = {}
     
     return self:ClientReader()
+end
+
+function __tostring(self)
+    return "client:"..self.socket:getpeername()
 end
 
 function ClientReader(self)
     copas.setErrorHandler(function(message, thread, socket)
         self:message("Read error in worker connected to %s", socket:getpeername())
         self:message("  Reported error is: %s", message)
+        self:message(debug.traceback(thread, "  Stack trace:"))
+        
+        -- send them a message explaining what happened, if we can
+        if socket then
+            -- pcall(self.forceClose, self, tostring(message))
+        end
+
         self:message("  Disconnecting client %s.", socket:getpeername())
-        socket:close()
     end)
     
     self:message("Client connecting from %s", self.socket:getpeername())
     
-    -- these will raise an error if we fail, the copas error handler will
-    -- take care of reporting it and closing the socket
-    -- if all the checks pass, the server now adds us to the game and the client
-    -- table, and sends the current game state.
-    -- at some point we probably want them to send a list of available modules
-    -- on login so we can reject them before they get to this point if they
-    -- don't have the right modules installed
-    self.server:register(self, self:recv())
+    -- register this client with the server
+    self.server:register(self)
     
     -- and now we just sit in the mainloop reading and processing messages
-    for msg in self.recv,self do
-        local r,e
-        if not msg.self then
-            -- no self specified? It's a call to the server public API.
-            r,e = pcall(self.server.api[msg.method], self.server, self. table.unpack(msg))
-        else
-            -- it's a method call on an in-game object
-            r,e = pcall(msg.self[msg.method], msg.self, self, table.unpack(msg))
-        end
-        -- report errors
-        if not r then
-            self:close("RMI error: "..e)
-            return
-        end
+    -- we do it this way (rather than using recv as an iterator) because we
+    -- can't yield across iterators in 5.1
+    while true do
+        local msg = self:recv()
+        if not msg then break end
+        self:message(" << %s %s", tostring(msg.self), tostring(msg.method))
+        self.server:dispatch(msg, self)
     end
     
     self:close("End of socket data - REPORT THIS AS A BUG")        
@@ -56,10 +54,17 @@ end
 
 function ClientWriter(self)
     copas.setErrorHandler(function(message, thread, socket)
+        print(message, thread, socket, debug.traceback(thread))
         self:message("Write error in worker connected to %s", socket:getpeername())
         self:message("  Reported error is: %s", message)
+        self:message(debug.traceback(thread, "  Stack trace:"))
+
+        -- send them a message explaining what happened, if we can
+        if socket then
+            --pcall(self.forceClose, self, tostring(message))
+        end
+
         self:message("  Disconnecting client %s.", socket:getpeername())
-        socket:close()
     end)
     
     while #self.sendq > 0 do
@@ -71,6 +76,7 @@ function ClientWriter(self)
             return
         end
         
+        self:message(" >> %s %s", tostring(msg.self), tostring(msg.method))
         copas.sendmsg(self.socket, box.pack(msg, self.objects))
     end
     -- no more messages in queue? Shut down. A new thread will be spawned if needed.
@@ -80,7 +86,7 @@ function send(self, msg)
     table.insert(self.sendq, msg)
     
     -- if the queue was previously empty, we need to spawn a worker
-    copas.addthread(self.ClientWriter, self)
+    copas.addthread(function() return self:ClientWriter() end)
     
     return self
 end
@@ -96,6 +102,14 @@ function close(self, message)
         "Disconnected: "..message;
     }
     self:send(false)
+end
+
+function forceClose(self, message)
+    self.socket:settimeout(0.1)
+    socket.sendmsg(self.socket, box.pack {
+        method = "message";
+        "Disconnected: "..message;
+    })
 end
 
 function message(self, ...)

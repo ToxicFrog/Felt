@@ -2,21 +2,25 @@ local pack = {}
 local do_pack,getpackmethod,maketoc
 local map = list.map
 
-function box.pack(obj, ...)
-    return do_pack(obj, {n=1}, ...)
+function box.pack(obj, objs, ...)
+    return do_pack(obj, {n=1}, objs, ...)
 end
 
-function do_pack(obj, refs, ...)
-    return getpackmethod(obj, refs)(obj, refs, ...)
+function do_pack(obj, refs, objs, ...)
+    return getpackmethod(obj, refs, objs)(obj, refs, objs, ...)
 end
 
-function getpackmethod(obj, refs)
+function getpackmethod(obj, refs, objs)
     local mt = getmetatable(obj)
     
     -- if we've packed this before, generate a backreference to the cached value
     if refs[obj] then
         return pack["ref"]
     
+    -- if we know the deserializer already has it, send just a lookup key for it
+    elseif objs[obj] then
+        return pack["obj"]
+        
     elseif mt and mt.__pack then
         return pack["metamethod"]
     
@@ -29,7 +33,7 @@ function getpackmethod(obj, refs)
 end
 
 function maketoc(data)
-    return #data .. ":" .. table.concat(map(data, L "x -> tostring(#x)..':'")) 
+    return #data .. ":" .. table.concat(map(data, f "x -> tostring(#x)..':'")) 
 end
     
 -- nil is packed as the single character "n"
@@ -55,6 +59,12 @@ end
 -- backreferences are "R" followed by a cache index
 pack["ref"] = function(obj, refs)
     return "R"..refs[obj]
+end
+
+-- references to objects the deserializer already has are "O" followed by an
+-- object id
+pack["obj"] = function(obj, refs, objs)
+    return "O"..objs[obj]
 end
 
 -- tables are "T" followed by a TOC followed by a sequence of K,V pairs
@@ -88,6 +98,6 @@ pack["metamethod"] = function(obj, refs, ...)
         return "C"..maketoc(data)..table.concat(data)
         
     else
-        return error("__pack metamethod returned illegal values")
+        return error("__pack metamethod returned illegal values starting with "..tostring(how))
     end
 end
