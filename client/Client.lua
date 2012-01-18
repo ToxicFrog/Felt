@@ -29,6 +29,7 @@ function start(self)
 	
 	self:message("connected to %s", self.socket:getpeername())
 	
+	self.socket:settimeout(0)
 	copas.addthread(self.ServerReader, self)
 	
 	return true
@@ -36,6 +37,7 @@ end
 
 -- cleanly shut down the client. FIXME: not implemented
 function stop(self)
+    print(debug.traceback())
     if self.socket then
         self.socket:close()
         self.socket = nil

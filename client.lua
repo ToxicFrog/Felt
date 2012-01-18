@@ -13,12 +13,32 @@
 require "felt"
 require "ddgetopts"
 require "client.init"
-_DEBUG = true
 
--- set up UI
+require "qtcore"
+require "qtgui"
+
+function Qt.SIGNAL(name)
+    return "2"..name
+end
+
+function Qt.SLOT(name)
+    return "1"..name
+end
+
+_DEBUG = false
+
+-- set up GUI
+local app = QApplication(1, {'Felt'})
+local log = QTextEdit()
+log:setWindowTitle("Felt - Log")
+log:setReadOnly(true)
+
+log:show()
+
 ui = {}
 function ui.message(...)
     print(string.format(...))
+    log:append(string.format(...))
 end
 
 local defaults = {
@@ -31,8 +51,8 @@ local defaults = {
 local C = new "Client" (ddgetopts(defaults, ...))
 assert(C:start())
 
--- loop infinitely sending and receiving messages
--- once a UI is hooked up, it should call C:step() several times a second instead
--- if something goes wrong, C:loop() will return at all, and C:step() will return
--- false instead of true.
-C:loop()
+local timer = QTimer()
+timer:connect(Qt.SIGNAL("timeout()"), function() print("step") return C:step(0.1) end)
+timer:start(0)
+
+app.exec()
