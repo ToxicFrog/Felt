@@ -41,8 +41,10 @@ function start(self)
     end
     
     copas.addserver(self.socket, function(...) return self:clientWorker(...) end)
-    self.game = new "Game" {}
+    self.game = new "Game" { server = self }
     self.game:addField("test")
+    self.game.fields.test:add(new "game.felt.Token" { name = "test object"; game = self.game; })
+    --self.game.fields.test.children[1]:add(new "game.felt.Entity" { name = "test object 2"; game = self.game; w = 8; h = 8; })
     self:message("Listening on port %d", self.port)
     
     return true

@@ -14,7 +14,7 @@ require "felt"
 require "ddgetopts"
 require "server.init"
 
-_DEBUG = true
+_DEBUG = false
 
 -- set up UI
 ui = {}

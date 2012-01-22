@@ -23,8 +23,9 @@ end
 
 function ClientReader(self)
     copas.setErrorHandler(function(message, thread, socket)
-        self:message("Read error in worker connected to %s", socket:getpeername())
-        self:message("  Reported error is: %s", message)
+        print("ERROR ON READ", message, thread, socket)
+        self:message("Read error in worker connected to %s", self.name)
+        self:message("  Reported error is: %s", tostring(message))
         self:message(debug.traceback(thread, "  Stack trace:"))
         
         -- send them a message explaining what happened, if we can
@@ -32,7 +33,7 @@ function ClientReader(self)
             -- pcall(self.forceClose, self, tostring(message))
         end
 
-        self:message("  Disconnecting client %s.", socket:getpeername())
+        self:message("  Disconnecting client %s.", self.name)
         self.server:unregister(self)
     end)
     
@@ -56,9 +57,9 @@ end
 
 function ClientWriter(self)
     copas.setErrorHandler(function(message, thread, socket)
-        print(message, thread, socket, debug.traceback(thread))
-        self:message("Write error in worker connected to %s", socket:getpeername())
-        self:message("  Reported error is: %s", message)
+        print("ERROR ON WRITE", message, thread, socket)
+        self:message("Write error in worker connected to %s", self.name)
+        self:message("  Reported error is: %s", tostring(message))
         self:message(debug.traceback(thread, "  Stack trace:"))
 
         -- send them a message explaining what happened, if we can
@@ -66,7 +67,7 @@ function ClientWriter(self)
             --pcall(self.forceClose, self, tostring(message))
         end
 
-        self:message("  Disconnecting client %s.", socket:getpeername())
+        self:message("  Disconnecting client %s.", self.name)
         self.server:unregister(self)
     end)
     

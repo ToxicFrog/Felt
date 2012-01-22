@@ -135,7 +135,4 @@ end
 
 function api:game(game)
     self.game = game
-    for k,v in pairs(game.objects) do
-        print(k,v,v.name,v._TYPE,v.x,v.y,v.z)
-    end
 end

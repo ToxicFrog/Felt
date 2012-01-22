@@ -35,4 +35,10 @@ function addObject(self, object)
     assert(not object.id or self.objects[object.id] == object, "object ID collision in addObject")
     object.id = object.id or #self.objects+1
     self.objects[object.id] = object
+    
+    self.server:broadcast {
+        self = self;
+        method = "addObject";
+        object;
+    }
 end

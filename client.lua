@@ -14,8 +14,11 @@ require "felt"
 require "ddgetopts"
 require "client.init"
 
+package.cpath = "lib_debug/?.so;"..package.cpath
+
 require "qtcore"
 require "qtgui"
+require "lqt_debug"
 
 function Qt.SIGNAL(name)
     return "2"..name
@@ -35,10 +38,19 @@ log:setReadOnly(true)
 
 log:show()
 
-ui = {}
+ui = { fields = {} }
 function ui.message(...)
     print(string.format(...))
     log:append(string.format(...))
+end
+
+function ui.addField(field)
+    ui.message("field: %s", tostring(field))
+    field.ui = field.ui or {}
+    field.ui.scene = QGraphicsScene()
+    field.ui.view = QGraphicsView(field.ui.scene)
+    field.ui.view:setWindowTitle("Felt - "..tostring(field))
+    field.ui.view:show()
 end
 
 local defaults = {
@@ -51,8 +63,13 @@ local defaults = {
 local C = new "Client" (ddgetopts(defaults, ...))
 assert(C:start())
 
-local timer = QTimer()
-timer:connect(Qt.SIGNAL("timeout()"), function() print("step") return C:step(0.1) end)
-timer:start(0)
+--local timer = QTimer()
+--timer:connect(Qt.SIGNAL("timeout()"), function() return C:step(0.1) end)
+--timer:start(0)
 
-app.exec()
+while true do
+    --app.exec()
+    app.sendPostedEvents()
+    app.processEvents()
+    C:step(0.1)
+end

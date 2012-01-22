@@ -1,1 +1,2 @@
-class(..., "game.felt.Entity")
+local super = class(..., "game.felt.Entity")
+

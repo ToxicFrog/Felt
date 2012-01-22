@@ -26,6 +26,8 @@ do
     end
 end
 
+local type = type
+
 module(...)
 
 -- the type of an Object is "common.Object"
