@@ -136,6 +136,13 @@ function _G.class(name, superclass)
 	function mt:__newindex(key, value)
 		if type(value) == "function" then
 			setfenv(value, _G)
+			if class._DEBUG then
+			    local f = value
+			    value = function(self, ...)
+			        print("CALL", self, key, ...)
+			        return f(self, ...)
+			    end
+			end
 		end
 		class[key] = value
 	end
