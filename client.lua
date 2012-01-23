@@ -20,6 +20,8 @@ require "qtcore"
 require "qtgui"
 require "lqt_debug"
 
+copas = nil
+
 function Qt.SIGNAL(name)
     return "2"..name
 end

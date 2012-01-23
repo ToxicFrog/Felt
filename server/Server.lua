@@ -130,7 +130,7 @@ function message(self, fmt, ...)
 	return ui.message("[server] "..fmt, ...)
 end
 
-function dispatch(self, sender, msg)
+function dispatch(self, msg, sender)
     if not msg.self then
         assert(self.api[msg.method], "no method "..tostring(msg.method).." in server API")
         self.api[msg.method](self, sender, table.unpack(msg))

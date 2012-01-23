@@ -6,8 +6,8 @@
 
 -- we need to localize everything we plan on using, since this
 -- library uses module()
-local pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,setfenv,loadfile,assert
-= pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,setfenv,loadfile,assert
+local pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,setfenv,loadfile,assert,error
+= pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,setfenv,loadfile,assert,error
 local print = print
 
 

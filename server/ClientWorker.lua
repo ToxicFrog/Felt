@@ -96,7 +96,7 @@ function send(self, msg)
 end
 
 function recv(self)
-    return box.unpack(copas.recvmsg(self.socket), self.objects)
+    return box.unpack(copas.recvmsg(self.socket), self.server.game.objects)
 end
 
 function close(self, message)

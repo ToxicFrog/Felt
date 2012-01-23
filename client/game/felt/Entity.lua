@@ -9,8 +9,6 @@ w,h = 16,16
 -- object name - used for pickup messages and the like
 name = "(FIXME - nameless object)"
 
-_CLASS._DEBUG = true
-
 if not _DEBUG then
     function __tostring(self)
         if self.concealed and self.__tostring_concealed then
@@ -35,27 +33,22 @@ function show(self, parent)
     if #self.actions > 0 then
         -- create context menu for actions
         self.qmenu = QMenu(tostring(self))
-        self.qaction = QObject()
-        self.qaction:__addmethod("print()", function(...) print("sig", ...) end)
+        
         for _,action in ipairs(self.actions) do
-            --[[
-            local qaction = QAction(action[1], self.qmenu)
-            self.qmenu:addAction(qaction)
-            qaction:connect(Qt.SIGNAL "triggered()",
-                function(...)
-                    print(...)
-                end)
-            --]]
-            --function self.qmenu:triggered(...) print(...) end
-            self.qmenu:addAction(action[1])
+            local qaction = self.qmenu:addAction(action[1])
+            qaction:setData(QVariant(action[2]))
+            function qaction:clicked(...) print(self, ...) end
+            print(qaction, qaction.clicked)
         end
-        self.qmenu:connect(Qt.SIGNAL "triggered(QAction*)", print)
+        self.qmenu:connect(Qt.SIGNAL "triggered(QAction*)", function(menu, action)
+            print(menu, action, action:data():toString():toUtf8())
+            self:send(action:data():toString():toUtf8())
+        end)
         --self.qmenu:connect(Qt.SIGNAL "triggered(QAction*)", self.qaction, Qt.SLOT "print()")
     end
     
     function self.qgraphics.mousePressEvent(e)
         print("game::felt::Entity:mousePressEvent", self, e)
-        print(debug.traceback())
         if self.qmenu then self.qmenu:popup(QCursor.pos()) end
     end
     

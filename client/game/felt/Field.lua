@@ -1,7 +1,5 @@
 local super = class(..., "game.felt.Entity")
 
-_CLASS._DEBUG = true
-
 function __init(self, ...)
     super.__init(self, ...)
     

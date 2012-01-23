@@ -18,7 +18,7 @@ function getpackmethod(obj, refs, objs)
         return pack["ref"]
     
     -- if we know the deserializer already has it, send just a lookup key for it
-    elseif objs[obj] then
+    elseif objs and objs[obj] then
         return pack["obj"]
         
     elseif mt and mt.__pack then
@@ -84,17 +84,18 @@ end
 
 -- metamethod calls are a "C" followed a TOC, type name, and single argument
 pack["metamethod"] = function(obj, refs, ...)
-    refs[obj] = refs.n; refs.n = refs.n + 1
     local mm = getmetatable(obj).__pack
     
     local how,what,with = mm(obj, ...)
     if how == "raw" then
+        refs[obj] = refs.n; refs.n = refs.n + 1
         return what
         
     elseif how == "pack" then
         return do_pack(what, refs, ...)
         
     elseif how == "call" then
+        refs[obj] = refs.n; refs.n = refs.n + 1
         local data = { do_pack(what, refs, ...), do_pack(with, refs, ...) }
         return "C"..maketoc(data)..table.concat(data)
         
