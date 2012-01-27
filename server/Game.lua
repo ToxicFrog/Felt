@@ -9,7 +9,6 @@ function __init(self, t)
 end
 
 function __pack(self, objects)
-    print("pack Game")
     return "call","Game",{
         id = id;
         fields = self.fields;

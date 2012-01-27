@@ -1,12 +1,12 @@
 class(..., "game.felt.Entity")
 
 pack = {
-    "held"
+    "held_by"
 }
 
 _CLASS:ACTION("Pick Up", "pickup", "mouse_left")
 
 function pickup(self, who)
-    print(self, "pickup", who)
-    self:set("held", not self.held)
+    if self.held_by then return end
+    self:set("held_by", who.name)
 end

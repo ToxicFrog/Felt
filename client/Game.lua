@@ -10,6 +10,13 @@ function __unpack(type, arg)
     print("unpack game")
     local self = new(type._NAME)(arg)
     self.objects.G = self
+
+    -- generate the "reverse object mapping"
+    self.r_objects = {}
+    for k,v in pairs(self.objects) do
+        self.r_objects[v] = v.id
+    end
+
     return self
 end
 

@@ -14,11 +14,9 @@ require "felt"
 require "ddgetopts"
 require "client.init"
 
-package.cpath = "lib_debug/?.so;"..package.cpath
-
 require "qtcore"
 require "qtgui"
-require "lqt_debug"
+--require "lqt_debug"
 
 copas = nil
 
@@ -69,9 +67,8 @@ assert(C:start())
 --timer:connect(Qt.SIGNAL("timeout()"), function() return C:step(0.1) end)
 --timer:start(0)
 
-while true do
+while C:step(0.1) do
     --app.exec()
     app.sendPostedEvents()
     app.processEvents()
-    C:step(0.1)
 end

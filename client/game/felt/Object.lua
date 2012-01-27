@@ -5,17 +5,16 @@
 
 local super = class(..., "common.Object")
 
--- instiate a new instance of this type or a subtype thereof
+-- instantiate a new instance of this type or a subtype thereof
 function __unpack(type, ctor)
     -- walk the inheritance chain and instantiate the most specialized type in
     -- it that we have a definition for
     print("unpack", unpack(ctor._ANCESTRY))
     for _,type in ipairs(ctor._ANCESTRY) do
         if srequire(type) then
-            obj = new(type)(ctor)
-            return obj
+            return new(type)(ctor)
         else
-            print("load warning:", type, srequire(type))
+            print("WARNING:", type, srequire(type))
         end
     end
     return error("No defined type found attempting to deserialize object of type %s" % ctor._ANCESTRY[1])

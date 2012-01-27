@@ -14,7 +14,10 @@ local client_instance = nil
 local _init = __init
 function __init(self, t)
     _init(self, t)
+
     self.sendq = {}
+    self.objects = {}
+
     client_instance = self
 end
 
@@ -36,6 +39,11 @@ function start(self)
 	self:message("connected to %s", self.socket:getpeername())
 	
 	self.socket:settimeout(0.05)
+
+    self:send {
+        method = "login";
+        self.name, self.pass;
+    }
 	
 	return true
 end
@@ -55,7 +63,7 @@ end
 -- inside copas.
 function ServerReader(self, protected)
     if not protected then
-        xpcall(function()
+        return xpcall(function()
             return self:ServerReader(true)
         end, function(message)
         self:message("Error receiving message from server: %s", message)
@@ -83,7 +91,7 @@ end
 
 function ServerWriter(self, protected)
     if not protected then
-        xpcall(function()
+        return xpcall(function()
             return self:ServerWriter(true)
         end, function(message)
             self:message("Error sending message to server: %s", message)
@@ -97,7 +105,7 @@ function ServerWriter(self, protected)
             table.print(self.game.objects)
         end
         local msg = table.remove(self.sendq, 1)
-        local buf = box.pack(msg, (self.game and self.game.objects))
+        local buf = box.pack(msg, self.objects)
         
         self:message(" Q> %s %s", tostring(msg.self), tostring(msg.method))
         self:message("    %s", buf)

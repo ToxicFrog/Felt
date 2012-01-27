@@ -8,8 +8,6 @@
 -- - a means by which RMIs can be propagated to the clients
 --   - this implies a set of clients and a broadcast API
 require "socket"
-require "socket-helpers"
-require "copas"
 
 class("Server", "common.Object")
 
@@ -23,9 +21,10 @@ class("Server", "common.Object")
 -- load: saved game to load on startup. Optional.
 local _init = __init
 function __init(self, t)
-	_init(self, t)
-	self.sendq = {}
-	self.clients = {}
+    _init(self, t)
+    self.sockets = {} -- list of raw sockets for use with select
+    self.clients = {} -- socket => client mapping
+    self.players = {} -- name => client mapping
 end
 
 function start(self)
@@ -40,14 +39,38 @@ function start(self)
         return nil,err
     end
     
-    copas.addserver(self.socket, function(...) return self:clientWorker(...) end)
+    -- HACK HACK HACK - test code
     self.game = new "Game" { server = self }
     self.game:addField("test")
     self.game.fields.test:add(new "game.felt.Token" { name = "test object"; game = self.game; })
-    --self.game.fields.test.children[1]:add(new "game.felt.Entity" { name = "test object 2"; game = self.game; w = 8; h = 8; })
-    self:message("Listening on port %d", self.port)
     
-    return true
+    self.socket:settimeout(0.1)
+    self:message("Listening on port %d", self.port)
+end
+
+function step(self, timeout)
+    -- check for new connections
+    local sock = self.socket:accept()
+    if sock then
+        self:register(sock)
+    end
+    
+    -- check for incoming and outgoing messages
+    local rr, wr = socket.select(self.sockets, self.sockets, timeout)
+    
+    -- incoming messages
+    for _,sock in ipairs(rr) do
+        self.clients[sock]:receiveOne()
+    end
+    
+    -- outgoing messages
+    for _,sock in ipairs(wr) do
+        -- it's possible something went wrong and the socket was closed and culled during
+        -- the read phase
+        if self.clients[sock] then
+            self.clients[sock]:sendOne()
+        end
+    end
 end
 
 -- cleanly shut down the server. FIXME: not implemented
@@ -60,67 +83,45 @@ function stop(self)
     self._break = true
 end
 
--- each instance of this function is responsible for handling a single client.
--- Whenever a client connects, copas will automatically create a new thread
--- from this function; when it returns, the socket is closed.
--- Note that neither this function, nor anything called by it, should EVER
--- send data (or perform additional socket reads); doing so may permit the
--- thread to block halfway through an operation on shared state and awaken
--- another thread.
--- Instead, use the server's :sendTo and :broadcast methods, which will
--- insert the messages into a queue which is periodically emptied by another
--- thread.
-function clientWorker(self, sock)
-    new "ClientWorker" {
-        socket = sock;
-        server = self;
-    }
-end
-
-function register(self, client)
-    self:message("Client connected from %s.", tostring(client))
+function register(self, socket)
+    self:message("Client connected from %s.", socket:getpeername())
     
-    self.clients[client] = true
-
-    -- send them the initial gamestate
-    client:send {
-        method = "game";
-        self.game;
+    table.insert(self.sockets, socket)
+    self.clients[socket] = new "ClientWorker" {
+        socket = socket;
+        server = self;
     }
 
     -- tell everyone that they've arrived
     self:broadcast {
         method = "message";
-        "%s joins the game.", tostring(client);
-    }
-    
-    self:broadcast {
-        self = self.game.objects[1];
-        method = "set";
-        "foo", "bar", "baz", "moby";
+        "Connection established from %s", socket:getpeername();
     }
 end
 
 function unregister(self, client)
-    self.clients[client] = nil
+    self.clients[client.socket] = nil
+    self.players[client.name] = nil
+
+    for k,v in ipairs(self.sockets) do
+        if v == client.socket then
+            table.remove(self.sockets, k)
+            break
+        end
+    end
     self:message("Client %s disconnected.", tostring(client))
 end
 
 function broadcast(self, msg)
-    for client in pairs(self.clients) do
+    for _,client in pairs(self.clients) do
         client:send(msg)
     end
-end
-
-function step(self, timeout)
-    copas.step(timeout)
-    return true
 end
 
 function loop(self, timeout)
     self._break = nil
     repeat
-        copas.step(timeout)
+        self:step(timeout)
     until self._break
     self._break = nil
 end
@@ -142,6 +143,31 @@ end
 -- public API callable by clients
 -- signature is (self, client, ...)
 api = {}
+
+function api:login(client, name, pass)
+    if type(name) ~= "string" then
+        client:disconnect("Malformed login message.")
+    elseif self.pass and self.pass ~= pass then
+        client:disconnect("Password incorrect.")
+    elseif self.clients[name] then
+        client:disconnect("Name already in use.")
+    else
+        client:setName(name)
+        self.players[client.name] = client
+        -- FIXME: register corresponding player object with game state?
+    end
+
+    -- send them the initial gamestate
+    client:send {
+        method = "game";
+        self.game;
+    }
+
+    self:broadcast {
+        method = "message";
+        "%s joins the game", name;
+    }
+end
 
 function api:chat(client, ...)
     self:broadcast {

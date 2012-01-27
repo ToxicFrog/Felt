@@ -19,7 +19,7 @@ _DEBUG = false
 -- set up UI
 ui = {}
 function ui.message(...)
-    print(string.format(...))
+    print(select(2, pcall(string.format, ...)))
 end
 
 local defaults = {
@@ -34,6 +34,6 @@ local defaults = {
 local S = new "Server" (ddgetopts(defaults, ...))
 S:start()
 
-S:loop()
+S:loop(0.1)
 
 S:shutdown()
