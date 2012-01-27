@@ -1,4 +1,4 @@
-local super = class(..., "common.Object")
+local super = class(..., "Object")
 
 pack = {
     "id";

@@ -9,7 +9,7 @@
 --   - this implies a set of clients and a broadcast API
 require "socket"
 
-class("Server", "common.Object")
+class("Server", "Object")
 
 
 -- constructor fields: 

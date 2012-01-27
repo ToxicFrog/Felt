@@ -3,7 +3,7 @@
 -- existence in the UI, there's no user interface code for this either
 -- so all this needs is a few accessors
 
-local super = class("Game", "common.Object")
+local super = class("Game", "Object")
 local _NAME = _NAME
 
 function __unpack(type, arg)

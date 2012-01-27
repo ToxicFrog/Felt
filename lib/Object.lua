@@ -1,4 +1,4 @@
--- common.Object
+-- Object
 -- this is the base class from which all other classes are derived
 -- It implements a few utility methods like Object:isInstanceOf(foo), but
 -- most of this is the basic pipe laying needed to let you create
@@ -30,7 +30,7 @@ local type = type
 
 module(...)
 
--- the type of an Object is "common.Object"
+-- the type of an Object is "Object"
 function _M:__type() return self._NAME end
 
 function _M:__init(t)

@@ -1,4 +1,4 @@
-local super = class(..., "common.Object")
+local super = class(..., "Object")
 
 function __init(self, t)
 	self.id = "G"

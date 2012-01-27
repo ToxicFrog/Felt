@@ -7,7 +7,7 @@ require "socket"
 require "socket-helpers"
 require "box"
 
-class("Client", "common.Object")
+class("Client", "Object")
 
 local client_instance = nil
 

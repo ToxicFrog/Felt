@@ -1,7 +1,7 @@
 require "copas"
 require "box"
 
-class("ClientWorker", "common.Object")
+class("ClientWorker", "Object")
 
 local _init = __init
 function __init(self, t)

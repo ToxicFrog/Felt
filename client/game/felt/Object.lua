@@ -3,7 +3,7 @@
 -- from the server, and send messages back to the server requesting method
 -- invokations.
 
-local super = class(..., "common.Object")
+local super = class(..., "Object")
 
 -- instantiate a new instance of this type or a subtype thereof
 function __unpack(type, ctor)
