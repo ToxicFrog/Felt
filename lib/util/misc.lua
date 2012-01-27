@@ -10,7 +10,11 @@ end
         
 -- fast lambda creation
 function f(src)
-    return assert(loadstring(src:gsub("%s+%-%>%s+", " = ...; return ")))
+    local f,e = loadstring(src:gsub("%s+%-%>%s+", " = ...; return "))
+    if not f then
+        error(tostring(e).."\n"..src:gsub("%s+%-%>%s+", " = ...; return "))
+    end
+    return f
 end
 
 -- turn a function that raises hard errors into one that returns nil,err

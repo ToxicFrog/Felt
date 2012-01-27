@@ -113,7 +113,7 @@ function unregister(self, client)
 end
 
 function broadcast(self, msg)
-    for _,client in pairs(self.clients) do
+    for _,client in pairs(self.players) do
         client:send(msg)
     end
 end
@@ -144,18 +144,21 @@ end
 -- signature is (self, client, ...)
 api = {}
 
-function api:login(client, name, pass)
+function api:login(client, name, pass, r, g, b)
     if type(name) ~= "string" then
         client:disconnect("Malformed login message.")
+        return
     elseif self.pass and self.pass ~= pass then
         client:disconnect("Password incorrect.")
+        return
     elseif self.clients[name] then
         client:disconnect("Name already in use.")
-    else
-        client:setName(name)
-        self.players[client.name] = client
-        -- FIXME: register corresponding player object with game state?
+        return
     end
+
+    client:setName(name)
+    self.game:addPlayer(name, r, g, b)
+    self.players[client.name] = client
 
     -- send them the initial gamestate
     client:send {
@@ -172,6 +175,6 @@ end
 function api:chat(client, ...)
     self:broadcast {
         method = "chat";
-        client.player.name, ...;
+        client.name, ...;
     }
 end

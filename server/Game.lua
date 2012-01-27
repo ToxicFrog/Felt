@@ -41,3 +41,15 @@ function addObject(self, object)
         object;
     }
 end
+
+function addPlayer(self, name, r, g, b)
+    local player = self.players[name] or { name = name }
+    player.r,player.g,player.b = r,g,b
+    self.players[name] = player
+
+    self.server:broadcast {
+        self = self;
+        method = "addPlayer";
+        name, r, g, b;
+    }
+end

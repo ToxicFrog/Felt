@@ -13,12 +13,11 @@
 require "felt"
 require "ddgetopts"
 require "client.init"
+require "Client"
 
 require "qtcore"
 require "qtgui"
 --require "lqt_debug"
-
-copas = nil
 
 function Qt.SIGNAL(name)
     return "2"..name
@@ -54,20 +53,20 @@ function ui.addField(field)
 end
 
 local defaults = {
-    name = "ToxicFrog";
-    colour = { r=0, g=1, b=1 };
     host = "localhost";
     port = 8088;
+    name = "ToxicFrog";
+    -- pass = "topsecret";
+    r = 0, g = 1, b = 1;
 }
 
-local C = new "Client" (ddgetopts(defaults, ...))
-assert(C:start())
+assert(client.connect(ddgetopts(defaults)))
 
 --local timer = QTimer()
 --timer:connect(Qt.SIGNAL("timeout()"), function() return C:step(0.1) end)
 --timer:start(0)
 
-while C:step(0.1) do
+while client.step(0.1) do
     --app.exec()
     app.sendPostedEvents()
     app.processEvents()

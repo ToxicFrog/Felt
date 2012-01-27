@@ -76,11 +76,13 @@ function initActions(self)
     end
 
     local function event(evt, ename)
-        print(self, ename)
+        print(self, evt, ename)
         if self.actions[ename] then
+            print("", "sending")
             self:send(self.actions[ename][2], evt:pos():x(), evt:pos():y())
             evt:accept()
         else
+            print("", "ignoring")
             evt:ignore()
         end
     end

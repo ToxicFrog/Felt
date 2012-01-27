@@ -36,3 +36,9 @@ end
 function getObject(self, id)
 	return assert(self.objects[id], "no object in game with id "..tostring(id))
 end
+
+function addPlayer(self, name, r, g, b)
+    local player = self.players[name] or { name = name }
+    player.r,player.g,player.b = r,g,b
+    self.players[name] = player
+end

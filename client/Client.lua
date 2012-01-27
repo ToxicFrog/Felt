@@ -7,165 +7,160 @@ require "socket"
 require "socket-helpers"
 require "box"
 
-class("Client", "Object")
+client = {}
 
-local client_instance = nil
+local _break = false
+local _socket,_game,_sendq,_objects
+local _info
 
-local _init = __init
-function __init(self, t)
-    _init(self, t)
+function client.connect(info)
+    assert(not _socket, "Client already connected")
+    assert(info.port and info.host, "Missing host or port")
+    assert(info.name and info.r and info.g and info.b, "Missing name or colour")
 
-    self.sendq = {}
-    self.objects = {}
+    _sendq,_objects = {},{}
+    _info = info
 
-    client_instance = self
-end
-
-function instance()
-    return client_instance
-end
-
-function start(self)
-	assert(self.port and self.host and self.name, "Invalid client configuration")
-	assert(not self.game, "Client is already connected")
-	
 	local err
-	self.socket,err = socket.connect(self.host, self.port)
-	
-	if not self.socket then
+    _socket,err = socket.connect(info.host, info.port)
+
+	if not _socket then
 	    return nil,err
 	end
-	
-	self:message("connected to %s", self.socket:getpeername())
-	
-	self.socket:settimeout(0.05)
 
-    self:send {
+    client.message("connected to %s", _socket:getpeername())
+
+    _socket:settimeout(0.05)
+
+    client.send {
         method = "login";
-        self.name, self.pass;
+        info.name, info.pass, info.r, info.g, info.b;
     }
 	
 	return true
 end
 
--- cleanly shut down the client. FIXME: not implemented
-function stop(self)
-    print(debug.traceback())
-    if self.socket then
-        self.socket:close()
-        self.socket = nil
+-- cleanly shut down the client.
+-- send a message to the server, if possible, explaining why
+function client.disconnect(message)
+    client.message("Disconnecting: %s", tostring(message))
+
+    if _socket:getpeername() then -- are we still connected?
+        _socket:settimeout(0.2)
+
+        local buf = box.pack {
+            method = "chat";
+            "%s disconnecting: %s", tostring(_info.name), tostring(message);
+        }
+
+        _socket:send(string.format("%d\n%s", #buf, buf))
+        _socket:close()
     end
-    self._break = true
-    print("stop")
+
+    _socket = nil
+    _break = true
 end
 
--- server worker function. Handles all communication with the server. Runs
--- inside copas.
-function ServerReader(self, protected)
+function client.send(msg)
+    table.insert(_sendq, msg)
+end
+
+function client.message(fmt, ...)
+    return ui.message("[client] "..fmt, ...)
+end
+
+-- mainloop function for the client. The UI is expected to call this frequently
+-- (say, 5-30 times a second) to collect network traffic and process pending
+-- events.
+local ServerReader,ServerWriter
+function client.step(timeout)
+    _socket:settimeout(timeout or 0.05)
+    ServerReader()
+    ServerWriter()
+    return not _break
+end
+
+function client.run(timeout)
+    while not _break do
+        client.step(timeout)
+    end
+    _break = nil
+end
+
+local function DispatchMessage(msg)
+    if not msg.self then
+        assert(client.api[msg.method], "no method "..tostring(msg.method).." in client API")
+        client.api[msg.method](table.unpack(msg))
+    else
+        assert(msg.self[msg.method], "No method "..msg.method.." in "..tostring(msg.self))
+        msg.self[msg.method](msg.self, table.unpack(msg))
+    end
+end
+
+-- called every mainloop iteration to process messages from the server
+function ServerReader(protected)
     if not protected then
         return xpcall(function()
-            return self:ServerReader(true)
+            return ServerReader(true)
         end, function(message)
-        self:message("Error receiving message from server: %s", message)
-            self:message(debug.traceback(thread, "  Stack trace:"))
-            self:stop()
+            client.message("Error receiving message from server: %s", message)
+            client.message(debug.traceback("  Stack trace:"))
+            client.disconnect("Receive error.")
         end)
     end
     
-    self.socket:settimeout(0)
-    
-    local result,err = self.socket:receive("*l")
+    local result,err = _socket:receive("*l")
     if result then
-        self.socket:settimeout(math.huge)
-        local buf = self.socket:receive(tonumber(result))
+        _socket:settimeout(math.huge)
+        local buf = _socket:receive(tonumber(result))
         print(buf)
-        local msg = box.unpack(buf, (self.game and self.game.objects))
-        self:message(" << %s %s", tostring(msg.self), tostring(msg.method))
-        self:dispatch(msg)
+        local msg = box.unpack(buf, (_game and _game.objects))
+        client.message(" << %s %s", tostring(msg.self), tostring(msg.method))
+        DispatchMessage(msg)
     elseif err ~= "timeout" then
         error(err)
     end
-    
-    self.socket:settimeout(0.05)
 end
 
-function ServerWriter(self, protected)
+local _sendbuf
+function ServerWriter(protected)
     if not protected then
         return xpcall(function()
-            return self:ServerWriter(true)
+            return ServerWriter(true)
         end, function(message)
-            self:message("Error sending message to server: %s", message)
-            self:message(debug.traceback(thread, "  Stack trace:"))
-            self:stop()
+            client.message("Error sending message to server: %s", message)
+            client.message(debug.traceback("  Stack trace:"))
+            client.disconnect("Send error.")
         end)
     end
     
-    if not self.sendbuf and #self.sendq > 0 then
-        if self.game then
-            table.print(self.game.objects)
-        end
-        local msg = table.remove(self.sendq, 1)
-        local buf = box.pack(msg, self.objects)
+    if not _sendbuf and #_sendq > 0 then
+        local msg = table.remove(_sendq, 1)
+        local buf = box.pack(msg, _objects)
         
-        self:message(" Q> %s %s", tostring(msg.self), tostring(msg.method))
-        self:message("    %s", buf)
-        self.sendbuf = string.format("%d\n%s", #buf, buf)
+        client.message(" Q> %s %s", tostring(msg.self), tostring(msg.method))
+        _sendbuf = string.format("%d\n%s", #buf, buf)
     end
     
-    if self.sendbuf then
-        local result,err,last = self.socket:send(self.sendbuf)
-        self:message(" >> %s %s %s", tostring(result), tostring(err), tostring(last))
+    if _sendbuf then
+        local result,err,last = _socket:send(_sendbuf)
+        client.message(" >> %s %s %s", tostring(result), tostring(err), tostring(last))
         if result then
-            self.sendbuf = nil
+            _sendbuf = nil
         elseif err == "timeout" then
-            self.sendbuf = self.sendbuf:sub(last+1)
+            _sendbuf = _sendbuf:sub(last+1)
         else
             error(err)
         end
     end
 end
 
-function send(self, msg)
-    table.insert(self.sendq, msg)
-    
-    return self
-end
+client.api = {}
 
-function message(self, fmt, ...)
-	return ui.message("[client] "..fmt, ...)
-end
-
-function dispatch(self, msg)
-    if not msg.self then
-        assert(self.api[msg.method], "no method "..tostring(msg.method).." in client API")
-        self.api[msg.method](self, table.unpack(msg))
-    else
-        msg.self[msg.method](msg.self, table.unpack(msg))
-    end
-end
-
--- mainloop function for the client. The UI is expected to call this frequently
--- (say, 5-30 times a second) to collect network traffic and process pending
--- events.
-function step(self, timeout)
-    self:ServerReader()
-    self:ServerWriter()
-    return not self._break
-end
-
-function loop(self, timeout)
-    while not self._break do
-        self:step(timeout)
-    end
-    self._break = nil
-end
-
-api = {}
-
-function api:message(...)
+function client.api.message(...)
     return ui.message(...)
 end
 
-function api:game(game)
-    self.game = game
+function client.api.game(game)
+    _game = game
 end

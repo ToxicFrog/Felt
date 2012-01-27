@@ -39,7 +39,7 @@ end
 
 -- send a message to the server requesting invokation of the given method
 function send(self, method, ...)
-    Client:instance():send {
+    client.send {
         self = self;
         method = method;
         ...
