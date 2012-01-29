@@ -33,8 +33,8 @@ function sendOne(self, protected)
         return xpcall(function()
             return self:sendOne(true)
         end, function(message)
-            self:message("Error sending message: %s", message)
-            self:message(debug.traceback(thread, "  Stack trace:"))
+            self:log("Error sending message: %s", message)
+            self:log(debug.traceback(thread, "  Stack trace:"))
             self:disconnect("Send error.")
         end)
     end
@@ -44,7 +44,7 @@ function sendOne(self, protected)
     local msg = assert(table.remove(self.sendq, 1), "INSANITY")
     local buf = box.pack(msg, self.objects)
     assert(self.socket:send(string.format("%d\n%s", #buf, buf)))
-    self:message(" >> %s:%s()", tostring(msg.self), tostring(msg.method))
+    self:log(" >> %s:%s()", tostring(msg.self), tostring(msg.method))
 end
 
 function receiveOne(self, protected)
@@ -52,18 +52,18 @@ function receiveOne(self, protected)
         return xpcall(function()
             return self:receiveOne(true)
         end, function(message)
-            self:message("Error receiving message: %s", message)
-            self:message(debug.traceback(thread, "  Stack trace:"))
+            self:log("Error receiving message: %s", message)
+            self:log(debug.traceback(thread, "  Stack trace:"))
             self:disconnect("Recieve error.")
         end)
     end
     
     local len = assert(tonumber(assert(self.socket:receive("*l"))), "malformed message header")
     local buf = assert(self.socket:receive(len))
-    local msg = box.unpack(buf, self.server.game.objects)
-    self:message(" << %s:%s()", tostring(msg.self), tostring(msg.method))
+    local msg = box.unpack(buf, server.game().objects)
+    self:log(" << %s:%s()", tostring(msg.self), tostring(msg.method))
     
-    self.server:dispatch(msg, self)
+    server.dispatch(msg, self)
 end
 
 function send(self, msg)
@@ -73,14 +73,14 @@ function send(self, msg)
 end
 
 function disconnect(self, message)
-    self:message("Closing connection to %s: %s", self.socket:getpeername(), tostring(message))
+    self:log("Closing connection to %s: %s", self.socket:getpeername(), tostring(message))
     self:send {
         method = "message";
         "Disconnected: "..tostring(message);
     }
-    self.server:unregister(self)
+    server.unregister(self)
 end
 
-function message(self, fmt, ...)
-    return self.server:message("["..tostring(self).."]"..fmt, ...)
+function log(self, fmt, ...)
+    return server.log("["..tostring(self).."] "..fmt, ...)
 end

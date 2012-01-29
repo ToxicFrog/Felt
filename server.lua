@@ -13,6 +13,7 @@
 require "felt"
 require "ddgetopts"
 require "server.init"
+require "Server"
 
 _DEBUG = false
 
@@ -31,9 +32,6 @@ local defaults = {
     pass = false;
 }
 
-local S = new "Server" (ddgetopts(defaults, ...))
-S:start()
+server.start(ddgetopts(defaults))
 
-S:loop(0.1)
-
-S:shutdown()
+server.loop(0.1)

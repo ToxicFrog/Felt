@@ -35,7 +35,7 @@ function addObject(self, object)
     object.id = object.id or #self.objects+1
     self.objects[object.id] = object
     
-    self.server:broadcast {
+    server.send {
         self = self;
         method = "addObject";
         object;
@@ -47,7 +47,7 @@ function addPlayer(self, name, r, g, b)
     player.r,player.g,player.b = r,g,b
     self.players[name] = player
 
-    self.server:broadcast {
+    server.send {
         self = self;
         method = "addPlayer";
         name, r, g, b;

@@ -9,172 +9,170 @@
 --   - this implies a set of clients and a broadcast API
 require "socket"
 
-class("Server", "Object")
+server = {}
 
+local _sockets,_clients,_players
+local _game
+local _socket
+local _info
 
--- constructor fields: 
--- name: name of game, for server browsers
--- host: interface to bind to
--- port: port to bind to
--- pass: game password. Optional.
--- admin: port for admin console. Always binds to localhost. Optional.
--- load: saved game to load on startup. Optional.
-local _init = __init
-function __init(self, t)
-    _init(self, t)
-    self.sockets = {} -- list of raw sockets for use with select
-    self.clients = {} -- socket => client mapping
-    self.players = {} -- name => client mapping
-end
-
-function start(self)
+function server.start(info)
 	-- if these aren't set, it's a programming error
-	assert(self.port and self.host and self.name, "Invalid arguments to constructor for server.Server")
-	assert(not self.game, "Server is already running")
+	assert(info.port and info.host and info.name, "Invalid arguments to constructor for server.Server")
+	assert(not _game, "Server is already running")
+
+    _info = info
+    _sockets,_clients,_players = {},{},{}
 
     local err
-    self.socket,err = socket.bind(self.host, self.port)
+    _socket,err = socket.bind(info.host, info.port)
     
-    if not self.socket then
+    if not _socket then
         return nil,err
     end
     
     -- HACK HACK HACK - test code
-    self.game = new "Game" { server = self }
-    self.game:addField("test")
-    self.game.fields.test:add(new "game.felt.Token" { name = "test object"; game = self.game; })
-    
-    self.socket:settimeout(0.1)
-    self:message("Listening on port %d", self.port)
+    _game = new "Game" { name = "Test Game" }
+    _game:addField("test")
+    _game.fields.test:add(new "game.felt.Token" { name = "test object"; })
+    _game.fields.test:add(new "game.felt.Token" { name = "test object 2"; x=50,y=50; })
+
+    _socket:settimeout(0.1)
+    server.log("Listening on port %d", info.port)
 end
 
-function step(self, timeout)
+function server.step(timeout)
     -- check for new connections
-    local sock = self.socket:accept()
+    local sock = _socket:accept()
     if sock then
-        self:register(sock)
+        server.register(sock)
     end
-    
+
     -- check for incoming and outgoing messages
-    local rr, wr = socket.select(self.sockets, self.sockets, timeout)
+    local rr, wr = socket.select(_sockets, _sockets, timeout)
     
     -- incoming messages
     for _,sock in ipairs(rr) do
-        self.clients[sock]:receiveOne()
+        _clients[sock]:receiveOne()
     end
     
     -- outgoing messages
     for _,sock in ipairs(wr) do
         -- it's possible something went wrong and the socket was closed and culled during
         -- the read phase
-        if self.clients[sock] then
-            self.clients[sock]:sendOne()
+        if _clients[sock] then
+            _clients[sock]:sendOne()
         end
     end
 end
 
--- cleanly shut down the server. FIXME: not implemented
-function stop(self)
-    self:broadcast {
-        method = "message";
-        "Disconnected: server shutting down";
-    }
-    self:broadcast(false)
-    self._break = true
+function server.game()
+    return _game
 end
 
-function register(self, socket)
-    self:message("Client connected from %s.", socket:getpeername())
-    
-    table.insert(self.sockets, socket)
-    self.clients[socket] = new "ClientWorker" {
-        socket = socket;
-        server = self;
-    }
-
-    -- tell everyone that they've arrived
-    self:broadcast {
-        method = "message";
-        "Connection established from %s", socket:getpeername();
-    }
+local _break
+function server.loop(timeout)
+    _break = nil
+    repeat
+        server.step(timeout)
+    until _break
+    _break = nil
 end
 
-function unregister(self, client)
-    self.clients[client.socket] = nil
-    self.players[client.name] = nil
+-- cleanly shut down the server.
+function server.stop(reason)
+    reason = reason or "server shutdown"
 
-    for k,v in ipairs(self.sockets) do
-        if v == client.socket then
-            table.remove(self.sockets, k)
-            break
-        end
-    end
-    self:message("Client %s disconnected.", tostring(client))
+    -- _immediately_ send the message to each client,
+    -- then close the socket
+    -- FIXME
+    _break = true
 end
 
-function broadcast(self, msg)
-    for _,client in pairs(self.players) do
+function server.send(msg)
+    for _,client in pairs(_players) do
         client:send(msg)
     end
 end
 
-function loop(self, timeout)
-    self._break = nil
-    repeat
-        self:step(timeout)
-    until self._break
-    self._break = nil
+function server.register(socket)
+    server.log("Client connected from %s.", socket:getpeername())
+
+    table.insert(_sockets, socket)
+    _clients[socket] = new "ClientWorker" {
+        socket = socket;
+    }
 end
 
--- server message function, prefixes messages with [server]
-function message(self, fmt, ...)
+function server.unregister(client)
+    _clients[client.socket] = nil
+    _players[client.name] = nil
+
+    for k,v in ipairs(_sockets) do
+        if v == client.socket then
+            v:close()
+            table.remove(_sockets, k)
+            break
+        end
+    end
+
+    server.log("%s disconnected.", tostring(client))
+end
+
+-- server log function, prefixes messages with [server]
+function server.log(fmt, ...)
 	return ui.message("[server] "..fmt, ...)
 end
 
-function dispatch(self, msg, sender)
+-- convenience function to broadcast a text message to all connected clients
+function server.message(...)
+    return server.send {
+        method = "message";
+        string.format(...)
+    }
+end
+
+function server.dispatch(msg, sender)
     if not msg.self then
-        assert(self.api[msg.method], "no method "..tostring(msg.method).." in server API")
-        self.api[msg.method](self, sender, table.unpack(msg))
+        assert(server.api[msg.method], "no method "..tostring(msg.method).." in server API")
+        server.api[msg.method](sender, table.unpack(msg))
     else
         msg.self[msg.method](msg.self, sender, table.unpack(msg))
     end
 end
 
 -- public API callable by clients
--- signature is (self, client, ...)
-api = {}
+-- signature is (client, ...)
+server.api = {}
 
-function api:login(client, name, pass, r, g, b)
+function server.api.login(client, name, pass, r, g, b)
     if type(name) ~= "string" then
         client:disconnect("Malformed login message.")
         return
-    elseif self.pass and self.pass ~= pass then
+    elseif _info.pass and _info.pass ~= pass then
         client:disconnect("Password incorrect.")
         return
-    elseif self.clients[name] then
+    elseif _clients[name] then
         client:disconnect("Name already in use.")
         return
     end
 
     client:setName(name)
-    self.game:addPlayer(name, r, g, b)
-    self.players[client.name] = client
+    _game:addPlayer(name, r, g, b)
+    _players[client.name] = client
 
     -- send them the initial gamestate
     client:send {
         method = "game";
-        self.game;
+        _game;
     }
 
-    self:broadcast {
-        method = "message";
-        "%s joins the game", name;
-    }
+    server.message("%s joins the game.", name)
 end
 
-function api:chat(client, ...)
-    self:broadcast {
+function server.api.chat(client, str)
+    server.broadcast {
         method = "chat";
-        client.name, ...;
+        client.name, str;
     }
 end

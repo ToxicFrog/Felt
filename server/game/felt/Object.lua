@@ -9,8 +9,7 @@ function __init(self, ...)
     
     -- register the object with the gamestate. This will automatically assign
     -- it a unique ID.
-    assert(self.game, "attempt to create in-game object without a containing game")
-    self.game:addObject(self)
+    server.game():addObject(self)
 end
 
 function __pack(self, objs)
