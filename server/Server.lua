@@ -172,7 +172,7 @@ function server.api.login(client, name, pass, r, g, b)
 end
 
 function server.api.chat(client, str)
-    server.broadcast {
+    server.send {
         method = "chat";
         client.name, str;
     }
