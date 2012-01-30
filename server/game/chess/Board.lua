@@ -1,0 +1,1 @@
+class(..., "game.felt.Entity")

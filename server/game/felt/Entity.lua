@@ -17,7 +17,8 @@ function ACTION(class, name, method, ...)
     end
     table.insert(class.actions, { name, method, ... })
 end
-            
+
+mixin "game.felt.Token"
 
 local _init = __init
 function __init(self, ...)

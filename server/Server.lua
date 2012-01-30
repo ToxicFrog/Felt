@@ -33,9 +33,7 @@ function server.start(info)
     
     -- HACK HACK HACK - test code
     _game = new "Game" { name = "Test Game" }
-    _game:addField("test")
-    _game.fields.test:add(new "game.felt.Token" { name = "test object"; })
-    _game.fields.test:add(new "game.felt.Token" { name = "test object 2"; x=50,y=50; })
+    _game:openGame("chess")
 
     _socket:settimeout(0.1)
     server.log("Listening on port %d", info.port)
@@ -86,6 +84,9 @@ function server.stop(reason)
     -- _immediately_ send the message to each client,
     -- then close the socket
     -- FIXME
+
+    _socket:close()
+    _clients,_sockets,_players,_game,_info,_socket = nil
     _break = true
 end
 

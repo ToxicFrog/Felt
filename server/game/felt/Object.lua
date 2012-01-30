@@ -41,3 +41,10 @@ function broadcast(self, method, ...)
         ...
     }
 end
+
+function message(self, ...)
+    self.game.server:broadcast {
+        method = "message";
+        ...;
+    }
+end

@@ -17,6 +17,10 @@ function __pack(self, objects)
     }
 end
 
+function openGame(self, name)
+    require("game."..name..".box")
+end
+
 function addField(self, name)
     if not self.fields[name] then
         local f = new "game.felt.Field" {

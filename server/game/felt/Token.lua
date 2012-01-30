@@ -1,12 +1,7 @@
-class(..., "game.felt.Entity")
-
-pack = {
-    "held_by"
-}
+trait(...)
 
 _CLASS:ACTION("Pick Up", "pickup", "mouse_left")
 
 function pickup(self, who)
-    if self.held_by then return end
-    self:set("held_by", who.name)
+    self:message("%s picks up %s.", tostring(who), tostring(self))
 end
