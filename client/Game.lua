@@ -6,10 +6,12 @@
 local super = class("Game", "Object")
 local _NAME = _NAME
 
+id = 0
+
 function __unpack(type, arg)
     print("unpack game")
     local self = new(type._NAME)(arg)
-    self.objects.G = self
+    self.objects[0] = self
 
     -- generate the "reverse object mapping"
     self.r_objects = {}
@@ -37,8 +39,11 @@ function getObject(self, id)
 	return assert(self.objects[id], "no object in game with id "..tostring(id))
 end
 
-function addPlayer(self, name, r, g, b)
-    local player = self.players[name] or { name = name }
-    player.r,player.g,player.b = r,g,b
-    self.players[name] = player
+function addObject(self, object)
+    self.objects[object.id] = object
+    self.r_objects[object] = object.id
+end
+
+function addPlayer(self, player)
+    self.players[player.name] = player
 end

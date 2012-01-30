@@ -10,11 +10,13 @@
 -- server.main returns when a server shutdown is completed, either from the
 -- server console or by the admin (FIXME: UI work needed here
 
+print("Starting up...")
 require "felt"
 require "ddgetopts"
 require "client.init"
 require "Client"
 
+print("Loading Qt...")
 require "qtcore"
 require "qtgui"
 --require "lqt_debug"
@@ -60,7 +62,8 @@ local defaults = {
     r = 0, g = 1, b = 1;
 }
 
-assert(client.connect(ddgetopts(defaults)))
+print("Connecting to server...")
+assert(client.connect(ddgetopts(defaults, ...)))
 
 --local timer = QTimer()
 --timer:connect(Qt.SIGNAL("timeout()"), function() return C:step(0.1) end)

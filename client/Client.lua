@@ -28,7 +28,7 @@ function client.connect(info)
 	    return nil,err
 	end
 
-    client.message("connected to %s", _socket:getpeername())
+    client.log("connected to %s", _socket:getpeername())
 
     _socket:settimeout(0.05)
 
@@ -43,14 +43,14 @@ end
 -- cleanly shut down the client.
 -- send a message to the server, if possible, explaining why
 function client.disconnect(message)
-    client.message("Disconnecting: %s", tostring(message))
+    client.log("Disconnecting: %s", tostring(message))
 
     if _socket:getpeername() then -- are we still connected?
         _socket:settimeout(0.2)
 
         local buf = box.pack {
             method = "chat";
-            "%s disconnecting: %s", tostring(_info.name), tostring(message);
+            string.format("%s disconnecting: %s", tostring(_info.name), tostring(message));
         }
 
         _socket:send(string.format("%d\n%s", #buf, buf))
@@ -65,12 +65,23 @@ function client.getInfo()
     return _info
 end
 
+function client.me()
+    return _game:getPlayer(_info.name)
+end
+
 function client.send(msg)
     table.insert(_sendq, msg)
 end
 
-function client.message(fmt, ...)
+function client.log(fmt, ...)
     return ui.message("[client] "..fmt, ...)
+end
+
+function client.chat(...)
+    return client.send {
+        method = "chat";
+        string.format(...);
+    }
 end
 
 -- mainloop function for the client. The UI is expected to call this frequently
@@ -107,8 +118,8 @@ function ServerReader(protected)
         return xpcall(function()
             return ServerReader(true)
         end, function(message)
-            client.message("Error receiving message from server: %s", message)
-            client.message(debug.traceback("  Stack trace:"))
+            client.log("Error receiving message from server: %s", message)
+            client.log(debug.traceback("  Stack trace:"))
             client.disconnect("Receive error.")
         end)
     end
@@ -119,7 +130,7 @@ function ServerReader(protected)
         _socket:settimeout(math.huge)
         local buf = assert(_socket:receive(tonumber(result)))
         local msg = box.unpack(buf, (_game and _game.objects))
-        client.message(" << %s %s", tostring(msg.self), tostring(msg.method))
+        client.log("<< %s:%s()", tostring(msg.self), tostring(msg.method))
         DispatchMessage(msg)
     elseif err ~= "timeout" then
         error(err)
@@ -132,8 +143,8 @@ function ServerWriter(protected)
         return xpcall(function()
             return ServerWriter(true)
         end, function(message)
-            client.message("Error sending message to server: %s", message)
-            client.message(debug.traceback("  Stack trace:"))
+            client.log("Error sending message to server: %s", message)
+            client.log(debug.traceback("  Stack trace:"))
             client.disconnect("Send error.")
         end)
     end
@@ -142,13 +153,13 @@ function ServerWriter(protected)
         local msg = table.remove(_sendq, 1)
         local buf = box.pack(msg, _objects)
         
-        client.message(" Q> %s %s", tostring(msg.self), tostring(msg.method))
+        client.log("Q> %s %s", tostring(msg.self), tostring(msg.method))
         _sendbuf = string.format("%d\n%s", #buf, buf)
     end
     
     if _sendbuf then
         local result,err,last = _socket:send(_sendbuf)
-        client.message(" >> %s %s %s", tostring(result), tostring(err), tostring(last))
+        client.log(">> %s %s", tostring(result), tostring(err))
         if result then
             _sendbuf = nil
         elseif err == "timeout" then
@@ -167,4 +178,8 @@ end
 
 function client.api.game(game)
     _game = game
+end
+
+function client.api.chat(who, message)
+    ui.message("<%s> %s", tostring(who), tostring(message))
 end

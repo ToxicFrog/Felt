@@ -102,12 +102,17 @@ function server.register(socket)
     table.insert(_sockets, socket)
     _clients[socket] = new "ClientWorker" {
         socket = socket;
+        game = _game;
     }
 end
 
 function server.unregister(client)
     _clients[client.socket] = nil
-    _players[client.name] = nil
+
+    if _players[client.name] then
+        client.player:disconnect()
+        _players[client.name] = nil
+    end
 
     for k,v in ipairs(_sockets) do
         if v == client.socket then
@@ -138,7 +143,8 @@ function server.dispatch(msg, sender)
         assert(server.api[msg.method], "no method "..tostring(msg.method).." in server API")
         server.api[msg.method](sender, table.unpack(msg))
     else
-        msg.self[msg.method](msg.self, sender, table.unpack(msg))
+        print("dispatch", msg.self, sender, sender.player)
+        msg.self[msg.method](msg.self, sender.player, table.unpack(msg))
     end
 end
 
@@ -153,13 +159,19 @@ function server.api.login(client, name, pass, r, g, b)
     elseif _info.pass and _info.pass ~= pass then
         client:disconnect("Password incorrect.")
         return
-    elseif _clients[name] then
+    elseif _players[name] then
         client:disconnect("Name already in use.")
         return
     end
 
+    local player = new "game.felt.Player" {
+        name = name;
+        r = r, g = g, b = b;
+    }
+
     client:setName(name)
-    _game:addPlayer(name, r, g, b)
+    client:setPlayer(player)
+    _game:addPlayer(player)
     _players[client.name] = client
 
     -- send them the initial gamestate

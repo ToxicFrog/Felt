@@ -31,20 +31,13 @@ end
 
 function set(self, key, value)
     self[key] = value
-    self:broadcast("set", key, value)
+    self:send("set", key, value)
 end
 
-function broadcast(self, method, ...)
-    self.game.server:broadcast {
+function send(self, method, ...)
+    server.send {
         self = self;
         method = method;
         ...
-    }
-end
-
-function message(self, ...)
-    self.game.server:broadcast {
-        method = "message";
-        ...;
     }
 end

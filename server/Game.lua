@@ -1,7 +1,7 @@
 local super = class(..., "Object")
 
 function __init(self, t)
-	self.id = "G"
+	self.id = 0
 	self.fields = {}
 	self.players = {}
 	self.objects = {}
@@ -9,6 +9,9 @@ function __init(self, t)
 end
 
 function __pack(self, objects)
+    -- register self with the object table so that we will be packed by ID next time
+    objects[self] = self.id
+
     return "call","Game",{
         id = id;
         fields = self.fields;
@@ -45,14 +48,12 @@ function addObject(self, object)
     }
 end
 
-function addPlayer(self, name, r, g, b)
-    local player = self.players[name] or { name = name }
-    player.r,player.g,player.b = r,g,b
-    self.players[name] = player
+function addPlayer(self, player)
+    self.players[player.name] = player
 
     server.send {
         self = self;
         method = "addPlayer";
-        name, r, g, b;
+        player;
     }
 end

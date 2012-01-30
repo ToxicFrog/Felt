@@ -2,10 +2,8 @@ class(..., "game.felt.Object")
 
 pack = {
     "x", "y", "z", "w", "h";
-    "name";
-    "game";
-    "face";
-    "children";
+    "name", "game", "face";
+    "children"; -- we don't broadcast "parent" and instead construct it on the client to avoid circularity
     "actions";
 }
 
@@ -25,8 +23,6 @@ function ACTION(class, name, method, ...)
     end
     table.insert(class.actions, { name, method, ... })
 end
-
-mixin "game.felt.Token"
 
 local _init = __init
 function __init(self, ...)
@@ -63,13 +59,22 @@ end
 
 -- add a new child widget
 function add(self, child, x, y)
-    if child.parent then
-        child.parent:remove(child)
+    child:moveto(self, x, y)
+end
+
+-- relocate an entity
+function moveto(self, parent, x, y)
+    if parent and self.parent and self.parent ~= parent then
+        self.parent:remove(self)
     end
-    
-    child.x = x or child.x
-    child.y = y or child.y
-    child.parent = self
-    self.children[#self.children+1] = child
-    return child
+
+    self.x = x or self.x
+    self.y = y or self.y
+
+    if parent and self.parent ~= parent then
+        self.parent = parent or self.parent
+        parent.children[#parent.children+1] = self
+    end
+
+    self:send("moveto", parent, x, y)
 end

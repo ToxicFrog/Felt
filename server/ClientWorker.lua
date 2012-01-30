@@ -11,7 +11,7 @@ function __init(self, t)
     -- needed by the serializer to determine which objects to serialize entire
     -- and which ones to serialize by ID.
     self.objects = {}
-    
+
     -- this is the client's send queue
     self.sendq = {}
     self.name = "client:"..self.socket:getpeername()
@@ -24,6 +24,10 @@ end
 function setName(self, name)
     self.name = name
     -- future versions - maybe some interoperation with visibility tables or the like?
+end
+
+function setPlayer(self, player)
+    self.player = player
 end
 
 function sendOne(self, protected)
@@ -44,7 +48,7 @@ function sendOne(self, protected)
     local msg = assert(table.remove(self.sendq, 1), "INSANITY")
     local buf = box.pack(msg, self.objects)
     assert(self.socket:send(string.format("%d\n%s", #buf, buf)))
-    self:log(" >> %s:%s()", tostring(msg.self), tostring(msg.method))
+    self:log(">> %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, f "x -> tostring(x)"), ", "))
 end
 
 function receiveOne(self, protected)
@@ -61,7 +65,7 @@ function receiveOne(self, protected)
     local len = assert(tonumber(assert(self.socket:receive("*l"))), "malformed message header")
     local buf = assert(self.socket:receive(len))
     local msg = box.unpack(buf, server.game().objects)
-    self:log(" << %s:%s()", tostring(msg.self), tostring(msg.method))
+    self:log("<< %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, f "x -> tostring(x)"), ", "))
     
     server.dispatch(msg, self)
 end
@@ -72,9 +76,15 @@ function send(self, msg)
     return self
 end
 
+function sendNow(self, msg)
+    local buf = box.pack(msg, self.objects)
+    self.socket:settimeout(math.huge)
+    self.socket:send(string.format("%d\n%s", #buf, buf))
+end
+
 function disconnect(self, message)
     self:log("Closing connection to %s: %s", self.socket:getpeername(), tostring(message))
-    self:send {
+    self:sendNow {
         method = "message";
         "Disconnected: "..tostring(message);
     }

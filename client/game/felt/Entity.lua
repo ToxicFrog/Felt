@@ -29,6 +29,18 @@ function __init(self, ...)
     self:initActions()
 end
 
+function event(self, evt, ename, fallthrough, x, y)
+    if self.actions[ename] then
+        self:send(self.actions[ename][2], x or evt:pos():x(), y or evt:pos():y())
+        evt:accept()
+    elseif fallthrough and self.parent:isInstanceOf("game.felt.Field") then
+        local pos = self.qgraphics:mapToScene(evt:pos())
+        self.parent:event(evt, ename, pos:x(), pos:y())
+    else
+        evt:ignore()
+    end
+end
+
 function initGraphics(self)
     -- the server is meant to associate two fields with each object, a "game" and a "face"
     -- the game tells us which game box the piece came from; the face is a hint as to what it should look like
@@ -93,56 +105,37 @@ function initActions(self)
         return "_"..(table.concat(modifiers):gsub("NoModifier", ""):gsub("%l+Modifier", ""))
     end
 
-    local function event(evt, ename)
-        print(self, evt, ename)
-        do return end
-        if self.actions[ename] then
-            print("", "sending")
-            self:send(self.actions[ename][2], evt:pos():x(), evt:pos():y())
-            evt:accept()
-        elseif self.parent:isInstanceOf("game.felt.Field") or self == client.getHeld() then
-            print("", "forwarding to background")
-            if self.parent.actions[ename] then
-                local pos = self.qgraphics:mapToScene(evt:pos())
-                self.parent:send(self.parent.actions[ename][2], pos():x(), pos():y())
-            end
-        else
-            print("", "ignoring")
-            evt:ignore()
-        end
-    end
-
     function self.qgraphics.hoverEnterEvent(item, e)
         self.qgraphics:setFocus()
-        event(e, "hover_enter")
+        self:event(e, "hover_enter")
         e:accept()
     end
 
     function self.qgraphics.hoverLeaveEvent(item, e)
         self.qgraphics:clearFocus()
-        event(e, "hover_leave")
+        self:event(e, "hover_leave")
         e:accept()
     end
 
     function self.qgraphics.keyPressEvent(item, e)
         local ename = "key_" .. e:text():toUtf8() .. modString(e:modifiers())
-        event(e, ename)
+        self:event(e, ename, true)
     end
 
     function self.qgraphics.mousePressEvent(item, e)
         -- if it's a left click AND we are holding an item, emit a drop event instead
         local ename
-        if client.getHeld() and e:button() == "LeftButton" then
+        if e:button() == "LeftButton" and client.me().held then
             ename = "drop" .. modString(e:modifiers())
         else
             ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
         end
-        event(e, ename)
+        self:event(e, ename, true)
     end
 
     function self.qgraphics.mouseDoubleClickEvent(item, e)
         local ename = "mouse_double_" .. buttonString(e:button()) .. modString(e:modifiers())
-        event(e, ename)
+        self:event(e, ename, true)
     end
 end
 
@@ -164,4 +157,21 @@ function childrenBTF(self)
             coroutine.yield(self.children[i])
         end
     end)
+end
+
+-- relocate an entity
+function moveto(self, parent, x, y)
+    if parent and self.parent and self.parent ~= parent then
+        self.parent:remove(self)
+    end
+
+    self.x = x or self.x
+    self.y = y or self.y
+    self.qgraphics:setPos(self.x, self.y)
+
+    if parent and self.parent ~= parent then
+        self.parent = parent or self.parent
+        parent.children[#parent.children+1] = self
+        self.qgraphics:setParentItem(self.parent.qgraphics)
+    end
 end
