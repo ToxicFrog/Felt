@@ -1,4 +1,3 @@
-require "copas"
 require "box"
 
 class("ClientWorker", "Object")

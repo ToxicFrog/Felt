@@ -4,7 +4,6 @@
 -- Fortunately, a client.Client is quite simple. Basically all it needs to do
 -- is maintain a world model for the view to look at.
 require "socket"
-require "socket-helpers"
 require "box"
 
 client = {}

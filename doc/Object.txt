@@ -1,0 +1,42 @@
+:wrap=soft:
+
+Overriden globals: type
+
+New globals:
+
+class(name, super) - creates a new class definition derived from the given superclass (which can be either a class, or a module name containing a class). Returns the superclass, so you can do things like:
+
+    local super = class("Sub", "Super")
+    function thing(self, ...)
+        super.thing(self, ...)
+        self:thing2(...)
+    end
+    
+new(name) - returns the constructor for the named class, so that you can do
+
+    new "Object" { foo = 1, bar = 2 }
+
+Which is eqv to:
+
+    local Object = require "Object"; Object { foo = 1, bar = 2 }
+    
+With some extra safety checks.
+
+
+Built in metamethods:
+    __pack __unpack - used by box serialization library
+    __init - constructor
+    __type - replaces type() if present
+    __new - called when a new instance is created, calls __init, don't touch
+    __tostring
+    
+Built in methods:
+    :clone()
+    :cloneto(t)
+    :isInstanceOf(type)
+
+Special fields:
+    _CLASS - the class definition
+    _SUPER - the superclass definition
+    _NAME - the class name
+    _DEBUG - enables debug logging for this class/object only
