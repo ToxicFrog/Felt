@@ -6,8 +6,8 @@
 
 -- we need to localize everything we plan on using, since this
 -- library uses module()
-local pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,setfenv,loadfile,assert,error
-= pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,setfenv,loadfile,assert,error
+local pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,getfenv,setfenv,loadfile,assert,error
+= pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,getfenv,setfenv,loadfile,assert,error
 local print = print
 
 
@@ -153,16 +153,23 @@ function _G.class(name, superclass)
 	setfenv(2, env)
 	
 	function class.mixin(name)
-		local f = assert(loadfile(name:gsub('%.', '/')..".lua"))
+		local f = assert(loadfile(package.searchpath(package.path, name)))
 		setfenv(f, env)
-		return function(...)
-			return f(...)
-		end
+        return f()
 	end
 
 	return superclass
 end
-	
+
+function _G.trait(name)
+    -- 0 is getfenv itself
+    -- 1 is trait()
+    -- 2 is the enclosing file
+    local class = getfenv(2)
+    assert(class._CLASS, "Attempt to directly instantiate a trait.")
+    return class
+end
+
 -- instantiate something using 'new "type" {ctor}'
 function _G.new(name)
     local class = require(name)

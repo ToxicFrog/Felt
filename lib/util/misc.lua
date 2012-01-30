@@ -38,3 +38,14 @@ end
 
 -- a 'safe' require that doesn't raise errors on failure
 srequire = tosofte(require)
+
+-- backport from 5.2
+function package.searchpath(paths, name)
+    name = name:gsub("%.", "/")
+    for path in paths:gmatch("[^;]+") do
+        if io.exists(path:gsub("%?", name)) then
+            return (path:gsub("%?", name))
+        end
+    end
+    return nil
+end

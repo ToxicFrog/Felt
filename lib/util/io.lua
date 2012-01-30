@@ -11,3 +11,12 @@ function io.readfile(name)
     fd:close()
     return r,e
 end
+
+function io.exists(name)
+    local fd,err = io.open(name, "r")
+    if not fd then
+        return false,err
+    end
+    fd:close()
+    return true
+end
