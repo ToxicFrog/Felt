@@ -30,8 +30,21 @@ function __init(self, ...)
 end
 
 function initGraphics(self)
-    self.qgraphics = QGraphicsRectItem(self.x, self.y, self.w, self.h)
-    self.qgraphics:setBrush(QBrush(QColor(255, 0, 0)))
+    -- the server is meant to associate two fields with each object, a "game" and a "face"
+    -- the game tells us which game box the piece came from; the face is a hint as to what it should look like
+    -- together, these tell us how it should be rendered, by default - share/<game>/<face>.png
+    -- if game is unset, or if there is no such file, we fall back to eye-searing magenta.
+    local path = "share/" .. (self.game or "") .. "/" .. (self.face or self.name or "") .. ".png"
+
+    if not self.game or not io.exists(path) then
+        print("Can't find", path, "using default graphics")
+        self.qgraphics = QGraphicsRectItem(self.x, self.y, self.w, self.h)
+        self.qgraphics:setBrush(QBrush(QColor(255, 0, 255)))
+    else
+        self.qgraphics = QGraphicsPixmapItem(QPixmap(path))
+        self.qgraphics:setPos(self.x, self.y)
+    end
+
     self.qgraphics:setCacheMode("ItemCoordinateCache")
 end
 
@@ -134,15 +147,12 @@ function initActions(self)
 end
 
 function show(self, parent)
-    print("game::felt::Entity:show", self, parent)
-
     if parent then self.qgraphics:setParentItem(parent) end
     self:showChildren(self.qgraphics)
 end
 
 function showChildren(self, field)
     for child in self:childrenBTF() do
-        print("", "game::felt::Entity:showChildren", child)
         child:show(self.qgraphics)
     end
 end

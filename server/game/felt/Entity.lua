@@ -1,14 +1,22 @@
 class(..., "game.felt.Object")
 
 pack = {
-    "x", "y", "z";
+    "x", "y", "z", "w", "h";
     "name";
+    "game";
+    "face";
     "children";
     "actions";
 }
 
 -- coordinates, RELATIVE TO PARENT, of this object. Z is height: lower values are further "down".
 x,y,z = 0,0,0
+
+-- size of this object
+w,h = 16,16
+
+-- the game box this object originated from - used to search for graphics on the client
+game = false
 
 actions = {}
 function ACTION(class, name, method, ...)

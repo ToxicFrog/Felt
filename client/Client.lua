@@ -115,9 +115,9 @@ function ServerReader(protected)
     
     local result,err = _socket:receive("*l")
     if result then
+        assert(tonumber(result), "Malformed message header: "..tostring(result))
         _socket:settimeout(math.huge)
-        local buf = _socket:receive(tonumber(result))
-        print(buf)
+        local buf = assert(_socket:receive(tonumber(result)))
         local msg = box.unpack(buf, (_game and _game.objects))
         client.message(" << %s %s", tostring(msg.self), tostring(msg.method))
         DispatchMessage(msg)

@@ -24,7 +24,6 @@ end
 function addField(self, name)
     if not self.fields[name] then
         local f = new "game.felt.Field" {
-            game = self;
             name = name;
         }
         self.fields[name] = f
