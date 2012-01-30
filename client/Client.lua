@@ -61,6 +61,10 @@ function client.disconnect(message)
     _break = true
 end
 
+function client.getInfo()
+    return _info
+end
+
 function client.send(msg)
     table.insert(_sendq, msg)
 end

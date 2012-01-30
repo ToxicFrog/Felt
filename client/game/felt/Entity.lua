@@ -20,6 +20,10 @@ end
 
 function __init(self, ...)
     super.__init(self, ...)
+
+    for child in self:childrenBTF() do
+        child.parent = self
+    end
     
     self:initGraphics()
     self:initActions()
@@ -28,7 +32,7 @@ end
 function initGraphics(self)
     self.qgraphics = QGraphicsRectItem(self.x, self.y, self.w, self.h)
     self.qgraphics:setBrush(QBrush(QColor(255, 0, 0)))
-    assert(self.qgraphics, "error creating graphics object")
+    self.qgraphics:setCacheMode("ItemCoordinateCache")
 end
 
 function initActions(self)
@@ -38,13 +42,14 @@ function initActions(self)
 
         -- each action gets an entry in the context menu
         for _,action in ipairs(self.actions) do
-            local qaction = self.qmenu:addAction(action[1])
-            qaction:setData(QVariant(action[2]))
-            function qaction:clicked(...) print(self, ...) end
-            print(qaction, qaction.clicked)
-
-            -- also set up the reverse map of action names
+            -- set up the reverse map of action names
             self.actions[action[3]] = action
+
+            -- if the action has a human-readable name, add it to the menu as well
+            if action[1] then
+                local qaction = self.qmenu:addAction(action[1])
+                qaction:setData(QVariant(action[2]))
+            end
         end
 
         -- and then when an entry in the menu is selected, we grab the method name from
@@ -77,10 +82,17 @@ function initActions(self)
 
     local function event(evt, ename)
         print(self, evt, ename)
+        do return end
         if self.actions[ename] then
             print("", "sending")
             self:send(self.actions[ename][2], evt:pos():x(), evt:pos():y())
             evt:accept()
+        elseif self.parent:isInstanceOf("game.felt.Field") or self == client.getHeld() then
+            print("", "forwarding to background")
+            if self.parent.actions[ename] then
+                local pos = self.qgraphics:mapToScene(evt:pos())
+                self.parent:send(self.parent.actions[ename][2], pos():x(), pos():y())
+            end
         else
             print("", "ignoring")
             evt:ignore()
@@ -105,7 +117,13 @@ function initActions(self)
     end
 
     function self.qgraphics.mousePressEvent(item, e)
-        local ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
+        -- if it's a left click AND we are holding an item, emit a drop event instead
+        local ename
+        if client.getHeld() and e:button() == "LeftButton" then
+            ename = "drop" .. modString(e:modifiers())
+        else
+            ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
+        end
         event(e, ename)
     end
 
@@ -124,6 +142,7 @@ end
 
 function showChildren(self, field)
     for child in self:childrenBTF() do
+        print("", "game::felt::Entity:showChildren", child)
         child:show(self.qgraphics)
     end
 end
