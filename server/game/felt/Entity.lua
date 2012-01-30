@@ -62,6 +62,16 @@ function add(self, child, x, y)
     child:moveto(self, x, y)
 end
 
+function remove(self, child)
+    child.parent = nil
+    for i=1,#self.children do
+        if self.children[i] == child then
+            table.remove(self.children, i)
+            return
+        end
+    end
+end
+
 -- relocate an entity
 function moveto(self, parent, x, y)
     if parent and self.parent and self.parent ~= parent then

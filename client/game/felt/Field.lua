@@ -15,44 +15,46 @@ function initGraphics(self)
 end
 
 function initActions(self)
-    do return end
-    -- currently disabled while I work on other parts of the pickup/drop infra; mouse tracking can wait
-    --super.initActions(self)
+    if self:initActionsMenu() then
+        function self.qview.contextMenuEvent(e)
+            self.qmenu:popup(QCursor.pos())
+        end
+    end
+
+    local function buttonString(button)
+        return button:match("(.*)Button"):lower()
+    end
+
+    local function modString(modifiers)
+        table.sort(modifiers)
+        if #modifiers == 1 then -- NoModifier
+            return ""
+        end
+
+        return "_"..(table.concat(modifiers):gsub("NoModifier", ""):gsub("%l+Modifier", ""))
+    end
 
     -- on receiving a mouse event, we need to forward it to our contained
     -- objects if we have any - we only handle it ourself if the user clicked
     -- on the background.
     -- FIXME: need to handle drop events!
     function self.qview.mousePressEvent(view, e)
-        -- handle drops - before/after forwarding to superclass? How do we drop on the background?
+        print("mousepressevent", view, view:itemAt(e:pos()))
         if view:itemAt(e:pos()) then
             error(SUPER) -- lqt special form to forward to superclass method
         end
-        print("game::felt::Field:mousePressEvent", e)
-    end
+        print("forwarding...")
 
-    function self.qview.enterEvent(view, e)
-        if client.getHeld() then
-            self.qscene:addItem(client.getHeld().qgraphics)
-            client.getHeld().qgraphics:setVisible(true)
+        -- if it's a left click AND we are holding an item, emit a drop event instead
+        local ename
+        if e:button() == "LeftButton" and client.me().held then
+            ename = "drop" .. modString(e:modifiers())
+        else
+            ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
         end
-        error(SUPER)
+        print(ename)
+        self:event(e, ename)
     end
-
-    function self.qview.leaveEvent(view, e)
-        if client.getHeld() then
-            client.getHeld().qgraphics:setVisible(false)
-        end
-        error(SUPER)
-    end
-
-    function self.qview.mouseMoveEvent(view, e)
-        if client.getHeld() then
-            client.getHeld().qgraphics:setPos(self.qview:mapToScene(e:pos()))
-        end
-        error(SUPER)
-    end
-
 end
 
 function showChildren(self)
@@ -67,3 +69,11 @@ function trackHeldItem(self, enable)
     print(self, "tracking of held items is now", enable)
     self.qview:setMouseTracking(enable)
 end
+
+function add(self, child)
+    child.parent = self
+    table.insert(self.children, child)
+    self.qscene:addItem(child.qgraphics)
+    print("add child to background:", child, child.qgraphics, child.qgraphics:parentItem())
+end
+
