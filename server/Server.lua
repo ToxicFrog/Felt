@@ -164,14 +164,13 @@ function server.api.login(client, name, pass, r, g, b)
         return
     end
 
-    local player = new "game.felt.Player" {
+    local player = _game:addPlayer {
         name = name;
         r = r, g = g, b = b;
     }
 
     client:setName(name)
     client:setPlayer(player)
-    _game:addPlayer(player)
     _players[client.name] = client
 
     -- send them the initial gamestate
