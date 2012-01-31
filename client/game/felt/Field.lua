@@ -38,12 +38,10 @@ function initActions(self)
     -- on receiving a mouse event, we need to forward it to our contained
     -- objects if we have any - we only handle it ourself if the user clicked
     -- on the background.
-    -- FIXME: need to handle drop events!
     function self.qview.mousePressEvent(view, e)
         if view:itemAt(e:pos()) ~= self.NULL then
             error(SUPER) -- lqt special form to forward to superclass method
         end
-        print("forwarding...")
 
         -- if it's a left click AND we are holding an item, emit a drop event instead
         local ename
@@ -52,8 +50,8 @@ function initActions(self)
         else
             ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
         end
-        print(ename)
-        self:event(e, ename)
+        local pos = view:mapToScene(e:pos())
+        self:event(e, ename, false, pos:x(), pos:y())
     end
 end
 

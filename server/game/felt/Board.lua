@@ -9,7 +9,8 @@ _CLASS:ACTION(false, "drop", "drop")
 function drop(self, who, x, y)
     -- don't drop items onto themselves or any of their children. Otherwise
     -- you end up with a cycle in the widget graph.
-    if who.held == self then
+    -- also, don't drop thin air
+    if who.held == self or not who.held then
         return
     end
 
@@ -24,12 +25,16 @@ function drop(self, who, x, y)
             x = row * self.grid.w + self.grid.x
             y = col * self.grid.h + self.grid.y
 
-            -- if centering is enabled, center the dropped item
+            -- if centering is enabled, center the dropped item in the grid
             if self.grid.center then
                 x = x + (self.grid.w - who.held.w)/2
                 y = y + (self.grid.h - who.held.h)/2
             end
         end
+    else
+        -- center the item
+        x = x - who.held.w/2
+        y = y - who.held.h/2
     end
 
     -- actually drop the item onto us
