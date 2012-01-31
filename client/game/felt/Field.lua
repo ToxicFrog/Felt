@@ -2,6 +2,7 @@ local super = class(..., "game.felt.Entity")
 
 function initGraphics(self)
     self.qscene = QGraphicsScene()
+    self.NULL = self.qscene:itemAt(0,0)
     self.qview = QGraphicsView(self.qscene)
     self.qview:setBackgroundBrush(QBrush(QColor(0, 128, 0)))
     self.qview:setHorizontalScrollBarPolicy("ScrollBarAlwaysOff")
@@ -39,8 +40,7 @@ function initActions(self)
     -- on the background.
     -- FIXME: need to handle drop events!
     function self.qview.mousePressEvent(view, e)
-        print("mousepressevent", view, view:itemAt(e:pos()))
-        if view:itemAt(e:pos()) then
+        if view:itemAt(e:pos()) ~= self.NULL then
             error(SUPER) -- lqt special form to forward to superclass method
         end
         print("forwarding...")
