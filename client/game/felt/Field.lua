@@ -52,8 +52,7 @@ function initActions(self)
         else
             ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
         end
-        print(ename)
-        self:event(e, ename)
+        self:event(e, ename, false, pos:x(), pos:y())
     end
 end
 
