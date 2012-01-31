@@ -60,7 +60,7 @@ function initGraphics(self)
     self.qgraphics:setCacheMode("ItemCoordinateCache")
 end
 
-function initActions(self)
+function initActionsMenu(self)
     if #self.actions > 0 then
         -- create context menu for actions
         self.qmenu = QMenu(tostring(self))
@@ -84,6 +84,12 @@ function initActions(self)
             self:send(action:data():toString():toUtf8(), QCursor.pos():x(), QCursor.pos():y())
         end)
 
+        return self.qmenu
+    end
+end
+
+function initActions(self)
+    if self:initActionsMenu() then
         function self.qgraphics.contextMenuEvent(e)
             self.qmenu:popup(QCursor.pos())
         end
@@ -159,8 +165,30 @@ function childrenBTF(self)
     end)
 end
 
+function add(self, child)
+    print(self, "add", child)
+    child.parent = self
+    table.insert(self.children, child)
+    print(child.qgraphics, self.qgraphics, child.qgraphics:parentItem())
+    self.qgraphics:scene():addItem(child.qgraphics)
+    child.qgraphics:setParentItem(self.qgraphics)
+    print("done add")
+end
+
+function remove(self, child)
+    print(self, "remove", child)
+    child.parent = nil
+    for i=1,#self.children do
+        if self.children[i] == child then
+            table.remove(self.children, i)
+            return
+        end
+    end
+end
+
 -- relocate an entity
 function moveto(self, parent, x, y)
+    print(self, "moveto", parent, x, y)
     if parent and self.parent and self.parent ~= parent then
         self.parent:remove(self)
     end
@@ -170,8 +198,6 @@ function moveto(self, parent, x, y)
     self.qgraphics:setPos(self.x, self.y)
 
     if parent and self.parent ~= parent then
-        self.parent = parent or self.parent
-        parent.children[#parent.children+1] = self
-        self.qgraphics:setParentItem(self.parent.qgraphics)
+        parent:add(self)
     end
 end
