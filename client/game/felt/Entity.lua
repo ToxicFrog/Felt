@@ -33,8 +33,14 @@ function event(self, evt, ename, fallthrough, x, y)
     if self.actions[ename] then
         self:send(self.actions[ename][2], x or evt:pos():x(), y or evt:pos():y())
         evt:accept()
-    elseif fallthrough and self.parent:isInstanceOf("game.felt.Field") then
-        local pos = self.qgraphics:mapToScene(evt:pos())
+    elseif fallthrough and self.parent and self.parent:isInstanceOf("game.felt.Field") then
+        local pos
+        if x and y then
+            pos = self.qgraphics:mapToScene(x, y)
+        else
+            pos = self.qgraphics:mapToScene(evt:pos())
+        end
+
         self.parent:event(evt, ename, pos:x(), pos:y())
     else
         evt:ignore()
@@ -125,7 +131,8 @@ function initActions(self)
 
     function self.qgraphics.keyPressEvent(item, e)
         local ename = "key_" .. e:text():toUtf8() .. modString(e:modifiers())
-        self:event(e, ename, true)
+        local pos = QCursor.pos()
+        self:event(e, ename, true, pos:x(), pos:y())
     end
 
     function self.qgraphics.mousePressEvent(item, e)
