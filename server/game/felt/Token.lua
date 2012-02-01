@@ -1,6 +1,6 @@
 trait(...)
 
-_CLASS:ACTION("Pick Up", "pickup", "mouse_left")
+_CLASS:ACTION("Pick Up", "pickup", "mouse_left_S", "mouse_left")
 
 function pickup(self, who)
     -- check: no grabbing pieces out of someone else's hand
