@@ -1,5 +1,7 @@
 local super = class(..., "game.felt.Entity")
 
+zoom = 1
+
 function initGraphics(self)
     self.qscene = QGraphicsScene()
     self.NULL = self.qscene:itemAt(0,0)
@@ -52,6 +54,17 @@ function initActions(self)
         end
         local pos = view:mapToScene(e:pos())
         self:event(e, ename, false, pos:x(), pos:y())
+    end
+
+    function self.qview.wheelEvent(view, e)
+        self.qview:scale(1/self.zoom, 1/self.zoom)
+        if e:delta() > 0 then
+            self.zoom = math.min(8/1, self.zoom*(2^0.5))
+        else
+            self.zoom = math.max(1/8, self.zoom/(2^0.5))
+        end
+        print(self.zoom)
+        self.qview:scale(self.zoom, self.zoom)
     end
 end
 

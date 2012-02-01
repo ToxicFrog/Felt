@@ -48,12 +48,20 @@ function addObject(self, object)
     }
 end
 
-function addPlayer(self, player)
-    self.players[player.name] = player
+function addPlayer(self, ctor)
+    if self.players[ctor.name] then
+        for k,v in pairs(ctor) do
+            self.players[ctor.name][k] = v
+        end
+    else
+        self.players[ctor.name] = new "game.felt.Player" (ctor)
+    end
 
     server.send {
         self = self;
         method = "addPlayer";
-        player;
+        self.players[ctor.name];
     }
+
+    return self.players[ctor.name]
 end
