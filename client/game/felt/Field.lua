@@ -23,52 +23,12 @@ function initActions(self)
         end
     end
 
-    local function buttonString(button)
-        return button:match("(.*)Button"):lower()
-    end
-
-    local function modString(modifiers)
-        table.sort(modifiers)
-        if #modifiers == 1 then -- NoModifier
-            return ""
-        end
-
-        return "_"..(table.concat(modifiers):gsub("NoModifier", ""):gsub("%l+Modifier", ""))
-    end
-
-    -- on receiving a mouse event, we need to forward it to our contained
-    -- objects if we have any - we only handle it ourself if the user clicked
-    -- on the background.
-    function self.qview.mousePressEvent(view, e)
-        if view:itemAt(e:pos()) then
-            error(SUPER) -- lqt special form to forward to superclass method
-        end
-
-        -- if it's a left click AND we are holding an item, emit a drop event instead
-        local ename
-        if e:button() == "LeftButton" and client.me().held then
-            ename = "drop" .. modString(e:modifiers())
-        else
-            ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
-        end
-        local pos = view:mapToScene(e:pos())
-        self:event(e, ename, false, pos:x(), pos:y())
-    end
-
-    function self.qview.wheelEvent(view, e)
-        self.qview:scale(1/self.zoom, 1/self.zoom)
-        if e:delta() > 0 then
-            self.zoom = math.min(8/1, self.zoom*(2^0.5))
-        else
-            self.zoom = math.max(1/8, self.zoom/(2^0.5))
-        end
-        print(self.zoom)
-        self.qview:scale(self.zoom, self.zoom)
+    for k,f in pairs(self.events) do
+        self.qscene[k] = function(...) return f(self, ...) end
     end
 end
 
 function showChildren(self)
-    print("felt::game::Field:showChildren")
     for child in self:childrenBTF() do
         self.qscene:addItem(child.qgraphics)
         child:show(nil)
@@ -76,7 +36,6 @@ function showChildren(self)
 end
 
 function trackHeldItem(self, enable)
-    print(self, "tracking of held items is now", enable)
     self.qview:setMouseTracking(enable)
 end
 
@@ -84,6 +43,46 @@ function add(self, child)
     child.parent = self
     table.insert(self.children, child)
     self.qscene:addItem(child.qgraphics)
-    print("add child to background:", child, child.qgraphics, child.qgraphics:parentItem())
 end
 
+events = {}
+
+-- on receiving a mouse event, we need to forward it to our contained
+-- objects if we have any - we only handle it ourself if the user clicked
+-- on the background.
+function events.mousePressEvent(self, scene, evt)
+    if scene:itemAt(evt:scenePos()) then
+        return Qt.super()
+    end
+    
+    -- we have to override super.events.mousePressEvent in its entirety rather than just forwarding to it
+    -- because for some reason evt:pos() is always (0,0) in this case; we need evt:scenePos()
+    -- if it's a left click AND we are holding an item, emit a drop event instead
+    local ename
+    if evt:button() == "LeftButton" and client.me().held then
+        ename = "drop" .. Qt.modString(evt:modifiers())
+    else
+        ename = "mouse_" .. Qt.buttonString(evt:button()) .. Qt.modString(evt:modifiers())
+    end
+    if self:event(ename, evt:scenePos():x(), evt:scenePos():y()) then
+        evt:accept()
+    end
+end
+
+function events.wheelEvent(self, scene, evt)
+    self.qview:scale(1/self.zoom, 1/self.zoom)
+    if e:delta() > 0 then
+        self.zoom = math.min(8/1, self.zoom*(2^0.5))
+    else
+        self.zoom = math.max(1/8, self.zoom/(2^0.5))
+    end
+    self.qview:scale(self.zoom, self.zoom)
+end
+
+function events.keyPressEvent(self, scene, evt)
+    if scene:focusItem() then
+        return Qt.super()
+    else
+        return super.events.keyPressEvent(self, scene, evt)
+    end
+end

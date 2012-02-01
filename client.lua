@@ -19,15 +19,8 @@ require "Client"
 print("Loading Qt...")
 require "qtcore"
 require "qtgui"
+require "qtaux"
 --require "lqt_debug"
-
-function Qt.SIGNAL(name)
-    return "2"..name
-end
-
-function Qt.SLOT(name)
-    return "1"..name
-end
 
 _DEBUG = false
 

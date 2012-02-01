@@ -29,22 +29,13 @@ function __init(self, ...)
     self:initActions()
 end
 
-function event(self, evt, ename, fallthrough, x, y)
+function event(self, ename, x, y)
+    print(self, "event", ename, x, y, self.actions[ename])
     if self.actions[ename] then
-        self:send(self.actions[ename][2], x or evt:pos():x(), y or evt:pos():y())
-        evt:accept()
-    elseif fallthrough and self.parent and self.parent:isInstanceOf("game.felt.Field") then
-        local pos
-        if x and y then
-            pos = self.qgraphics:mapToScene(x, y)
-        else
-            pos = self.qgraphics:mapToScene(evt:pos())
-        end
-
-        self.parent:event(evt, ename, pos:x(), pos:y())
-    else
-        evt:ignore()
+        self:send(self.actions[ename][2], x, y)
+        return true
     end
+    return false
 end
 
 function initGraphics(self)
@@ -74,7 +65,9 @@ function initActionsMenu(self)
         -- each action gets an entry in the context menu
         for _,action in ipairs(self.actions) do
             -- set up the reverse map of action names
-            self.actions[action[3]] = action
+            for i=3,#action do
+                self.actions[action[i]] = action
+            end
 
             -- if the action has a human-readable name, add it to the menu as well
             if action[1] then
@@ -104,51 +97,8 @@ function initActions(self)
     self.qgraphics:setAcceptHoverEvents(true)
     self.qgraphics:setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsFocusable, true)
 
-    local function buttonString(button)
-        return button:match("(.*)Button"):lower()
-    end
-
-    local function modString(modifiers)
-        table.sort(modifiers)
-        if #modifiers == 1 then -- NoModifier
-            return ""
-        end
-
-        return "_"..(table.concat(modifiers):gsub("NoModifier", ""):gsub("%l+Modifier", ""))
-    end
-
-    function self.qgraphics.hoverEnterEvent(item, e)
-        self.qgraphics:setFocus()
-        self:event(e, "hover_enter")
-        e:accept()
-    end
-
-    function self.qgraphics.hoverLeaveEvent(item, e)
-        self.qgraphics:clearFocus()
-        self:event(e, "hover_leave")
-        e:accept()
-    end
-
-    function self.qgraphics.keyPressEvent(item, e)
-        local ename = "key_" .. e:text():toUtf8() .. modString(e:modifiers())
-        local pos = QCursor.pos()
-        self:event(e, ename, true, pos:x(), pos:y())
-    end
-
-    function self.qgraphics.mousePressEvent(item, e)
-        -- if it's a left click AND we are holding an item, emit a drop event instead
-        local ename
-        if e:button() == "LeftButton" and client.me().held then
-            ename = "drop" .. modString(e:modifiers())
-        else
-            ename = "mouse_" .. buttonString(e:button()) .. modString(e:modifiers())
-        end
-        self:event(e, ename, true)
-    end
-
-    function self.qgraphics.mouseDoubleClickEvent(item, e)
-        local ename = "mouse_double_" .. buttonString(e:button()) .. modString(e:modifiers())
-        self:event(e, ename, true)
+    for k,f in pairs(self.events) do
+        self.qgraphics[k] = function(...) return f(self, ...) end
     end
 end
 
@@ -159,6 +109,7 @@ end
 
 function showChildren(self, field)
     for child in self:childrenBTF() do
+        print(child, child.id)
         child:show(self.qgraphics)
     end
 end
@@ -206,5 +157,46 @@ function moveto(self, parent, x, y)
 
     if parent and self.parent ~= parent then
         parent:add(self)
+    end
+end
+
+events = {}
+
+function events.hoverEnterEvent(self, item, evt)
+    item:setFocus()
+    self:event("hover_enter", 0, 0)
+    evt:accept()
+end
+
+function events.hoverLeaveEvent(self, item, evt)
+    item:clearFocus()
+    self:event("hover_leave", 0, 0)
+    evt:accept()
+end
+
+function events.keyPressEvent(self, item, evt)
+    local ename = "key_" .. e:text():toUtf8() .. Qt.modString(e:modifiers())
+    if self:event(ename, 0, 0) then
+        evt:accept()
+    end
+end
+
+function events.mousePressEvent(self, item, evt)
+    -- if it's a left click AND we are holding an item, emit a drop event instead
+    local ename
+    if evt:button() == "LeftButton" and client.me().held then
+        ename = "drop" .. Qt.modString(evt:modifiers())
+    else
+        ename = "mouse_" .. Qt.buttonString(evt:button()) .. Qt.modString(evt:modifiers())
+    end
+    if self:event(ename, evt:pos():x(), evt:pos():y()) then
+        evt:accept()
+    end
+end
+
+function events.mouseDoubleClickEvent(self, item, evt)
+    local ename = "mouse_double_" .. Qt.buttonString(evt:button()) .. Qt.modString(evt:modifiers())
+    if self:event(ename, evt:pos():x(), evt:pos():y()) then
+        evt:accept()
     end
 end

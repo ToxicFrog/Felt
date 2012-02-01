@@ -36,8 +36,21 @@ function toharde(f)
     end
 end
 
--- a 'safe' require that doesn't raise errors on failure
-srequire = tosofte(require)
+-- a 'safe' require that doesn't raise errors on file-not-found failure
+-- but still does when the file is found but is invalid
+function srequire(name)
+    local result,err = pcall(require, name)
+    if result then
+        return err
+    else
+        if err:match("\n%s+no file") then
+            return false
+        end
+        -- call it again to re-throw
+        package.loaded[name] = nil
+        require(name)
+    end
+end
 
 -- backport from 5.2
 function package.searchpath(paths, name)
