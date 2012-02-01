@@ -73,7 +73,7 @@ function client.send(msg)
 end
 
 function client.log(fmt, ...)
-    return ui.message("[client] "..fmt, ...)
+    return print(string.format("[client] "..fmt, ...))
 end
 
 function client.chat(...)
@@ -126,7 +126,8 @@ function ServerReader(protected)
     local result,err = _socket:receive("*l")
     if result then
         assert(tonumber(result), "Malformed message header: "..tostring(result))
-        _socket:settimeout(math.huge)
+        client.log("<N %s %f", tostring(result), tonumber(result))
+        _socket:settimeout(-1)
         local buf = assert(_socket:receive(tonumber(result)))
         local msg = box.unpack(buf, (_game and _game.objects))
         client.log("<< %s:%s()", tostring(msg.self), tostring(msg.method))
