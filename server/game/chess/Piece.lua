@@ -8,3 +8,13 @@ w,h = 45,45
 game = "chess"
 
 mixin "game.felt.Token"
+mixin "game.felt.Board"
+
+-- if someone else drops a chess piece on us, swap places with it
+function drop(self, who, x, y)
+    print(self, "drop", who, x, y, self.parent, self.parent._NAME, self.parent:isInstanceOf("game.chess.Board"))
+    if not self.parent:isInstanceOf("game.chess.Board") then return end
+
+    self.parent:drop(who, x + self.x, y + self.y)
+    self:pickup(who)
+end

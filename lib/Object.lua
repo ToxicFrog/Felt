@@ -56,19 +56,13 @@ function _M:clone()
 end
 
 function _M:isInstanceOf(t)
-    if type(t) == "string" then
-        t = require(t)
-    end
-    
     if type(self) == t then
         return true
-    elseif self._NAME == t then
-        return true
     end
     
-    while self.__super do
-        if self.__super._NAME == t then return true end
-        self = self.__super
+    while self._SUPER do
+        if self._SUPER._NAME == t then return true end
+        self = self._SUPER
     end
     
     return false
