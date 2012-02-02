@@ -30,7 +30,6 @@ function __init(self, ...)
 end
 
 function event(self, ename, x, y)
-    print(self, "event", ename, x, y, self.actions[ename])
     if self.actions[ename] then
         self:send(self.actions[ename][2], x, y)
         return true
@@ -79,7 +78,6 @@ function initActionsMenu(self)
         -- and then when an entry in the menu is selected, we grab the method name from
         -- the associated action and tell the server to call that method
         self.qmenu:connect(Qt.SIGNAL "triggered(QAction*)", function(menu, action)
-            print(menu, action, action:data():toString():toUtf8())
             self:send(action:data():toString():toUtf8(), QCursor.pos():x(), QCursor.pos():y())
         end)
 
@@ -109,7 +107,6 @@ end
 
 function showChildren(self, field)
     for child in self:childrenBTF() do
-        print(child, child.id)
         child:show(self.qgraphics)
     end
 end
@@ -124,17 +121,13 @@ function childrenBTF(self)
 end
 
 function add(self, child)
-    print(self, "add", child)
     child.parent = self
     table.insert(self.children, child)
-    print(child.qgraphics, self.qgraphics, child.qgraphics:parentItem())
     self.qgraphics:scene():addItem(child.qgraphics)
     child.qgraphics:setParentItem(self.qgraphics)
-    print("done add")
 end
 
 function remove(self, child)
-    print(self, "remove", child)
     child.parent = nil
     for i=1,#self.children do
         if self.children[i] == child then
@@ -146,7 +139,6 @@ end
 
 -- relocate an entity
 function moveto(self, parent, x, y)
-    print(self, "moveto", parent, x, y)
     if parent and self.parent and self.parent ~= parent then
         self.parent:remove(self)
     end
@@ -175,7 +167,7 @@ function events.hoverLeaveEvent(self, item, evt)
 end
 
 function events.keyPressEvent(self, item, evt)
-    local ename = "key_" .. e:text():toUtf8() .. Qt.modString(e:modifiers())
+    local ename = "key_" .. evt:text():toUtf8() .. Qt.modString(evt:modifiers())
     if self:event(ename, 0, 0) then
         evt:accept()
     end

@@ -54,7 +54,7 @@ function events.mousePressEvent(self, scene, evt)
     if scene:itemAt(evt:scenePos()) then
         return Qt.super()
     end
-    
+
     -- we have to override super.events.mousePressEvent in its entirety rather than just forwarding to it
     -- because for some reason evt:pos() is always (0,0) in this case; we need evt:scenePos()
     -- if it's a left click AND we are holding an item, emit a drop event instead

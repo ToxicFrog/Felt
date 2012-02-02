@@ -5,6 +5,10 @@ function __init(self, t)
 	self.fields = {}
 	self.players = {}
 	self.objects = {}
+
+    -- reverse lookup table, maps objects to IDs
+    self.r_objects = setmetatable({}, { __index = f "_,o -> o.id" })
+
 	super.__init(self, t)
 end
 
@@ -13,7 +17,7 @@ function __pack(self, objects)
     objects[self] = self.id
 
     return "call","Game",{
-        id = id;
+        id = self.id;
         fields = self.fields;
         players = self.players;
         objects = self.objects;
@@ -46,6 +50,16 @@ function addObject(self, object)
         method = "addObject";
         object;
     }
+end
+
+function destroyObject(self, object)
+    server.send {
+        self = self;
+        method = "destroyObject";
+        object.id;
+    }
+
+    self.objects[object.id] = nil
 end
 
 function addPlayer(self, ctor)

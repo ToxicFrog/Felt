@@ -1,8 +1,9 @@
 local super = class(..., "game.felt.Entity")
 
-_CLASS:ACTION("Take Item", "takeItem", "mouse_left")
-
 mixin "game.felt.Board"
+mixin "game.felt.Token"
+
+_CLASS:ACTION("Take Item", "takeItem", "mouse_left")
 
 pack = {
     "count";
@@ -10,8 +11,12 @@ pack = {
 
 count = math.huge
 
-function drop(self, ...)
-    super.drop(self, ...)
+local _drop = drop
+function drop(self, who, ...)
+    -- don't accept items of a different type than we are configured to hold
+    if who.held and not who.held:isInstanceOf(self.type) then return end
+
+    _drop(self, who, ...)
     local child = self.children[1]
     child:destroy()
     self.count = self.count + 1

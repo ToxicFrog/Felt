@@ -9,5 +9,6 @@ function pickup(self, who)
         return
     end
 
+    print("pickup", who, type(who), who.pickup)
     who:pickup(self)
 end

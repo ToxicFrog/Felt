@@ -47,3 +47,8 @@ end
 function addPlayer(self, player)
     self.players[player.name] = player
 end
+
+function destroyObject(self, id)
+    self.r_objects[self.objects[id]] = nil
+    self.objects[id] = nil
+end

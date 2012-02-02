@@ -1,4 +1,4 @@
-class(..., "game.felt.Object")
+local super = class(..., "game.felt.Object")
 
 pack = {
     "x", "y", "z", "w", "h";
@@ -87,4 +87,11 @@ function moveto(self, parent, x, y)
     end
 
     self:send("moveto", parent, x, y)
+end
+
+function destroy(self)
+    for child in self:childrenFTB() do
+        child:destroy()
+    end
+    super.destroy(self)
 end

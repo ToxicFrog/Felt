@@ -41,3 +41,7 @@ function send(self, method, ...)
         ...
     }
 end
+
+function destroy(self)
+    server.destroyObject(self)
+end

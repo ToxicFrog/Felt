@@ -143,8 +143,15 @@ function server.dispatch(msg, sender)
         assert(server.api[msg.method], "no method "..tostring(msg.method).." in server API")
         server.api[msg.method](sender, table.unpack(msg))
     else
-        print("dispatch", msg.self, sender, sender.player)
+        print("dispatch", msg.self, sender, sender.player, type(sender.player))
         msg.self[msg.method](msg.self, sender.player, table.unpack(msg))
+    end
+end
+
+function server.destroyObject(object)
+    _game:destroyObject(object)
+    for _,client in pairs(_clients) do
+        client:destroyObject(object)
     end
 end
 
