@@ -89,9 +89,9 @@ function moveto(self, parent, x, y)
     self:send("moveto", parent, x, y)
 end
 
-function destroy(self)
+function delete(self)
     for child in self:childrenFTB() do
-        child:destroy()
+        child:delete()
     end
-    super.destroy(self)
+    super.delete(self)
 end

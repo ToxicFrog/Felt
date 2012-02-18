@@ -23,9 +23,7 @@ function __pack(self, objs)
         end
         class = class._SUPER
     until not class.pack
-    
-    objs[self] = self.id
-    
+
     return "call","game.felt.Object",ctor
 end
 
@@ -42,6 +40,12 @@ function send(self, method, ...)
     }
 end
 
-function destroy(self)
-    server.destroyObject(self)
+-- deleting an object is tricky
+-- on the server, we need to, at minimum, remove it from the forward and reverse object lookup tables
+-- subtypes may also need to do their own cleanup - for example, Entity needs to remove the object
+-- from the game world
+-- on the client, it needs to be removed from the object tables, and also from the UI, in addition to any
+-- other required cleanup
+function delete(self)
+    server.deleteObject(self)
 end

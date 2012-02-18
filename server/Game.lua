@@ -7,15 +7,14 @@ function __init(self, t)
 	self.objects = {}
 
     -- reverse lookup table, maps objects to IDs
-    self.r_objects = setmetatable({}, { __index = f "_,o -> o.id" })
+    self.r_objects = {
+        [self] = 0;
+    }
 
 	super.__init(self, t)
 end
 
-function __pack(self, objects)
-    -- register self with the object table so that we will be packed by ID next time
-    objects[self] = self.id
-
+function __pack(self)
     return "call","Game",{
         id = self.id;
         fields = self.fields;
@@ -43,16 +42,18 @@ end
 function addObject(self, object)
     assert(not object.id or self.objects[object.id] == object, "object ID collision in addObject")
     object.id = object.id or #self.objects+1
-    self.objects[object.id] = object
-    
+
     server.send {
         self = self;
         method = "addObject";
         object;
     }
+
+    self.objects[object.id] = object
+    self.r_objects[object] = object.id
 end
 
-function destroyObject(self, object)
+function deleteObject(self, object)
     server.send {
         self = self;
         method = "destroyObject";
@@ -60,6 +61,7 @@ function destroyObject(self, object)
     }
 
     self.objects[object.id] = nil
+    self.r_objects[object] = nil
 end
 
 function addPlayer(self, ctor)

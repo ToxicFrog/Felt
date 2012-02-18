@@ -5,11 +5,6 @@ class("ClientWorker", "Object")
 local _init = __init
 function __init(self, t)
     _init(self, t)
-    
-    -- this table tracks which objects the remote client knows about. It is
-    -- needed by the serializer to determine which objects to serialize entire
-    -- and which ones to serialize by ID.
-    self.objects = {}
 
     -- this is the client's send queue
     self.sendq = {}
@@ -45,9 +40,7 @@ function sendOne(self, protected)
     for k,v in pairs(self.sendq) do print(k,v) end
     
     local msg = assert(table.remove(self.sendq, 1), "INSANITY")
-    local buf = box.pack(msg, self.objects)
-    assert(self.socket:send(string.format("%d\n%s", #buf, buf)))
-    self:log(">> %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, f "x -> tostring(x)"), ", "))
+    assert(self.socket:send(msg))
 end
 
 function receiveOne(self, protected)
@@ -69,15 +62,22 @@ function receiveOne(self, protected)
     server.dispatch(msg, self)
 end
 
-function send(self, msg)
-    table.insert(self.sendq, msg)
-    
+function send(self, msg, skipobjects)
+    local buf
+    if skipobjects then
+        buf = box.pack(msg, nil)
+    else
+        buf = box.pack(msg, server.game().r_objects)
+    end
+    table.insert(self.sendq, string.format("%d\n%s", #buf, buf))
+    self:log(">Q %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, f "x -> tostring(x)"), ", "))
+
     return self
 end
 
 function sendNow(self, msg)
-    local buf = box.pack(msg, self.objects)
-    self.socket:settimeout(math.huge)
+    local buf = box.pack(msg, server.game().r_objects)
+    self.socket:settimeout(-1)
     self.socket:send(string.format("%d\n%s", #buf, buf))
 end
 

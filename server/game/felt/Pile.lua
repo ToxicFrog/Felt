@@ -18,7 +18,7 @@ function drop(self, who, ...)
 
     _drop(self, who, ...)
     local child = self.children[1]
-    child:destroy()
+    child:delete()
     self.count = self.count + 1
 end
 

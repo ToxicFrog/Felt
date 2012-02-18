@@ -32,7 +32,7 @@ function server.start(info)
     end
     
     -- HACK HACK HACK - test code
-    _game = new "Game" { name = "Test Game" }
+    _game = new "Game" { name = "Test Game", _DEBUG = true }
     _game:openGame("chess")
 
     _socket:settimeout(0.1)
@@ -148,11 +148,8 @@ function server.dispatch(msg, sender)
     end
 end
 
-function server.destroyObject(object)
-    _game:destroyObject(object)
-    for _,client in pairs(_clients) do
-        client:destroyObject(object)
-    end
+function server.deleteObject(object)
+    _game:deleteObject(object)
 end
 
 -- public API callable by clients
@@ -181,10 +178,10 @@ function server.api.login(client, name, pass, r, g, b)
     _players[client.name] = client
 
     -- send them the initial gamestate
-    client:send {
+    client:send({
         method = "game";
         _game;
-    }
+    }, true)
 
     server.message("%s joins the game.", name)
 end
