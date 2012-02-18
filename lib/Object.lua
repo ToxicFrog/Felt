@@ -6,9 +6,10 @@
 
 -- we need to localize everything we plan on using, since this
 -- library uses module()
-local pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,getfenv,setfenv,loadfile,assert,error
-= pairs,setmetatable,module,package,require,unpack,ipairs,table,tostring,_G,getfenv,setfenv,loadfile,assert,error
-local print = print
+local package,table,_G = package,table,_G
+local pairs,ipairs,unpack,tostring = pairs,ipairs,unpack,tostring
+local module,require,loadfile,setmetatable,setfenv,getfenv = module,require,loadfile,setmetatable,setfenv,getfenv
+local assert,error,print = assert,error,print
 
 
 -- the global type() function gets overriden, to support the __type metamethod
@@ -44,11 +45,11 @@ function _M:__init(t)
 end
 
 function _M:__pack(...)
-    error("abstract metamethod __pack not implemented in class %s" % self._NAME)
+    error(("abstract metamethod __pack not implemented in class %s"):format(self._NAME))
 end
 
 function _M:__unpack(...)
-    error("abstract metamethod __unpack not implemented in class %s" % self._NAME)
+    error(("abstract metamethod __unpack not implemented in class %s"):format(self._NAME))
 end
 
 function _M:clone()
@@ -167,7 +168,7 @@ end
 -- instantiate something using 'new "type" {ctor}'
 function _G.new(name)
     local class = require(name)
-    assert(type(class) == "table" and class._NAME == name, "Malformed or missing class definition for '%s'" % name)
+    assert(type(class) == "table" and class._NAME == name, ("Malformed or missing class definition for '%s'"):format(name))
     return function(...)
         return class(...)
     end
