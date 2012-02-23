@@ -24,9 +24,8 @@ function ACTION(class, name, method, ...)
     table.insert(class.actions, { name, method, ... })
 end
 
-local _init = __init
 function __init(self, ...)
-    _init(self, ...)
+    super.__init(self, ...)
     
     assert(self.name, "Attempted to create a widget (%s) without a name" % tostring(self))
     
@@ -71,7 +70,7 @@ end
 
 -- relocate an entity
 function moveto(self, parent, x, y)
-    if parent and self.parent and self.parent ~= parent then
+    if self.parent and self.parent ~= parent then
         self.parent:remove(self)
     end
 
@@ -83,6 +82,7 @@ function moveto(self, parent, x, y)
         parent.children[#parent.children+1] = self
     end
 
+    self.parent = parent
     self:send("moveto", parent, x, y)
 end
 
@@ -90,5 +90,6 @@ function delete(self)
     for child in self:childrenFTB() do
         child:delete()
     end
+    self:moveto(nil)
     super.delete(self)
 end
