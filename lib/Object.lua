@@ -136,7 +136,7 @@ function _G.class(name, superclass)
 			if class._DEBUG then
 			    local f = value
 			    value = function(self, ...)
-			        print("CALL", self, key, ...)
+			        print("CALL", self, f, key, ...)
 			        return f(self, ...)
 			    end
 			end

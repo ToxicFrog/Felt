@@ -36,9 +36,7 @@ function sendOne(self, protected)
             self:disconnect("Send error.")
         end)
     end
-    
-    for k,v in pairs(self.sendq) do print(k,v) end
-    
+
     local msg = assert(table.remove(self.sendq, 1), "INSANITY")
     assert(self.socket:send(msg))
 end

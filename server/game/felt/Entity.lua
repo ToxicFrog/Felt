@@ -39,13 +39,10 @@ function __init(self, ...)
 end
 
 function __tostring(self)
-	if _DEBUG then
-		return "%s (%s: %s)" % { self.name, self._NAME, self._ID }
+	if self._DEBUG then
+		return "%s (%s: %s)" % { self.name or "ERROR: NAMELESS OBJECT", self._NAME, self._ID }
 	end
-	if self.concealed and self.__tostring_concealed then
-		return self:__tostring_concealed()
-	end
-	return self.name
+	return self.name or "ERROR: NAMELESS OBJECT"
 end
 
 -- returns an iterator over the children of this widget in front-to-back order

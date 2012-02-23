@@ -23,7 +23,6 @@ end
 -- client is not permitted to create its own) and kick the ball back to the
 -- serializer, which should now pick up the entry in the object table.
 function __pack(self, objs)
-    print(objs)
     objs[self] = self.id
     return "pack", self
 end
