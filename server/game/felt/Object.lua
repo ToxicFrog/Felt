@@ -4,15 +4,12 @@ pack = {
     "id";
 }
 
-function __init(self, ...)
-    super.__init(self, ...)
-    
-    -- register the object with the gamestate. This will automatically assign
-    -- it a unique ID.
-    server.game():addObject(self)
-end
-
 function __pack(self, objs)
+    -- register the object with the gamestate. This will automatically assign
+    -- it a unique ID. We can safely do this here because __pack will only be
+    -- called if the object does not exist in the server object table yet.
+    server.game():addObject(self)
+
     -- pack all of the saveable fields and generate the inheritance chain
     local ctor = { _ANCESTRY = {} }
     local class = self

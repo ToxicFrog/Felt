@@ -6,15 +6,21 @@
 local super = class(..., "Object")
 
 -- instantiate a new instance of this type or a subtype thereof
+-- this will get called the first time an object is sent to the client
+-- the object is deserialized, and registered in the game's master object table
 function __unpack(type, ctor)
     -- walk the inheritance chain and instantiate the most specialized type in
     -- it that we have a definition for
     for _,type in ipairs(ctor._ANCESTRY) do
         if srequire(type) then
-            return new(type)(ctor)
+            local obj = new(type)(ctor)
+            if client.getGame() then
+                client.getGame():addObject(obj)
+            end
+            return obj
         end
     end
-    return error("No defined type found attempting to deserialize object of type %s" % ctor._ANCESTRY[1])
+    return error("No defined type found attempting to deserialize object of type %s (%s)" % { ctor._ANCESTRY[1], table.concat(ctor._ANCESTRY, ", ")})
 end
 
 -- this will get triggered when we try to send a message containing this object
@@ -55,4 +61,9 @@ function set(self, key, value, ...)
         self:__set(key, value)
     end
     return self:set(...)
+end
+
+-- called by Game:deleteObject when the server dictates that an object must be deleted
+-- a normal Object doesn't need to do anything here, but subclasses might
+function delete(self)
 end

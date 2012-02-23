@@ -150,6 +150,19 @@ function moveto(self, parent, x, y)
     if parent and self.parent ~= parent then
         parent:add(self)
     end
+
+    self.parent = parent
+end
+
+-- called to remove the object from the game. By the time this is called, the object and all
+-- of its children have already been deleted from the server, and the object has been removed
+-- from the scene; we just need to remove the Qt half of it.
+function delete(self)
+    assert(self.parent == nil)
+
+    if self.qgraphics:scene() then
+        self.qgraphics:scene():removeItem(self.qgraphics)
+    end
 end
 
 events = {}

@@ -64,6 +64,10 @@ function client.getInfo()
     return _info
 end
 
+function client.getGame()
+    return _game
+end
+
 function client.me()
     return _game:getPlayer(_info.name)
 end

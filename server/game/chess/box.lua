@@ -13,6 +13,7 @@ field:add(board, 0, 0)
 field:add(new "game.felt.Pile" {
     name = "pile o'pawns";
     face = "white pawn";
+    game = "chess";
     type = "game.chess.Piece";
     ctor = {
         name = "white pawn";
