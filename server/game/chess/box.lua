@@ -1,7 +1,5 @@
 local game = server.game()
 
-game:addField("Captured Pieces")
-
 local field = game:addField("Chess")
 
 local board = new "game.chess.Board" {
@@ -9,16 +7,6 @@ local board = new "game.chess.Board" {
 }
 
 field:add(board, 0, 0)
-
-field:add(new "game.felt.Pile" {
-    name = "pile o'pawns";
-    face = "white pawn";
-    game = "chess";
-    type = "game.chess.Piece";
-    ctor = {
-        name = "white pawn";
-    };
-}, -20, -20)
 
 for r,colour in ipairs { "white", "black" } do
     -- create the ranks of pawns

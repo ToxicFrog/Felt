@@ -1,16 +1,12 @@
-class(..., "felt.ImageToken")
+class(..., "game.felt.Entity")
 
-mixin "mixins.serialize" ("module")
+_CLASS:ACTION("Open", "open", "mouse_left")
 
-function click_left(self)
-	self:open_box()
-	return true
-end
-
-function server_open_box(self)
-	if not self.open then
-		require(self.module)
-		self.open = true
+function open(self)
+    print("Opening ", self.game, self.opened)
+	if not self.opened then
+		server.game():openGame(self.game)
+		self.opened = true
 		self.parent:remove(self)
 	end
 end
