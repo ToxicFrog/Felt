@@ -4,12 +4,20 @@ pack = {
     "id";
 }
 
-function __pack(self, objs)
+-- object registration has to happen _after_ all of the constructors are called,
+-- so we put it in __new, which means we can register after all of the constructors
+-- finish. Yes, this is a hack.
+function __new(...)
+    local self = super.__new(...)
+
     -- register the object with the gamestate. This will automatically assign
-    -- it a unique ID. We can safely do this here because __pack will only be
-    -- called if the object does not exist in the server object table yet.
+    -- it a unique ID.
     server.game():addObject(self)
 
+    return self
+end
+
+function __pack(self, objs)
     -- pack all of the saveable fields and generate the inheritance chain
     local ctor = { _ANCESTRY = {} }
     local class = self

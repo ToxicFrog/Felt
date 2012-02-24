@@ -43,6 +43,12 @@ function addObject(self, object)
     assert(not object.id or self.objects[object.id] == object, "object ID collision in addObject")
     object.id = object.id or #self.objects+1
 
+    server.send {
+        self = self;
+        method = "addObject";
+        object;
+    }
+
     self.objects[object.id] = object
     self.r_objects[object] = object.id
 end

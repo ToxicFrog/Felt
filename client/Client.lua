@@ -135,7 +135,7 @@ function ServerReader(protected)
         local buf = assert(_socket:receive(tonumber(result)))
         client.log("<< %s", buf)
         local msg = box.unpack(buf, (_game and _game.objects))
-        client.log("<< %s:%s()", tostring(msg.self), tostring(msg.method))
+        client.log("<< %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, tostring), ", "))
         DispatchMessage(msg)
     elseif err ~= "timeout" then
         error(err)
@@ -158,7 +158,7 @@ function ServerWriter(protected)
         local msg = table.remove(_sendq, 1)
         local buf = box.pack(msg, _objects)
         
-        client.log("Q> %s %s", tostring(msg.self), tostring(msg.method))
+        client.log(">Q %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, tostring), ", "))
         _sendbuf = string.format("%d\n%s", #buf, buf)
     end
     

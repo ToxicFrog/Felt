@@ -55,7 +55,7 @@ function receiveOne(self, protected)
     local len = assert(tonumber(assert(self.socket:receive("*l"))), "malformed message header")
     local buf = assert(self.socket:receive(len))
     local msg = box.unpack(buf, server.game().objects)
-    self:log("<< %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, f "x -> tostring(x)"), ", "))
+    self:log("<< %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, tostring), ", "))
     
     server.dispatch(msg, self)
 end
@@ -68,7 +68,7 @@ function send(self, msg, skipobjects)
         buf = box.pack(msg, server.game().r_objects)
     end
     table.insert(self.sendq, string.format("%d\n%s", #buf, buf))
-    self:log(">Q %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, f "x -> tostring(x)"), ", "))
+    self:log(">Q %s:%s(%s)", tostring(msg.self), tostring(msg.method), table.concat(list.map(msg, tostring), ", "))
 
     return self
 end
