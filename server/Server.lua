@@ -33,7 +33,7 @@ function server.start(info)
     
     -- HACK HACK HACK - test code
     _game = new "Game" { name = "Test Game", _DEBUG = true }
-    _game:openGame("chess")
+    _game:openGame("go")
 
     _socket:settimeout(0.1)
     server.log("Listening on port %d", info.port)
